@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "action": "patrol_corner_bottom_left",
+  "canvas": {
+    "width": 512,
+    "height": 768
+  },
+  "frameOrder": [
+    "frame_00.png",
+    "frame_01.png",
+    "frame_02.png",
+    "frame_03.png",
+    "frame_04.png",
+    "frame_05.png",
+    "frame_06.png",
+    "frame_07.png"
+  ],
+  "placement": {
+    "dock": "bottom-left",
+    "inset": 16
+  },
+  "anchor": {
+    "x": 0.0390625,
+    "y": 0.96875
+  },
+  "motion": {
+    "kind": "one-shot",
+    "canonicalPlayback": "ground-to-wall",
+    "reversePlayback": "wall-to-ground",
+    "frameDurationMs": 90
+  },
+  "reference": {
+    "frame": "frame_00.png",
+    "normalization": "exact-v16-floor-boundary-then-authored-transition",
+    "scaleKey": "body-height",
+    "canonicalBodyHeight": 329,
+    "canonicalHeadWidth": null,
+    "measuredBodyHeight": 332,
+    "measuredHeadWidth": 118,
+    "measuredHeadHeight": 120,
+    "appliedScale": null
+  },
+  "normalization": {
+    "mode": "head-width-locked-corner-travel",
+    "edgePadding": 20,
+    "anchorTargetY": 744,
+    "frameBottomRange": [
+      737,
+      678
+    ],
+    "groundStartCenterX": 288,
+    "v16Boundary": {
+      "source": "patrol_floor_left/frame_00.png",
+      "target": "ground-to-lower-left-corner",
+      "offset": [
+        20,
+        265
+      ],
+      "operation": "exact-rgba-integer-translation"
+    },
+    "v17Boundary": {
+      "source": "patrol_floor_left/frame_00.png",
+      "target": "ground-to-lower-left-corner",
+      "offset": [
+        20,
+        265
+      ],
+      "operation": "exact-rgba-integer-translation"
+    },
+    "v18Boundary": {
+      "source": "patrol_floor_left/frame_00.png",
+      "target": "ground-to-lower-left-corner",
+      "offset": [
+        20,
+        265
+      ],
+      "operation": "exact-rgba-integer-translation"
+    }
+  },
+  "bounds": {
+    "alphaThreshold": 2,
+    "union": {
+      "x": 20,
+      "y": 277,
+      "width": 352,
+      "height": 460
+    },
+    "frames": [
+      {
+        "file": "frame_00.png",
+        "visibleBounds": {
+          "x": 187,
+          "y": 288,
+          "width": 185,
+          "height": 449,
+          "right": 372,
+          "bottom": 737
+        }
+      },
+      {
+        "file": "frame_01.png",
+        "visibleBounds": {
+          "x": 176,
+          "y": 277,
+          "width": 172,
+          "height": 452,
+          "right": 348,
+          "bottom": 729
+        }
+      },
+      {
+        "file": "frame_02.png",
+        "visibleBounds": {
+          "x": 122,
+          "y": 367,
+          "width": 250,
+          "height": 353,
+          "right": 372,
+          "bottom": 720
+        }
+      },
+      {
+        "file": "frame_03.png",
+        "visibleBounds": {
+          "x": 122,
+          "y": 373,
+          "width": 178,
+          "height": 339,
+          "right": 300,
+          "bottom": 712
+        }
+      },
+      {
+        "file": "frame_04.png",
+        "visibleBounds": {
+          "x": 97,
+          "y": 331,
+          "width": 176,
+          "height": 372,
+          "right": 273,
+          "bottom": 703
+        }
+      },
+      {
+        "file": "frame_05.png",
+        "visibleBounds": {
+          "x": 75,
+          "y": 357,
+          "width": 151,
+          "height": 338,
+          "right": 226,
+          "bottom": 695
+        }
+      },
+      {
+        "file": "frame_06.png",
+        "visibleBounds": {
+          "x": 48,
+          "y": 342,
+          "width": 140,
+          "height": 344,
+          "right": 188,
+          "bottom": 686
+        }
+      },
+      {
+        "file": "frame_07.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 306,
+          "width": 143,
+          "height": 365,
+          "right": 163,
+          "bottom": 671
+        }
+      }
+    ]
+  }
+}

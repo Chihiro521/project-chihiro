@@ -1,0 +1,6590 @@
+{
+  "schemaVersion": 1,
+  "id": "little-chihiro.default",
+  "name": "小千寻 · 动作相位适配巡逻 v0.20.0-beta.3",
+  "author": "Chihiro",
+  "canvas": {
+    "width": 512,
+    "height": 512,
+    "displayWidth": 328,
+    "displayHeight": 328,
+    "groundY": 470
+  },
+  "renderBox": {
+    "shape": "square",
+    "baseSize": 360,
+    "resizeStep": 4,
+    "safeMargin": 8
+  },
+  "behavior": {
+    "idleWanderMinMs": 6500,
+    "idleWanderMaxMs": 12000,
+    "clickCooldownMs": 420,
+    "floatDurationMs": 1050,
+    "edgePatrolChance": 0.4,
+    "groundWalkSpeedPxPerSecond": 82,
+    "wallClimbSpeedPxPerSecond": 68,
+    "ceilingMoveSpeedPxPerSecond": 72,
+    "doorWarpChance": 0,
+    "doorWarpCooldownMs": 60000,
+    "dragThresholdPx": 7,
+    "longPressMs": 350,
+    "umbrellaMinDropPx": 120,
+    "umbrellaFallMinDurationMs": 1000,
+    "umbrellaFallMaxDurationMs": 2200,
+    "wallClimbVariantBChance": 0.5,
+    "flightMoveSpeedPxPerSecond": 72
+  },
+  "hitZones": {
+    "head": [
+      {
+        "x": 178,
+        "y": 20
+      },
+      {
+        "x": 327,
+        "y": 20
+      },
+      {
+        "x": 341,
+        "y": 135
+      },
+      {
+        "x": 317,
+        "y": 194
+      },
+      {
+        "x": 193,
+        "y": 194
+      },
+      {
+        "x": 164,
+        "y": 133
+      }
+    ],
+    "bag": [
+      {
+        "x": 279,
+        "y": 205
+      },
+      {
+        "x": 340,
+        "y": 211
+      },
+      {
+        "x": 346,
+        "y": 354
+      },
+      {
+        "x": 280,
+        "y": 365
+      },
+      {
+        "x": 260,
+        "y": 277
+      }
+    ],
+    "body": [
+      {
+        "x": 184,
+        "y": 176
+      },
+      {
+        "x": 315,
+        "y": 174
+      },
+      {
+        "x": 338,
+        "y": 292
+      },
+      {
+        "x": 313,
+        "y": 472
+      },
+      {
+        "x": 197,
+        "y": 472
+      },
+      {
+        "x": 169,
+        "y": 295
+      }
+    ]
+  },
+  "gaze": {
+    "animation": "gaze",
+    "eyeOrigin": {
+      "x": 256,
+      "y": 95
+    },
+    "engageDistancePx": 420,
+    "disengageDistancePx": 540,
+    "sampleIntervalMs": 33,
+    "directionFrames": {
+      "up-left": 0,
+      "up": 1,
+      "up-right": 2,
+      "left": 3,
+      "center": 4,
+      "right": 5,
+      "down-left": 6,
+      "down": 7,
+      "down-right": 8
+    }
+  },
+  "animations": {
+    "boot": {
+      "frames": [
+        "animations/boot/frame_00.png",
+        "animations/boot/frame_01.png",
+        "animations/boot/frame_02.png",
+        "animations/boot/frame_03.png",
+        "animations/boot/frame_04.png",
+        "animations/boot/frame_05.png",
+        "animations/boot/frame_06.png",
+        "animations/boot/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        130,
+        110,
+        110,
+        110,
+        100,
+        100,
+        120,
+        180
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 142,
+        "y": 18,
+        "width": 238,
+        "height": 454
+      }
+    },
+    "idle": {
+      "frames": [
+        "animations/idle/frame_00.png",
+        "animations/idle/frame_01.png",
+        "animations/idle/frame_02.png",
+        "animations/idle/frame_03.png",
+        "animations/idle/frame_04.png",
+        "animations/idle/frame_05.png",
+        "animations/idle/frame_06.png",
+        "animations/idle/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        170,
+        170,
+        170,
+        170,
+        170,
+        170,
+        170,
+        170
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 18,
+        "width": 170,
+        "height": 454
+      }
+    },
+    "idle_blink": {
+      "frames": [
+        "animations/idle_blink/frame_00.png",
+        "animations/idle_blink/frame_01.png",
+        "animations/idle_blink/frame_02.png",
+        "animations/idle_blink/frame_03.png",
+        "animations/idle_blink/frame_04.png",
+        "animations/idle_blink/frame_05.png",
+        "animations/idle_blink/frame_06.png",
+        "animations/idle_blink/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        150,
+        100,
+        80,
+        90,
+        90,
+        80,
+        100,
+        160
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 19,
+        "width": 171,
+        "height": 453
+      }
+    },
+    "idle_left": {
+      "frames": [
+        "animations/idle_left/frame_00.png",
+        "animations/idle_left/frame_01.png",
+        "animations/idle_left/frame_02.png",
+        "animations/idle_left/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        180,
+        180,
+        180,
+        180
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 178,
+        "y": 18,
+        "width": 156,
+        "height": 454
+      }
+    },
+    "idle_left_enter": {
+      "frames": [
+        "animations/idle_left_enter/frame_00.png",
+        "animations/idle_left_enter/frame_01.png",
+        "animations/idle_left_enter/frame_02.png",
+        "animations/idle_left_enter/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        90,
+        100,
+        120
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 18,
+        "width": 169,
+        "height": 454
+      }
+    },
+    "idle_left_blink": {
+      "frames": [
+        "animations/idle_left_blink/frame_00.png",
+        "animations/idle_left_blink/frame_01.png",
+        "animations/idle_left_blink/frame_02.png",
+        "animations/idle_left_blink/frame_03.png",
+        "animations/idle_left_blink/frame_04.png",
+        "animations/idle_left_blink/frame_05.png",
+        "animations/idle_left_blink/frame_06.png",
+        "animations/idle_left_blink/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        120,
+        80,
+        70,
+        90,
+        90,
+        70,
+        80,
+        120
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 178,
+        "y": 18,
+        "width": 158,
+        "height": 454
+      }
+    },
+    "idle_right": {
+      "frames": [
+        "animations/idle_right/frame_00.png",
+        "animations/idle_right/frame_01.png",
+        "animations/idle_right/frame_02.png",
+        "animations/idle_right/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        180,
+        180,
+        180,
+        180
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 188,
+        "y": 18,
+        "width": 156,
+        "height": 454
+      }
+    },
+    "idle_right_enter": {
+      "frames": [
+        "animations/idle_right_enter/frame_00.png",
+        "animations/idle_right_enter/frame_01.png",
+        "animations/idle_right_enter/frame_02.png",
+        "animations/idle_right_enter/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        90,
+        100,
+        120
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 18,
+        "width": 177,
+        "height": 454
+      }
+    },
+    "idle_right_blink": {
+      "frames": [
+        "animations/idle_right_blink/frame_00.png",
+        "animations/idle_right_blink/frame_01.png",
+        "animations/idle_right_blink/frame_02.png",
+        "animations/idle_right_blink/frame_03.png",
+        "animations/idle_right_blink/frame_04.png",
+        "animations/idle_right_blink/frame_05.png",
+        "animations/idle_right_blink/frame_06.png",
+        "animations/idle_right_blink/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        120,
+        80,
+        70,
+        90,
+        90,
+        70,
+        80,
+        120
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 189,
+        "y": 18,
+        "width": 156,
+        "height": 454
+      }
+    },
+    "react": {
+      "frames": [
+        "animations/react/frame_00.png",
+        "animations/react/frame_01.png",
+        "animations/react/frame_02.png",
+        "animations/react/frame_03.png",
+        "animations/react/frame_04.png",
+        "animations/react/frame_05.png",
+        "animations/react/frame_06.png",
+        "animations/react/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        70,
+        70,
+        80,
+        90,
+        100,
+        120,
+        160
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 166,
+        "y": 12,
+        "width": 242,
+        "height": 460
+      }
+    },
+    "turn": {
+      "frames": [
+        "animations/turn/frame_00.png",
+        "animations/turn/frame_01.png",
+        "animations/turn/frame_02.png",
+        "animations/turn/frame_03.png",
+        "animations/turn/frame_04.png",
+        "animations/turn/frame_05.png",
+        "animations/turn/frame_06.png",
+        "animations/turn/frame_07.png",
+        "animations/turn/frame_08.png",
+        "animations/turn/frame_09.png",
+        "animations/turn/frame_10.png",
+        "animations/turn/frame_11.png",
+        "animations/turn/frame_12.png",
+        "animations/turn/frame_13.png",
+        "animations/turn/frame_14.png",
+        "animations/turn/frame_15.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        60,
+        60,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        60
+      ],
+      "loop": false,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 7,
+          "loop": false
+        },
+        "right": {
+          "start": 8,
+          "end": 15,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 97,
+        "y": 19,
+        "width": 287,
+        "height": 453
+      }
+    },
+    "takeoff": {
+      "frames": [
+        "animations/takeoff/frame_00.png",
+        "animations/takeoff/frame_01.png",
+        "animations/takeoff/frame_02.png",
+        "animations/takeoff/frame_03.png",
+        "animations/takeoff/frame_04.png",
+        "animations/takeoff/frame_05.png",
+        "animations/takeoff/frame_06.png",
+        "animations/takeoff/frame_07.png",
+        "animations/takeoff/frame_08.png",
+        "animations/takeoff/frame_09.png",
+        "animations/takeoff/frame_10.png",
+        "animations/takeoff/frame_11.png",
+        "animations/takeoff/frame_12.png",
+        "animations/takeoff/frame_13.png",
+        "animations/takeoff/frame_14.png",
+        "animations/takeoff/frame_15.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        95,
+        105,
+        55,
+        55,
+        60,
+        65,
+        80,
+        90,
+        95,
+        105,
+        55,
+        55,
+        60,
+        65,
+        80
+      ],
+      "loop": false,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 2,
+          "loop": false
+        },
+        "right": {
+          "start": 8,
+          "end": 10,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 45,
+        "y": 0,
+        "width": 428,
+        "height": 472
+      }
+    },
+    "float": {
+      "frames": [
+        "animations/float/frame_00.png",
+        "animations/float/frame_01.png",
+        "animations/float/frame_02.png",
+        "animations/float/frame_03.png",
+        "animations/float/frame_04.png",
+        "animations/float/frame_05.png",
+        "animations/float/frame_06.png",
+        "animations/float/frame_07.png",
+        "animations/float/frame_08.png",
+        "animations/float/frame_09.png",
+        "animations/float/frame_10.png",
+        "animations/float/frame_11.png",
+        "animations/float/frame_12.png",
+        "animations/float/frame_13.png",
+        "animations/float/frame_14.png",
+        "animations/float/frame_15.png",
+        "animations/float/frame_16.png",
+        "animations/float/frame_17.png",
+        "animations/float/frame_18.png",
+        "animations/float/frame_19.png",
+        "animations/float/frame_20.png",
+        "animations/float/frame_21.png",
+        "animations/float/frame_22.png",
+        "animations/float/frame_23.png"
+      ],
+      "frameDurationsMs": [
+        100,
+        100,
+        100,
+        120,
+        70,
+        70,
+        90,
+        120,
+        140,
+        160,
+        95,
+        110,
+        100,
+        100,
+        100,
+        120,
+        70,
+        70,
+        90,
+        120,
+        140,
+        160,
+        95,
+        110
+      ],
+      "loop": false,
+      "segments": {
+        "left-rise": {
+          "start": 0,
+          "end": 3,
+          "loop": false
+        },
+        "left-apex": {
+          "start": 4,
+          "end": 6,
+          "loop": false
+        },
+        "left-fall": {
+          "start": 7,
+          "end": 9,
+          "loop": false
+        },
+        "right-rise": {
+          "start": 12,
+          "end": 15,
+          "loop": false
+        },
+        "right-apex": {
+          "start": 16,
+          "end": 18,
+          "loop": false
+        },
+        "right-fall": {
+          "start": 19,
+          "end": 21,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 99,
+        "y": 43,
+        "width": 317,
+        "height": 354
+      }
+    },
+    "land": {
+      "frames": [
+        "animations/land/frame_00.png",
+        "animations/land/frame_01.png",
+        "animations/land/frame_02.png",
+        "animations/land/frame_03.png",
+        "animations/land/frame_04.png",
+        "animations/land/frame_05.png",
+        "animations/land/frame_06.png",
+        "animations/land/frame_07.png",
+        "animations/land/frame_08.png",
+        "animations/land/frame_09.png",
+        "animations/land/frame_10.png",
+        "animations/land/frame_11.png",
+        "animations/land/frame_12.png",
+        "animations/land/frame_13.png",
+        "animations/land/frame_14.png",
+        "animations/land/frame_15.png"
+      ],
+      "frameDurationsMs": [
+        70,
+        60,
+        65,
+        90,
+        80,
+        90,
+        110,
+        160,
+        70,
+        65,
+        75,
+        85,
+        80,
+        90,
+        110,
+        160
+      ],
+      "loop": false,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 7,
+          "loop": false
+        },
+        "right": {
+          "start": 8,
+          "end": 15,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 129,
+        "y": 19,
+        "width": 283,
+        "height": 453
+      }
+    },
+    "notice": {
+      "frames": [
+        "animations/notice/frame_00.png",
+        "animations/notice/frame_01.png",
+        "animations/notice/frame_02.png",
+        "animations/notice/frame_03.png",
+        "animations/notice/frame_04.png",
+        "animations/notice/frame_05.png",
+        "animations/notice/frame_06.png",
+        "animations/notice/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        120,
+        100,
+        100,
+        100,
+        110,
+        120,
+        130,
+        160
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 157,
+        "y": 17,
+        "width": 181,
+        "height": 455
+      }
+    },
+    "gaze": {
+      "frames": [
+        "animations/gaze/frame_00.png",
+        "animations/gaze/frame_01.png",
+        "animations/gaze/frame_02.png",
+        "animations/gaze/frame_03.png",
+        "animations/gaze/frame_04.png",
+        "animations/gaze/frame_05.png",
+        "animations/gaze/frame_06.png",
+        "animations/gaze/frame_07.png",
+        "animations/gaze/frame_08.png"
+      ],
+      "frameDurationsMs": [
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 171,
+        "y": 19,
+        "width": 169,
+        "height": 453
+      }
+    },
+    "cursor_track": {
+      "frames": [
+        "animations/cursor_track/frame_00.png",
+        "animations/cursor_track/frame_01.png",
+        "animations/cursor_track/frame_02.png",
+        "animations/cursor_track/frame_03.png",
+        "animations/cursor_track/frame_04.png",
+        "animations/cursor_track/frame_05.png",
+        "animations/cursor_track/frame_06.png",
+        "animations/cursor_track/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180
+      ],
+      "loop": true,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": true
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": true
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 173,
+        "y": 18,
+        "width": 170,
+        "height": 454
+      }
+    },
+    "cursor_dizzy": {
+      "frames": [
+        "animations/cursor_dizzy/frame_00.png",
+        "animations/cursor_dizzy/frame_01.png",
+        "animations/cursor_dizzy/frame_02.png",
+        "animations/cursor_dizzy/frame_03.png",
+        "animations/cursor_dizzy/frame_04.png",
+        "animations/cursor_dizzy/frame_05.png",
+        "animations/cursor_dizzy/frame_06.png",
+        "animations/cursor_dizzy/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        120,
+        100,
+        100,
+        110,
+        250,
+        180,
+        160,
+        220
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 81,
+        "y": 18,
+        "width": 313,
+        "height": 454
+      }
+    },
+    "head_pat": {
+      "frames": [
+        "animations/head_pat/frame_00.png",
+        "animations/head_pat/frame_01.png",
+        "animations/head_pat/frame_02.png",
+        "animations/head_pat/frame_03.png",
+        "animations/head_pat/frame_04.png",
+        "animations/head_pat/frame_05.png",
+        "animations/head_pat/frame_06.png",
+        "animations/head_pat/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        100,
+        100,
+        120,
+        160,
+        160,
+        160,
+        120,
+        160
+      ],
+      "loop": false,
+      "segments": {
+        "enter": {
+          "start": 0,
+          "end": 2,
+          "loop": false
+        },
+        "hold": {
+          "start": 3,
+          "end": 5,
+          "loop": true
+        },
+        "exit": {
+          "start": 6,
+          "end": 7,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 17,
+        "width": 169,
+        "height": 455
+      }
+    },
+    "poke_cheek": {
+      "frames": [
+        "animations/poke_cheek/frame_00.png",
+        "animations/poke_cheek/frame_01.png",
+        "animations/poke_cheek/frame_02.png",
+        "animations/poke_cheek/frame_03.png",
+        "animations/poke_cheek/frame_04.png",
+        "animations/poke_cheek/frame_05.png",
+        "animations/poke_cheek/frame_06.png",
+        "animations/poke_cheek/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        70,
+        70,
+        90,
+        100,
+        110,
+        120,
+        160
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 18,
+        "width": 169,
+        "height": 454
+      }
+    },
+    "menu_wait": {
+      "frames": [
+        "animations/menu_wait/frame_00.png",
+        "animations/menu_wait/frame_01.png",
+        "animations/menu_wait/frame_02.png",
+        "animations/menu_wait/frame_03.png",
+        "animations/menu_wait/frame_04.png",
+        "animations/menu_wait/frame_05.png",
+        "animations/menu_wait/frame_06.png",
+        "animations/menu_wait/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180,
+        180
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 169,
+        "y": 18,
+        "width": 164,
+        "height": 454
+      }
+    },
+    "clock_scare": {
+      "frames": [
+        "animations/clock_scare/frame_00.png",
+        "animations/clock_scare/frame_01.png",
+        "animations/clock_scare/frame_02.png",
+        "animations/clock_scare/frame_03.png",
+        "animations/clock_scare/frame_04.png",
+        "animations/clock_scare/frame_05.png",
+        "animations/clock_scare/frame_06.png",
+        "animations/clock_scare/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        100,
+        90,
+        90,
+        90,
+        110,
+        130,
+        150,
+        180
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 70,
+        "y": 18,
+        "width": 375,
+        "height": 454
+      }
+    },
+    "dragged": {
+      "frames": [
+        "animations/dragged/frame_00.png",
+        "animations/dragged/frame_01.png",
+        "animations/dragged/frame_02.png",
+        "animations/dragged/frame_03.png",
+        "animations/dragged/frame_04.png",
+        "animations/dragged/frame_05.png",
+        "animations/dragged/frame_06.png",
+        "animations/dragged/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115,
+        115
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 95,
+        "y": 0,
+        "width": 295,
+        "height": 452
+      }
+    },
+    "drag_grab": {
+      "frames": [
+        "animations/drag_grab/frame_00.png",
+        "animations/drag_grab/frame_01.png",
+        "animations/drag_grab/frame_02.png",
+        "animations/drag_grab/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        70,
+        80,
+        90,
+        110
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 126,
+        "y": 19,
+        "width": 247,
+        "height": 453
+      }
+    },
+    "drag_hold": {
+      "frames": [
+        "animations/drag_hold/frame_00.png",
+        "animations/drag_hold/frame_01.png",
+        "animations/drag_hold/frame_02.png",
+        "animations/drag_hold/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        170,
+        170,
+        170,
+        170
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 138,
+        "y": 24,
+        "width": 225,
+        "height": 440
+      }
+    },
+    "drag_left": {
+      "frames": [
+        "animations/drag_left/frame_00.png",
+        "animations/drag_left/frame_01.png",
+        "animations/drag_left/frame_02.png",
+        "animations/drag_left/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        95,
+        95,
+        95,
+        95
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 157,
+        "y": 16,
+        "width": 239,
+        "height": 431
+      }
+    },
+    "drag_right": {
+      "frames": [
+        "animations/drag_right/frame_00.png",
+        "animations/drag_right/frame_01.png",
+        "animations/drag_right/frame_02.png",
+        "animations/drag_right/frame_03.png"
+      ],
+      "frameDurationsMs": [
+        95,
+        95,
+        95,
+        95
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 132,
+        "y": 13,
+        "width": 262,
+        "height": 427
+      }
+    },
+    "drag_brake": {
+      "frames": [
+        "animations/drag_brake/frame_00.png",
+        "animations/drag_brake/frame_01.png",
+        "animations/drag_brake/frame_02.png",
+        "animations/drag_brake/frame_03.png",
+        "animations/drag_brake/frame_04.png",
+        "animations/drag_brake/frame_05.png",
+        "animations/drag_brake/frame_06.png",
+        "animations/drag_brake/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        70,
+        75,
+        90,
+        110,
+        70,
+        75,
+        90,
+        110
+      ],
+      "loop": false,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": false
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 85,
+        "y": 13,
+        "width": 300,
+        "height": 451
+      }
+    },
+    "drag_fall": {
+      "frames": [
+        "animations/drag_fall/frame_00.png",
+        "animations/drag_fall/frame_01.png",
+        "animations/drag_fall/frame_02.png",
+        "animations/drag_fall/frame_03.png",
+        "animations/drag_fall/frame_04.png",
+        "animations/drag_fall/frame_05.png",
+        "animations/drag_fall/frame_06.png",
+        "animations/drag_fall/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        110,
+        150,
+        180,
+        80,
+        110,
+        150,
+        180
+      ],
+      "loop": false,
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": false
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 109,
+        "y": 25,
+        "width": 303,
+        "height": 447
+      }
+    },
+    "umbrella_open": {
+      "frames": [
+        "animations/umbrella_open/frame_00.png",
+        "animations/umbrella_open/frame_01.png",
+        "animations/umbrella_open/frame_02.png",
+        "animations/umbrella_open/frame_03.png",
+        "animations/umbrella_open/frame_04.png",
+        "animations/umbrella_open/frame_05.png",
+        "animations/umbrella_open/frame_06.png",
+        "animations/umbrella_open/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        120,
+        130,
+        100,
+        90,
+        120,
+        130,
+        100
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 768
+      },
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": false
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9739583333
+      },
+      "hitArea": [
+        {
+          "x": 80,
+          "y": 112
+        },
+        {
+          "x": 432,
+          "y": 112
+        },
+        {
+          "x": 454,
+          "y": 320
+        },
+        {
+          "x": 390,
+          "y": 720
+        },
+        {
+          "x": 320,
+          "y": 744
+        },
+        {
+          "x": 192,
+          "y": 744
+        },
+        {
+          "x": 118,
+          "y": 720
+        },
+        {
+          "x": 58,
+          "y": 320
+        }
+      ],
+      "visualBounds": {
+        "x": 77,
+        "y": 128,
+        "width": 358,
+        "height": 600
+      }
+    },
+    "umbrella_float": {
+      "frames": [
+        "animations/umbrella_float/frame_00.png",
+        "animations/umbrella_float/frame_01.png",
+        "animations/umbrella_float/frame_02.png",
+        "animations/umbrella_float/frame_03.png",
+        "animations/umbrella_float/frame_04.png",
+        "animations/umbrella_float/frame_05.png",
+        "animations/umbrella_float/frame_06.png",
+        "animations/umbrella_float/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        170,
+        170,
+        170,
+        170,
+        170,
+        170,
+        170,
+        170
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 768
+      },
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": true
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": true
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9739583333
+      },
+      "hitArea": [
+        {
+          "x": 80,
+          "y": 112
+        },
+        {
+          "x": 432,
+          "y": 112
+        },
+        {
+          "x": 454,
+          "y": 320
+        },
+        {
+          "x": 390,
+          "y": 720
+        },
+        {
+          "x": 320,
+          "y": 744
+        },
+        {
+          "x": 192,
+          "y": 744
+        },
+        {
+          "x": 118,
+          "y": 720
+        },
+        {
+          "x": 58,
+          "y": 320
+        }
+      ],
+      "visualBounds": {
+        "x": 77,
+        "y": 128,
+        "width": 359,
+        "height": 603
+      }
+    },
+    "patrol_floor_left": {
+      "frames": [
+        "animations/patrol_floor_left/frame_00.png",
+        "animations/patrol_floor_left/frame_01.png",
+        "animations/patrol_floor_left/frame_02.png",
+        "animations/patrol_floor_left/frame_03.png",
+        "animations/patrol_floor_left/frame_04.png",
+        "animations/patrol_floor_left/frame_05.png",
+        "animations/patrol_floor_left/frame_06.png",
+        "animations/patrol_floor_left/frame_07.png",
+        "animations/patrol_floor_left/frame_08.png",
+        "animations/patrol_floor_left/frame_09.png",
+        "animations/patrol_floor_left/frame_10.png",
+        "animations/patrol_floor_left/frame_11.png",
+        "animations/patrol_floor_left/frame_12.png",
+        "animations/patrol_floor_left/frame_13.png",
+        "animations/patrol_floor_left/frame_14.png",
+        "animations/patrol_floor_left/frame_15.png",
+        "animations/patrol_floor_left/frame_16.png",
+        "animations/patrol_floor_left/frame_17.png",
+        "animations/patrol_floor_left/frame_18.png",
+        "animations/patrol_floor_left/frame_19.png",
+        "animations/patrol_floor_left/frame_20.png",
+        "animations/patrol_floor_left/frame_21.png",
+        "animations/patrol_floor_left/frame_22.png",
+        "animations/patrol_floor_left/frame_23.png",
+        "animations/patrol_floor_left/frame_24.png",
+        "animations/patrol_floor_left/frame_25.png",
+        "animations/patrol_floor_left/frame_26.png"
+      ],
+      "frameDurationsMs": [
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40
+      ],
+      "loop": true,
+      "rootMotion": {
+        "cycleAdvancePx": 88.56,
+        "frameProgress": [
+          0,
+          0.054625528401,
+          0.068562575434,
+          0.085748515469,
+          0.159037246801,
+          0.176223186836,
+          0.194038891212,
+          0.271335309461,
+          0.289544301073,
+          0.310683269103,
+          0.398441201707,
+          0.419604784622,
+          0.442912040091,
+          0.531613894896,
+          0.556439909275,
+          0.572151063221,
+          0.620242145115,
+          0.634082194872,
+          0.657761146285,
+          0.746488796369,
+          0.770850129753,
+          0.786660383511,
+          0.838744738278,
+          0.853886627318,
+          0.872434557982,
+          0.953065716036,
+          0.973859786315,
+          1
+        ]
+      },
+      "visualBounds": {
+        "x": 145,
+        "y": 15,
+        "width": 224,
+        "height": 457
+      },
+      "placement": {
+        "dock": "bottom"
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ]
+    },
+    "patrol_floor_right": {
+      "frames": [
+        "animations/patrol_floor_right/frame_00.png",
+        "animations/patrol_floor_right/frame_01.png",
+        "animations/patrol_floor_right/frame_02.png",
+        "animations/patrol_floor_right/frame_03.png",
+        "animations/patrol_floor_right/frame_04.png",
+        "animations/patrol_floor_right/frame_05.png",
+        "animations/patrol_floor_right/frame_06.png",
+        "animations/patrol_floor_right/frame_07.png",
+        "animations/patrol_floor_right/frame_08.png",
+        "animations/patrol_floor_right/frame_09.png",
+        "animations/patrol_floor_right/frame_10.png",
+        "animations/patrol_floor_right/frame_11.png",
+        "animations/patrol_floor_right/frame_12.png",
+        "animations/patrol_floor_right/frame_13.png",
+        "animations/patrol_floor_right/frame_14.png",
+        "animations/patrol_floor_right/frame_15.png",
+        "animations/patrol_floor_right/frame_16.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "loop": true,
+      "rootMotion": {
+        "cycleAdvancePx": 83.64,
+        "frameProgress": [
+          0,
+          0.029491753669,
+          0.059053868875,
+          0.181666586442,
+          0.210011273038,
+          0.238300543215,
+          0.360923540244,
+          0.389201474759,
+          0.41334341709,
+          0.509923594829,
+          0.535026923721,
+          0.562423966151,
+          0.679444537259,
+          0.713545657384,
+          0.748560111116,
+          0.872831414618,
+          0.916891643837,
+          1
+        ]
+      },
+      "visualBounds": {
+        "x": 147,
+        "y": 17,
+        "width": 210,
+        "height": 455
+      },
+      "placement": {
+        "dock": "bottom"
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ]
+    },
+    "patrol_ceiling_left": {
+      "frames": [
+        "animations/patrol_ceiling_left/frame_00.png",
+        "animations/patrol_ceiling_left/frame_01.png",
+        "animations/patrol_ceiling_left/frame_02.png",
+        "animations/patrol_ceiling_left/frame_03.png",
+        "animations/patrol_ceiling_left/frame_04.png",
+        "animations/patrol_ceiling_left/frame_05.png",
+        "animations/patrol_ceiling_left/frame_06.png",
+        "animations/patrol_ceiling_left/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        60
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "top",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.0390625
+      },
+      "hitArea": [
+        {
+          "x": 170,
+          "y": 20
+        },
+        {
+          "x": 343,
+          "y": 20
+        },
+        {
+          "x": 343,
+          "y": 462
+        },
+        {
+          "x": 170,
+          "y": 462
+        }
+      ],
+      "visualBounds": {
+        "x": 170,
+        "y": 20,
+        "width": 173,
+        "height": 442
+      }
+    },
+    "patrol_ceiling_right": {
+      "frames": [
+        "animations/patrol_ceiling_right/frame_00.png",
+        "animations/patrol_ceiling_right/frame_01.png",
+        "animations/patrol_ceiling_right/frame_02.png",
+        "animations/patrol_ceiling_right/frame_03.png",
+        "animations/patrol_ceiling_right/frame_04.png",
+        "animations/patrol_ceiling_right/frame_05.png",
+        "animations/patrol_ceiling_right/frame_06.png",
+        "animations/patrol_ceiling_right/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        60
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "top",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.0390625
+      },
+      "hitArea": [
+        {
+          "x": 166,
+          "y": 20
+        },
+        {
+          "x": 347,
+          "y": 20
+        },
+        {
+          "x": 347,
+          "y": 463
+        },
+        {
+          "x": 166,
+          "y": 463
+        }
+      ],
+      "visualBounds": {
+        "x": 166,
+        "y": 20,
+        "width": 181,
+        "height": 443
+      }
+    },
+    "patrol_door_enter_left": {
+      "frames": [
+        "animations/patrol_door_enter_left/frame_00.png",
+        "animations/patrol_door_enter_left/frame_01.png",
+        "animations/patrol_door_enter_left/frame_02.png",
+        "animations/patrol_door_enter_left/frame_03.png",
+        "animations/patrol_door_enter_left/frame_04.png",
+        "animations/patrol_door_enter_left/frame_05.png",
+        "animations/patrol_door_enter_left/frame_06.png",
+        "animations/patrol_door_enter_left/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        100,
+        110,
+        100,
+        110,
+        110,
+        120,
+        150
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.9844378810975609
+      },
+      "hitArea": [
+        {
+          "x": 20,
+          "y": 41
+        },
+        {
+          "x": 366,
+          "y": 41
+        },
+        {
+          "x": 366,
+          "y": 497
+        },
+        {
+          "x": 20,
+          "y": 497
+        }
+      ],
+      "visualBounds": {
+        "x": 20,
+        "y": 41,
+        "width": 352,
+        "height": 456
+      }
+    },
+    "patrol_door_enter_right": {
+      "frames": [
+        "animations/patrol_door_enter_right/frame_00.png",
+        "animations/patrol_door_enter_right/frame_01.png",
+        "animations/patrol_door_enter_right/frame_02.png",
+        "animations/patrol_door_enter_right/frame_03.png",
+        "animations/patrol_door_enter_right/frame_04.png",
+        "animations/patrol_door_enter_right/frame_05.png",
+        "animations/patrol_door_enter_right/frame_06.png",
+        "animations/patrol_door_enter_right/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        100,
+        110,
+        100,
+        110,
+        110,
+        120,
+        150
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.9844378810975609
+      },
+      "hitArea": [
+        {
+          "x": 52,
+          "y": 46
+        },
+        {
+          "x": 492,
+          "y": 46
+        },
+        {
+          "x": 492,
+          "y": 497
+        },
+        {
+          "x": 52,
+          "y": 497
+        }
+      ],
+      "visualBounds": {
+        "x": 52,
+        "y": 53,
+        "width": 440,
+        "height": 444
+      }
+    },
+    "patrol_door_exit_left": {
+      "frames": [
+        "animations/patrol_door_exit_left/frame_00.png",
+        "animations/patrol_door_exit_left/frame_01.png",
+        "animations/patrol_door_exit_left/frame_02.png",
+        "animations/patrol_door_exit_left/frame_03.png",
+        "animations/patrol_door_exit_left/frame_04.png",
+        "animations/patrol_door_exit_left/frame_05.png",
+        "animations/patrol_door_exit_left/frame_06.png",
+        "animations/patrol_door_exit_left/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        140,
+        100,
+        100,
+        110,
+        110,
+        100,
+        100,
+        90
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.9844378810975609
+      },
+      "hitArea": [
+        {
+          "x": 20,
+          "y": 38
+        },
+        {
+          "x": 398,
+          "y": 38
+        },
+        {
+          "x": 398,
+          "y": 497
+        },
+        {
+          "x": 20,
+          "y": 497
+        }
+      ],
+      "visualBounds": {
+        "x": 20,
+        "y": 38,
+        "width": 371,
+        "height": 459
+      }
+    },
+    "patrol_door_exit_right": {
+      "frames": [
+        "animations/patrol_door_exit_right/frame_00.png",
+        "animations/patrol_door_exit_right/frame_01.png",
+        "animations/patrol_door_exit_right/frame_02.png",
+        "animations/patrol_door_exit_right/frame_03.png",
+        "animations/patrol_door_exit_right/frame_04.png",
+        "animations/patrol_door_exit_right/frame_05.png",
+        "animations/patrol_door_exit_right/frame_06.png",
+        "animations/patrol_door_exit_right/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        140,
+        100,
+        100,
+        110,
+        110,
+        100,
+        100,
+        90
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.9844378810975609
+      },
+      "hitArea": [
+        {
+          "x": 95,
+          "y": 43
+        },
+        {
+          "x": 492,
+          "y": 43
+        },
+        {
+          "x": 492,
+          "y": 497
+        },
+        {
+          "x": 95,
+          "y": 497
+        }
+      ],
+      "visualBounds": {
+        "x": 95,
+        "y": 45,
+        "width": 397,
+        "height": 452
+      }
+    },
+    "umbrella_close": {
+      "frames": [
+        "animations/umbrella_close/frame_00.png",
+        "animations/umbrella_close/frame_01.png",
+        "animations/umbrella_close/frame_02.png",
+        "animations/umbrella_close/frame_03.png",
+        "animations/umbrella_close/frame_04.png",
+        "animations/umbrella_close/frame_05.png",
+        "animations/umbrella_close/frame_06.png",
+        "animations/umbrella_close/frame_07.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        130,
+        170,
+        100,
+        90,
+        130,
+        170,
+        100
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 768
+      },
+      "segments": {
+        "left": {
+          "start": 0,
+          "end": 3,
+          "loop": false
+        },
+        "right": {
+          "start": 4,
+          "end": 7,
+          "loop": false
+        }
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9739583333
+      },
+      "hitArea": [
+        {
+          "x": 80,
+          "y": 112
+        },
+        {
+          "x": 432,
+          "y": 112
+        },
+        {
+          "x": 454,
+          "y": 320
+        },
+        {
+          "x": 390,
+          "y": 720
+        },
+        {
+          "x": 320,
+          "y": 744
+        },
+        {
+          "x": 192,
+          "y": 744
+        },
+        {
+          "x": 118,
+          "y": 720
+        },
+        {
+          "x": 58,
+          "y": 320
+        }
+      ],
+      "visualBounds": {
+        "x": 77,
+        "y": 128,
+        "width": 358,
+        "height": 600
+      }
+    },
+    "patrol_wall_left_a": {
+      "frames": [
+        "animations/patrol_wall_left_a/frame_000.png",
+        "animations/patrol_wall_left_a/frame_001.png",
+        "animations/patrol_wall_left_a/frame_002.png",
+        "animations/patrol_wall_left_a/frame_003.png",
+        "animations/patrol_wall_left_a/frame_004.png",
+        "animations/patrol_wall_left_a/frame_005.png",
+        "animations/patrol_wall_left_a/frame_006.png",
+        "animations/patrol_wall_left_a/frame_007.png",
+        "animations/patrol_wall_left_a/frame_008.png",
+        "animations/patrol_wall_left_a/frame_009.png",
+        "animations/patrol_wall_left_a/frame_010.png",
+        "animations/patrol_wall_left_a/frame_011.png",
+        "animations/patrol_wall_left_a/frame_012.png",
+        "animations/patrol_wall_left_a/frame_013.png",
+        "animations/patrol_wall_left_a/frame_014.png",
+        "animations/patrol_wall_left_a/frame_015.png",
+        "animations/patrol_wall_left_a/frame_016.png",
+        "animations/patrol_wall_left_a/frame_017.png",
+        "animations/patrol_wall_left_a/frame_018.png",
+        "animations/patrol_wall_left_a/frame_019.png",
+        "animations/patrol_wall_left_a/frame_020.png",
+        "animations/patrol_wall_left_a/frame_021.png",
+        "animations/patrol_wall_left_a/frame_022.png",
+        "animations/patrol_wall_left_a/frame_023.png",
+        "animations/patrol_wall_left_a/frame_024.png",
+        "animations/patrol_wall_left_a/frame_025.png",
+        "animations/patrol_wall_left_a/frame_026.png",
+        "animations/patrol_wall_left_a/frame_027.png",
+        "animations/patrol_wall_left_a/frame_028.png",
+        "animations/patrol_wall_left_a/frame_029.png",
+        "animations/patrol_wall_left_a/frame_030.png",
+        "animations/patrol_wall_left_a/frame_031.png",
+        "animations/patrol_wall_left_a/frame_032.png",
+        "animations/patrol_wall_left_a/frame_033.png",
+        "animations/patrol_wall_left_a/frame_034.png",
+        "animations/patrol_wall_left_a/frame_035.png",
+        "animations/patrol_wall_left_a/frame_036.png",
+        "animations/patrol_wall_left_a/frame_037.png",
+        "animations/patrol_wall_left_a/frame_038.png",
+        "animations/patrol_wall_left_a/frame_039.png",
+        "animations/patrol_wall_left_a/frame_040.png",
+        "animations/patrol_wall_left_a/frame_041.png",
+        "animations/patrol_wall_left_a/frame_042.png",
+        "animations/patrol_wall_left_a/frame_043.png",
+        "animations/patrol_wall_left_a/frame_044.png",
+        "animations/patrol_wall_left_a/frame_045.png",
+        "animations/patrol_wall_left_a/frame_046.png",
+        "animations/patrol_wall_left_a/frame_047.png",
+        "animations/patrol_wall_left_a/frame_048.png",
+        "animations/patrol_wall_left_a/frame_049.png",
+        "animations/patrol_wall_left_a/frame_050.png",
+        "animations/patrol_wall_left_a/frame_051.png",
+        "animations/patrol_wall_left_a/frame_052.png",
+        "animations/patrol_wall_left_a/frame_053.png",
+        "animations/patrol_wall_left_a/frame_054.png",
+        "animations/patrol_wall_left_a/frame_055.png",
+        "animations/patrol_wall_left_a/frame_056.png",
+        "animations/patrol_wall_left_a/frame_057.png",
+        "animations/patrol_wall_left_a/frame_058.png",
+        "animations/patrol_wall_left_a/frame_059.png",
+        "animations/patrol_wall_left_a/frame_060.png",
+        "animations/patrol_wall_left_a/frame_061.png",
+        "animations/patrol_wall_left_a/frame_062.png",
+        "animations/patrol_wall_left_a/frame_063.png",
+        "animations/patrol_wall_left_a/frame_064.png",
+        "animations/patrol_wall_left_a/frame_065.png",
+        "animations/patrol_wall_left_a/frame_066.png",
+        "animations/patrol_wall_left_a/frame_067.png",
+        "animations/patrol_wall_left_a/frame_068.png",
+        "animations/patrol_wall_left_a/frame_069.png",
+        "animations/patrol_wall_left_a/frame_070.png",
+        "animations/patrol_wall_left_a/frame_071.png",
+        "animations/patrol_wall_left_a/frame_072.png",
+        "animations/patrol_wall_left_a/frame_073.png",
+        "animations/patrol_wall_left_a/frame_074.png",
+        "animations/patrol_wall_left_a/frame_075.png",
+        "animations/patrol_wall_left_a/frame_076.png",
+        "animations/patrol_wall_left_a/frame_077.png",
+        "animations/patrol_wall_left_a/frame_078.png",
+        "animations/patrol_wall_left_a/frame_079.png",
+        "animations/patrol_wall_left_a/frame_080.png",
+        "animations/patrol_wall_left_a/frame_081.png",
+        "animations/patrol_wall_left_a/frame_082.png",
+        "animations/patrol_wall_left_a/frame_083.png",
+        "animations/patrol_wall_left_a/frame_084.png",
+        "animations/patrol_wall_left_a/frame_085.png",
+        "animations/patrol_wall_left_a/frame_086.png",
+        "animations/patrol_wall_left_a/frame_087.png",
+        "animations/patrol_wall_left_a/frame_088.png",
+        "animations/patrol_wall_left_a/frame_089.png",
+        "animations/patrol_wall_left_a/frame_090.png",
+        "animations/patrol_wall_left_a/frame_091.png",
+        "animations/patrol_wall_left_a/frame_092.png",
+        "animations/patrol_wall_left_a/frame_093.png",
+        "animations/patrol_wall_left_a/frame_094.png",
+        "animations/patrol_wall_left_a/frame_095.png",
+        "animations/patrol_wall_left_a/frame_096.png",
+        "animations/patrol_wall_left_a/frame_097.png",
+        "animations/patrol_wall_left_a/frame_098.png",
+        "animations/patrol_wall_left_a/frame_099.png",
+        "animations/patrol_wall_left_a/frame_100.png",
+        "animations/patrol_wall_left_a/frame_101.png",
+        "animations/patrol_wall_left_a/frame_102.png",
+        "animations/patrol_wall_left_a/frame_103.png",
+        "animations/patrol_wall_left_a/frame_104.png",
+        "animations/patrol_wall_left_a/frame_105.png",
+        "animations/patrol_wall_left_a/frame_106.png",
+        "animations/patrol_wall_left_a/frame_107.png",
+        "animations/patrol_wall_left_a/frame_108.png",
+        "animations/patrol_wall_left_a/frame_109.png",
+        "animations/patrol_wall_left_a/frame_110.png",
+        "animations/patrol_wall_left_a/frame_111.png",
+        "animations/patrol_wall_left_a/frame_112.png",
+        "animations/patrol_wall_left_a/frame_113.png",
+        "animations/patrol_wall_left_a/frame_114.png",
+        "animations/patrol_wall_left_a/frame_115.png",
+        "animations/patrol_wall_left_a/frame_116.png",
+        "animations/patrol_wall_left_a/frame_117.png",
+        "animations/patrol_wall_left_a/frame_118.png",
+        "animations/patrol_wall_left_a/frame_119.png",
+        "animations/patrol_wall_left_a/frame_120.png",
+        "animations/patrol_wall_left_a/frame_121.png",
+        "animations/patrol_wall_left_a/frame_122.png",
+        "animations/patrol_wall_left_a/frame_123.png",
+        "animations/patrol_wall_left_a/frame_124.png",
+        "animations/patrol_wall_left_a/frame_125.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "visualBounds": {
+        "x": 19,
+        "y": 5,
+        "width": 207,
+        "height": 497
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.5
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 359.856,
+        "frameProgress": [
+          0,
+          0.00587910627,
+          0.014225676477,
+          0.020106096157,
+          0.026398697976,
+          0.036171035293,
+          0.042344100538,
+          0.049107792132,
+          0.06193905999,
+          0.068744079113,
+          0.075608405605,
+          0.08889790651,
+          0.095819876176,
+          0.102632677861,
+          0.115899932384,
+          0.122538303509,
+          0.12931860443,
+          0.143269729212,
+          0.150269181876,
+          0.157149864802,
+          0.171128962758,
+          0.178215230968,
+          0.185266975274,
+          0.199279773195,
+          0.206285066859,
+          0.213177970204,
+          0.227140401728,
+          0.234119949305,
+          0.241023882025,
+          0.255016856437,
+          0.262031050286,
+          0.268547584332,
+          0.281668218311,
+          0.288381290617,
+          0.295025192745,
+          0.308182096403,
+          0.314935631508,
+          0.321843479984,
+          0.335651165773,
+          0.342723965419,
+          0.349700437497,
+          0.36326144705,
+          0.37054140644,
+          0.377202113683,
+          0.389222485827,
+          0.396004328576,
+          0.402297297497,
+          0.41236396905,
+          0.418497844116,
+          0.42425341648,
+          0.432815043204,
+          0.438197248349,
+          0.44416562567,
+          0.454324660089,
+          0.460255821424,
+          0.466054083674,
+          0.476564043142,
+          0.482400182161,
+          0.488581462335,
+          0.500126763686,
+          0.506182160501,
+          0.512731586887,
+          0.526211091635,
+          0.532808331019,
+          0.539456948369,
+          0.553324153632,
+          0.560083562369,
+          0.566748405628,
+          0.580632203901,
+          0.58745061001,
+          0.59413204628,
+          0.607962247659,
+          0.614590087035,
+          0.621217926412,
+          0.635048127791,
+          0.641675967167,
+          0.648303806543,
+          0.662134007923,
+          0.668761847299,
+          0.675389686675,
+          0.689219888054,
+          0.69584772743,
+          0.702475566806,
+          0.716305768186,
+          0.722933607562,
+          0.729561446938,
+          0.743391648317,
+          0.750028958925,
+          0.756242389077,
+          0.768535640383,
+          0.774881684097,
+          0.780645732439,
+          0.791312615781,
+          0.797358280313,
+          0.803360488125,
+          0.814080527838,
+          0.820356601908,
+          0.826636102264,
+          0.837453611641,
+          0.843515273662,
+          0.849658693381,
+          0.860882348108,
+          0.867188385861,
+          0.872482470207,
+          0.881077592949,
+          0.886440309056,
+          0.891804411992,
+          0.900491310238,
+          0.905879193227,
+          0.911453506934,
+          0.921145913906,
+          0.926841061279,
+          0.933175887987,
+          0.945356063716,
+          0.951802334437,
+          0.955701724819,
+          0.959511248629,
+          0.963321653483,
+          0.967149728181,
+          0.971014953602,
+          0.975195764387,
+          0.980270599096,
+          0.984447885701,
+          0.988299699662,
+          0.992121117577,
+          0.995930641386,
+          1
+        ]
+      }
+    },
+    "patrol_wall_left_b": {
+      "frames": [
+        "animations/patrol_wall_left_b/frame_000.png",
+        "animations/patrol_wall_left_b/frame_001.png",
+        "animations/patrol_wall_left_b/frame_002.png",
+        "animations/patrol_wall_left_b/frame_003.png",
+        "animations/patrol_wall_left_b/frame_004.png",
+        "animations/patrol_wall_left_b/frame_005.png",
+        "animations/patrol_wall_left_b/frame_006.png",
+        "animations/patrol_wall_left_b/frame_007.png",
+        "animations/patrol_wall_left_b/frame_008.png",
+        "animations/patrol_wall_left_b/frame_009.png",
+        "animations/patrol_wall_left_b/frame_010.png",
+        "animations/patrol_wall_left_b/frame_011.png",
+        "animations/patrol_wall_left_b/frame_012.png",
+        "animations/patrol_wall_left_b/frame_013.png",
+        "animations/patrol_wall_left_b/frame_014.png",
+        "animations/patrol_wall_left_b/frame_015.png",
+        "animations/patrol_wall_left_b/frame_016.png",
+        "animations/patrol_wall_left_b/frame_017.png",
+        "animations/patrol_wall_left_b/frame_018.png",
+        "animations/patrol_wall_left_b/frame_019.png",
+        "animations/patrol_wall_left_b/frame_020.png",
+        "animations/patrol_wall_left_b/frame_021.png",
+        "animations/patrol_wall_left_b/frame_022.png",
+        "animations/patrol_wall_left_b/frame_023.png",
+        "animations/patrol_wall_left_b/frame_024.png",
+        "animations/patrol_wall_left_b/frame_025.png",
+        "animations/patrol_wall_left_b/frame_026.png",
+        "animations/patrol_wall_left_b/frame_027.png",
+        "animations/patrol_wall_left_b/frame_028.png",
+        "animations/patrol_wall_left_b/frame_029.png",
+        "animations/patrol_wall_left_b/frame_030.png",
+        "animations/patrol_wall_left_b/frame_031.png",
+        "animations/patrol_wall_left_b/frame_032.png",
+        "animations/patrol_wall_left_b/frame_033.png",
+        "animations/patrol_wall_left_b/frame_034.png",
+        "animations/patrol_wall_left_b/frame_035.png",
+        "animations/patrol_wall_left_b/frame_036.png",
+        "animations/patrol_wall_left_b/frame_037.png",
+        "animations/patrol_wall_left_b/frame_038.png",
+        "animations/patrol_wall_left_b/frame_039.png",
+        "animations/patrol_wall_left_b/frame_040.png",
+        "animations/patrol_wall_left_b/frame_041.png",
+        "animations/patrol_wall_left_b/frame_042.png",
+        "animations/patrol_wall_left_b/frame_043.png",
+        "animations/patrol_wall_left_b/frame_044.png",
+        "animations/patrol_wall_left_b/frame_045.png",
+        "animations/patrol_wall_left_b/frame_046.png",
+        "animations/patrol_wall_left_b/frame_047.png",
+        "animations/patrol_wall_left_b/frame_048.png",
+        "animations/patrol_wall_left_b/frame_049.png",
+        "animations/patrol_wall_left_b/frame_050.png",
+        "animations/patrol_wall_left_b/frame_051.png",
+        "animations/patrol_wall_left_b/frame_052.png",
+        "animations/patrol_wall_left_b/frame_053.png",
+        "animations/patrol_wall_left_b/frame_054.png",
+        "animations/patrol_wall_left_b/frame_055.png",
+        "animations/patrol_wall_left_b/frame_056.png",
+        "animations/patrol_wall_left_b/frame_057.png",
+        "animations/patrol_wall_left_b/frame_058.png",
+        "animations/patrol_wall_left_b/frame_059.png",
+        "animations/patrol_wall_left_b/frame_060.png",
+        "animations/patrol_wall_left_b/frame_061.png",
+        "animations/patrol_wall_left_b/frame_062.png",
+        "animations/patrol_wall_left_b/frame_063.png",
+        "animations/patrol_wall_left_b/frame_064.png",
+        "animations/patrol_wall_left_b/frame_065.png",
+        "animations/patrol_wall_left_b/frame_066.png",
+        "animations/patrol_wall_left_b/frame_067.png",
+        "animations/patrol_wall_left_b/frame_068.png",
+        "animations/patrol_wall_left_b/frame_069.png",
+        "animations/patrol_wall_left_b/frame_070.png",
+        "animations/patrol_wall_left_b/frame_071.png",
+        "animations/patrol_wall_left_b/frame_072.png",
+        "animations/patrol_wall_left_b/frame_073.png",
+        "animations/patrol_wall_left_b/frame_074.png",
+        "animations/patrol_wall_left_b/frame_075.png",
+        "animations/patrol_wall_left_b/frame_076.png",
+        "animations/patrol_wall_left_b/frame_077.png",
+        "animations/patrol_wall_left_b/frame_078.png",
+        "animations/patrol_wall_left_b/frame_079.png",
+        "animations/patrol_wall_left_b/frame_080.png",
+        "animations/patrol_wall_left_b/frame_081.png",
+        "animations/patrol_wall_left_b/frame_082.png",
+        "animations/patrol_wall_left_b/frame_083.png",
+        "animations/patrol_wall_left_b/frame_084.png",
+        "animations/patrol_wall_left_b/frame_085.png",
+        "animations/patrol_wall_left_b/frame_086.png",
+        "animations/patrol_wall_left_b/frame_087.png",
+        "animations/patrol_wall_left_b/frame_088.png",
+        "animations/patrol_wall_left_b/frame_089.png",
+        "animations/patrol_wall_left_b/frame_090.png",
+        "animations/patrol_wall_left_b/frame_091.png",
+        "animations/patrol_wall_left_b/frame_092.png",
+        "animations/patrol_wall_left_b/frame_093.png",
+        "animations/patrol_wall_left_b/frame_094.png",
+        "animations/patrol_wall_left_b/frame_095.png",
+        "animations/patrol_wall_left_b/frame_096.png",
+        "animations/patrol_wall_left_b/frame_097.png",
+        "animations/patrol_wall_left_b/frame_098.png",
+        "animations/patrol_wall_left_b/frame_099.png",
+        "animations/patrol_wall_left_b/frame_100.png",
+        "animations/patrol_wall_left_b/frame_101.png",
+        "animations/patrol_wall_left_b/frame_102.png",
+        "animations/patrol_wall_left_b/frame_103.png",
+        "animations/patrol_wall_left_b/frame_104.png",
+        "animations/patrol_wall_left_b/frame_105.png",
+        "animations/patrol_wall_left_b/frame_106.png",
+        "animations/patrol_wall_left_b/frame_107.png",
+        "animations/patrol_wall_left_b/frame_108.png",
+        "animations/patrol_wall_left_b/frame_109.png",
+        "animations/patrol_wall_left_b/frame_110.png",
+        "animations/patrol_wall_left_b/frame_111.png",
+        "animations/patrol_wall_left_b/frame_112.png",
+        "animations/patrol_wall_left_b/frame_113.png",
+        "animations/patrol_wall_left_b/frame_114.png",
+        "animations/patrol_wall_left_b/frame_115.png",
+        "animations/patrol_wall_left_b/frame_116.png",
+        "animations/patrol_wall_left_b/frame_117.png",
+        "animations/patrol_wall_left_b/frame_118.png",
+        "animations/patrol_wall_left_b/frame_119.png",
+        "animations/patrol_wall_left_b/frame_120.png",
+        "animations/patrol_wall_left_b/frame_121.png",
+        "animations/patrol_wall_left_b/frame_122.png",
+        "animations/patrol_wall_left_b/frame_123.png",
+        "animations/patrol_wall_left_b/frame_124.png",
+        "animations/patrol_wall_left_b/frame_125.png",
+        "animations/patrol_wall_left_b/frame_126.png",
+        "animations/patrol_wall_left_b/frame_127.png",
+        "animations/patrol_wall_left_b/frame_128.png",
+        "animations/patrol_wall_left_b/frame_129.png",
+        "animations/patrol_wall_left_b/frame_130.png",
+        "animations/patrol_wall_left_b/frame_131.png",
+        "animations/patrol_wall_left_b/frame_132.png",
+        "animations/patrol_wall_left_b/frame_133.png",
+        "animations/patrol_wall_left_b/frame_134.png",
+        "animations/patrol_wall_left_b/frame_135.png",
+        "animations/patrol_wall_left_b/frame_136.png",
+        "animations/patrol_wall_left_b/frame_137.png",
+        "animations/patrol_wall_left_b/frame_138.png",
+        "animations/patrol_wall_left_b/frame_139.png",
+        "animations/patrol_wall_left_b/frame_140.png",
+        "animations/patrol_wall_left_b/frame_141.png",
+        "animations/patrol_wall_left_b/frame_142.png",
+        "animations/patrol_wall_left_b/frame_143.png",
+        "animations/patrol_wall_left_b/frame_144.png",
+        "animations/patrol_wall_left_b/frame_145.png",
+        "animations/patrol_wall_left_b/frame_146.png",
+        "animations/patrol_wall_left_b/frame_147.png",
+        "animations/patrol_wall_left_b/frame_148.png",
+        "animations/patrol_wall_left_b/frame_149.png",
+        "animations/patrol_wall_left_b/frame_150.png",
+        "animations/patrol_wall_left_b/frame_151.png",
+        "animations/patrol_wall_left_b/frame_152.png",
+        "animations/patrol_wall_left_b/frame_153.png",
+        "animations/patrol_wall_left_b/frame_154.png",
+        "animations/patrol_wall_left_b/frame_155.png",
+        "animations/patrol_wall_left_b/frame_156.png",
+        "animations/patrol_wall_left_b/frame_157.png",
+        "animations/patrol_wall_left_b/frame_158.png",
+        "animations/patrol_wall_left_b/frame_159.png",
+        "animations/patrol_wall_left_b/frame_160.png",
+        "animations/patrol_wall_left_b/frame_161.png",
+        "animations/patrol_wall_left_b/frame_162.png",
+        "animations/patrol_wall_left_b/frame_163.png",
+        "animations/patrol_wall_left_b/frame_164.png",
+        "animations/patrol_wall_left_b/frame_165.png",
+        "animations/patrol_wall_left_b/frame_166.png",
+        "animations/patrol_wall_left_b/frame_167.png",
+        "animations/patrol_wall_left_b/frame_168.png",
+        "animations/patrol_wall_left_b/frame_169.png",
+        "animations/patrol_wall_left_b/frame_170.png",
+        "animations/patrol_wall_left_b/frame_171.png",
+        "animations/patrol_wall_left_b/frame_172.png",
+        "animations/patrol_wall_left_b/frame_173.png",
+        "animations/patrol_wall_left_b/frame_174.png",
+        "animations/patrol_wall_left_b/frame_175.png",
+        "animations/patrol_wall_left_b/frame_176.png",
+        "animations/patrol_wall_left_b/frame_177.png",
+        "animations/patrol_wall_left_b/frame_178.png",
+        "animations/patrol_wall_left_b/frame_179.png",
+        "animations/patrol_wall_left_b/frame_180.png",
+        "animations/patrol_wall_left_b/frame_181.png",
+        "animations/patrol_wall_left_b/frame_182.png",
+        "animations/patrol_wall_left_b/frame_183.png",
+        "animations/patrol_wall_left_b/frame_184.png",
+        "animations/patrol_wall_left_b/frame_185.png",
+        "animations/patrol_wall_left_b/frame_186.png",
+        "animations/patrol_wall_left_b/frame_187.png",
+        "animations/patrol_wall_left_b/frame_188.png",
+        "animations/patrol_wall_left_b/frame_189.png",
+        "animations/patrol_wall_left_b/frame_190.png",
+        "animations/patrol_wall_left_b/frame_191.png",
+        "animations/patrol_wall_left_b/frame_192.png",
+        "animations/patrol_wall_left_b/frame_193.png",
+        "animations/patrol_wall_left_b/frame_194.png",
+        "animations/patrol_wall_left_b/frame_195.png",
+        "animations/patrol_wall_left_b/frame_196.png",
+        "animations/patrol_wall_left_b/frame_197.png",
+        "animations/patrol_wall_left_b/frame_198.png",
+        "animations/patrol_wall_left_b/frame_199.png",
+        "animations/patrol_wall_left_b/frame_200.png",
+        "animations/patrol_wall_left_b/frame_201.png",
+        "animations/patrol_wall_left_b/frame_202.png",
+        "animations/patrol_wall_left_b/frame_203.png",
+        "animations/patrol_wall_left_b/frame_204.png",
+        "animations/patrol_wall_left_b/frame_205.png",
+        "animations/patrol_wall_left_b/frame_206.png",
+        "animations/patrol_wall_left_b/frame_207.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "visualBounds": {
+        "x": 13,
+        "y": 1,
+        "width": 208,
+        "height": 507
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.5
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 594.048,
+        "frameProgress": [
+          0,
+          0.003282749607,
+          0.00725516218,
+          0.012282286331,
+          0.016071561216,
+          0.020111973526,
+          0.026007630007,
+          0.030094661677,
+          0.034820978538,
+          0.042794097941,
+          0.04729831533,
+          0.051881060129,
+          0.060090419276,
+          0.064969602849,
+          0.069365979049,
+          0.076287353886,
+          0.080629506826,
+          0.085157308231,
+          0.092919256904,
+          0.097600394673,
+          0.101941208731,
+          0.108686516016,
+          0.11296701773,
+          0.116937885668,
+          0.123194790005,
+          0.127466626255,
+          0.131251297054,
+          0.135959734315,
+          0.13972420856,
+          0.14347535958,
+          0.148433168966,
+          0.15236245401,
+          0.156454557927,
+          0.161992577661,
+          0.1659180697,
+          0.169860481161,
+          0.17574475863,
+          0.1797199593,
+          0.184177247208,
+          0.192036021852,
+          0.196243860105,
+          0.200456646856,
+          0.208394949344,
+          0.212472371772,
+          0.216516187944,
+          0.224394509083,
+          0.228348448951,
+          0.232231911701,
+          0.240074469463,
+          0.244054105741,
+          0.247998626912,
+          0.255863314705,
+          0.259866481325,
+          0.26376958808,
+          0.271439663752,
+          0.275467853166,
+          0.279349367827,
+          0.286418968016,
+          0.290299820691,
+          0.29348535787,
+          0.29848240815,
+          0.301542258533,
+          0.305376257469,
+          0.313110817789,
+          0.316944816725,
+          0.320186140884,
+          0.325813413104,
+          0.329054737262,
+          0.332476810588,
+          0.338746746518,
+          0.342168819844,
+          0.345328880679,
+          0.350667216639,
+          0.353827277474,
+          0.35697008193,
+          0.362247061875,
+          0.36538986633,
+          0.368758345583,
+          0.374840800358,
+          0.378243525785,
+          0.381637445598,
+          0.387572129468,
+          0.391097173312,
+          0.395084477601,
+          0.402721767047,
+          0.406899845724,
+          0.411060299754,
+          0.418993610506,
+          0.423131998317,
+          0.427253857338,
+          0.435206195731,
+          0.439412455056,
+          0.443542432358,
+          0.451481378941,
+          0.455678762577,
+          0.459284038,
+          0.465659989586,
+          0.469377227214,
+          0.472891294606,
+          0.478610364681,
+          0.482075662748,
+          0.485526731086,
+          0.491282281988,
+          0.494745000693,
+          0.498326086769,
+          0.504413966852,
+          0.507963983097,
+          0.511443558007,
+          0.517745359942,
+          0.521312708306,
+          0.524781015131,
+          0.531043057318,
+          0.534714295826,
+          0.538542633882,
+          0.545549709141,
+          0.549495645234,
+          0.55364791389,
+          0.561585572283,
+          0.56567300681,
+          0.569594014933,
+          0.577451708928,
+          0.581490449871,
+          0.585468905308,
+          0.593331446118,
+          0.597294413455,
+          0.601199975822,
+          0.609073063688,
+          0.61321333011,
+          0.617118327403,
+          0.623995468417,
+          0.628083382735,
+          0.632150861946,
+          0.639258991541,
+          0.643376188327,
+          0.647297398327,
+          0.653839454865,
+          0.657883627378,
+          0.662244867597,
+          0.670129319566,
+          0.674637103333,
+          0.679153521253,
+          0.687250700515,
+          0.691706853803,
+          0.696018337681,
+          0.704006852745,
+          0.708287342532,
+          0.71227176032,
+          0.719162188776,
+          0.723004843038,
+          0.726618068264,
+          0.732710889391,
+          0.736336656578,
+          0.74039276274,
+          0.747736159973,
+          0.751860567045,
+          0.756134617373,
+          0.764216418867,
+          0.76886517446,
+          0.772998428894,
+          0.779579775229,
+          0.783745255288,
+          0.78827926058,
+          0.796419835746,
+          0.801096725768,
+          0.80571634799,
+          0.813837680816,
+          0.818276026069,
+          0.822500525808,
+          0.830465772938,
+          0.834710212786,
+          0.838614732971,
+          0.845537548076,
+          0.849266342438,
+          0.852788025061,
+          0.859257869004,
+          0.862736166459,
+          0.866064899681,
+          0.872002959681,
+          0.875331692903,
+          0.878676501663,
+          0.884671719133,
+          0.888016527893,
+          0.891486988859,
+          0.897928969728,
+          0.901399430693,
+          0.905255315442,
+          0.913067691984,
+          0.916923576733,
+          0.920779461481,
+          0.928591838024,
+          0.932447722772,
+          0.936303607521,
+          0.944115984063,
+          0.947971868812,
+          0.95182775356,
+          0.959640130102,
+          0.963496014851,
+          0.9673518996,
+          0.975164276142,
+          0.97902016089,
+          0.981327853198,
+          0.983635545506,
+          0.985943237813,
+          0.988250930121,
+          0.990558622429,
+          0.992866314737,
+          0.995174007044,
+          0.997481699352,
+          1
+        ]
+      }
+    },
+    "patrol_wall_right_a": {
+      "frames": [
+        "animations/patrol_wall_right_a/frame_000.png",
+        "animations/patrol_wall_right_a/frame_001.png",
+        "animations/patrol_wall_right_a/frame_002.png",
+        "animations/patrol_wall_right_a/frame_003.png",
+        "animations/patrol_wall_right_a/frame_004.png",
+        "animations/patrol_wall_right_a/frame_005.png",
+        "animations/patrol_wall_right_a/frame_006.png",
+        "animations/patrol_wall_right_a/frame_007.png",
+        "animations/patrol_wall_right_a/frame_008.png",
+        "animations/patrol_wall_right_a/frame_009.png",
+        "animations/patrol_wall_right_a/frame_010.png",
+        "animations/patrol_wall_right_a/frame_011.png",
+        "animations/patrol_wall_right_a/frame_012.png",
+        "animations/patrol_wall_right_a/frame_013.png",
+        "animations/patrol_wall_right_a/frame_014.png",
+        "animations/patrol_wall_right_a/frame_015.png",
+        "animations/patrol_wall_right_a/frame_016.png",
+        "animations/patrol_wall_right_a/frame_017.png",
+        "animations/patrol_wall_right_a/frame_018.png",
+        "animations/patrol_wall_right_a/frame_019.png",
+        "animations/patrol_wall_right_a/frame_020.png",
+        "animations/patrol_wall_right_a/frame_021.png",
+        "animations/patrol_wall_right_a/frame_022.png",
+        "animations/patrol_wall_right_a/frame_023.png",
+        "animations/patrol_wall_right_a/frame_024.png",
+        "animations/patrol_wall_right_a/frame_025.png",
+        "animations/patrol_wall_right_a/frame_026.png",
+        "animations/patrol_wall_right_a/frame_027.png",
+        "animations/patrol_wall_right_a/frame_028.png",
+        "animations/patrol_wall_right_a/frame_029.png",
+        "animations/patrol_wall_right_a/frame_030.png",
+        "animations/patrol_wall_right_a/frame_031.png",
+        "animations/patrol_wall_right_a/frame_032.png",
+        "animations/patrol_wall_right_a/frame_033.png",
+        "animations/patrol_wall_right_a/frame_034.png",
+        "animations/patrol_wall_right_a/frame_035.png",
+        "animations/patrol_wall_right_a/frame_036.png",
+        "animations/patrol_wall_right_a/frame_037.png",
+        "animations/patrol_wall_right_a/frame_038.png",
+        "animations/patrol_wall_right_a/frame_039.png",
+        "animations/patrol_wall_right_a/frame_040.png",
+        "animations/patrol_wall_right_a/frame_041.png",
+        "animations/patrol_wall_right_a/frame_042.png",
+        "animations/patrol_wall_right_a/frame_043.png",
+        "animations/patrol_wall_right_a/frame_044.png",
+        "animations/patrol_wall_right_a/frame_045.png",
+        "animations/patrol_wall_right_a/frame_046.png",
+        "animations/patrol_wall_right_a/frame_047.png",
+        "animations/patrol_wall_right_a/frame_048.png",
+        "animations/patrol_wall_right_a/frame_049.png",
+        "animations/patrol_wall_right_a/frame_050.png",
+        "animations/patrol_wall_right_a/frame_051.png",
+        "animations/patrol_wall_right_a/frame_052.png",
+        "animations/patrol_wall_right_a/frame_053.png",
+        "animations/patrol_wall_right_a/frame_054.png",
+        "animations/patrol_wall_right_a/frame_055.png",
+        "animations/patrol_wall_right_a/frame_056.png",
+        "animations/patrol_wall_right_a/frame_057.png",
+        "animations/patrol_wall_right_a/frame_058.png",
+        "animations/patrol_wall_right_a/frame_059.png",
+        "animations/patrol_wall_right_a/frame_060.png",
+        "animations/patrol_wall_right_a/frame_061.png",
+        "animations/patrol_wall_right_a/frame_062.png",
+        "animations/patrol_wall_right_a/frame_063.png",
+        "animations/patrol_wall_right_a/frame_064.png",
+        "animations/patrol_wall_right_a/frame_065.png",
+        "animations/patrol_wall_right_a/frame_066.png",
+        "animations/patrol_wall_right_a/frame_067.png",
+        "animations/patrol_wall_right_a/frame_068.png",
+        "animations/patrol_wall_right_a/frame_069.png",
+        "animations/patrol_wall_right_a/frame_070.png",
+        "animations/patrol_wall_right_a/frame_071.png",
+        "animations/patrol_wall_right_a/frame_072.png",
+        "animations/patrol_wall_right_a/frame_073.png",
+        "animations/patrol_wall_right_a/frame_074.png",
+        "animations/patrol_wall_right_a/frame_075.png",
+        "animations/patrol_wall_right_a/frame_076.png",
+        "animations/patrol_wall_right_a/frame_077.png",
+        "animations/patrol_wall_right_a/frame_078.png",
+        "animations/patrol_wall_right_a/frame_079.png",
+        "animations/patrol_wall_right_a/frame_080.png",
+        "animations/patrol_wall_right_a/frame_081.png",
+        "animations/patrol_wall_right_a/frame_082.png",
+        "animations/patrol_wall_right_a/frame_083.png",
+        "animations/patrol_wall_right_a/frame_084.png",
+        "animations/patrol_wall_right_a/frame_085.png",
+        "animations/patrol_wall_right_a/frame_086.png",
+        "animations/patrol_wall_right_a/frame_087.png",
+        "animations/patrol_wall_right_a/frame_088.png",
+        "animations/patrol_wall_right_a/frame_089.png",
+        "animations/patrol_wall_right_a/frame_090.png",
+        "animations/patrol_wall_right_a/frame_091.png",
+        "animations/patrol_wall_right_a/frame_092.png",
+        "animations/patrol_wall_right_a/frame_093.png",
+        "animations/patrol_wall_right_a/frame_094.png",
+        "animations/patrol_wall_right_a/frame_095.png",
+        "animations/patrol_wall_right_a/frame_096.png",
+        "animations/patrol_wall_right_a/frame_097.png",
+        "animations/patrol_wall_right_a/frame_098.png",
+        "animations/patrol_wall_right_a/frame_099.png",
+        "animations/patrol_wall_right_a/frame_100.png",
+        "animations/patrol_wall_right_a/frame_101.png",
+        "animations/patrol_wall_right_a/frame_102.png",
+        "animations/patrol_wall_right_a/frame_103.png",
+        "animations/patrol_wall_right_a/frame_104.png",
+        "animations/patrol_wall_right_a/frame_105.png",
+        "animations/patrol_wall_right_a/frame_106.png",
+        "animations/patrol_wall_right_a/frame_107.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "visualBounds": {
+        "x": 299,
+        "y": 0,
+        "width": 193,
+        "height": 508
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.5
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 308.448,
+        "frameProgress": [
+          0,
+          0.016017616177,
+          0.024163384831,
+          0.032021604238,
+          0.048050146342,
+          0.056235023977,
+          0.064317403812,
+          0.080379632546,
+          0.088424659628,
+          0.09637552001,
+          0.112406334233,
+          0.12048787986,
+          0.12860653676,
+          0.144791855056,
+          0.153274413173,
+          0.161580250946,
+          0.177899327883,
+          0.186853641511,
+          0.19495742646,
+          0.209165527285,
+          0.217180776439,
+          0.224943842368,
+          0.238259999388,
+          0.246238159223,
+          0.253930108933,
+          0.266944897394,
+          0.274912322291,
+          0.282229559011,
+          0.293467967734,
+          0.301006214649,
+          0.308564427671,
+          0.319878409038,
+          0.327362575137,
+          0.334959139767,
+          0.346928973143,
+          0.354396784378,
+          0.361742175613,
+          0.373540897594,
+          0.381353631819,
+          0.388394328639,
+          0.398061419082,
+          0.404659744266,
+          0.411238147249,
+          0.420729088121,
+          0.427179879258,
+          0.434820141011,
+          0.449255321991,
+          0.457078747248,
+          0.46469436694,
+          0.478916216828,
+          0.486087756953,
+          0.493400662378,
+          0.508044079197,
+          0.515356984622,
+          0.522970501233,
+          0.538682757825,
+          0.546296274436,
+          0.553958898447,
+          0.569845759131,
+          0.577508383143,
+          0.585171007154,
+          0.601057867838,
+          0.60872049185,
+          0.616383115861,
+          0.632327727876,
+          0.640195689952,
+          0.647916065294,
+          0.663802925978,
+          0.671473709859,
+          0.679165346742,
+          0.695060367295,
+          0.702722991307,
+          0.710022264019,
+          0.724617208973,
+          0.731916481685,
+          0.738815169988,
+          0.752012645576,
+          0.759048973782,
+          0.765488195773,
+          0.776488251558,
+          0.782929093668,
+          0.7895931215,
+          0.801774345339,
+          0.808477923404,
+          0.815490026653,
+          0.829009170589,
+          0.836383989603,
+          0.843219943281,
+          0.855190808441,
+          0.861874244777,
+          0.867346224729,
+          0.874934849017,
+          0.880254019656,
+          0.887189753372,
+          0.900533665365,
+          0.9076171329,
+          0.915190600949,
+          0.930612728835,
+          0.93839019363,
+          0.943978628997,
+          0.95000463272,
+          0.956211637591,
+          0.962082423773,
+          0.96848552237,
+          0.974301898443,
+          0.980500714906,
+          0.986533139834,
+          0.992099139401,
+          1
+        ]
+      }
+    },
+    "patrol_wall_right_b": {
+      "frames": [
+        "animations/patrol_wall_right_b/frame_000.png",
+        "animations/patrol_wall_right_b/frame_001.png",
+        "animations/patrol_wall_right_b/frame_002.png",
+        "animations/patrol_wall_right_b/frame_003.png",
+        "animations/patrol_wall_right_b/frame_004.png",
+        "animations/patrol_wall_right_b/frame_005.png",
+        "animations/patrol_wall_right_b/frame_006.png",
+        "animations/patrol_wall_right_b/frame_007.png",
+        "animations/patrol_wall_right_b/frame_008.png",
+        "animations/patrol_wall_right_b/frame_009.png",
+        "animations/patrol_wall_right_b/frame_010.png",
+        "animations/patrol_wall_right_b/frame_011.png",
+        "animations/patrol_wall_right_b/frame_012.png",
+        "animations/patrol_wall_right_b/frame_013.png",
+        "animations/patrol_wall_right_b/frame_014.png",
+        "animations/patrol_wall_right_b/frame_015.png",
+        "animations/patrol_wall_right_b/frame_016.png",
+        "animations/patrol_wall_right_b/frame_017.png",
+        "animations/patrol_wall_right_b/frame_018.png",
+        "animations/patrol_wall_right_b/frame_019.png",
+        "animations/patrol_wall_right_b/frame_020.png",
+        "animations/patrol_wall_right_b/frame_021.png",
+        "animations/patrol_wall_right_b/frame_022.png",
+        "animations/patrol_wall_right_b/frame_023.png",
+        "animations/patrol_wall_right_b/frame_024.png",
+        "animations/patrol_wall_right_b/frame_025.png",
+        "animations/patrol_wall_right_b/frame_026.png",
+        "animations/patrol_wall_right_b/frame_027.png",
+        "animations/patrol_wall_right_b/frame_028.png",
+        "animations/patrol_wall_right_b/frame_029.png",
+        "animations/patrol_wall_right_b/frame_030.png",
+        "animations/patrol_wall_right_b/frame_031.png",
+        "animations/patrol_wall_right_b/frame_032.png",
+        "animations/patrol_wall_right_b/frame_033.png",
+        "animations/patrol_wall_right_b/frame_034.png",
+        "animations/patrol_wall_right_b/frame_035.png",
+        "animations/patrol_wall_right_b/frame_036.png",
+        "animations/patrol_wall_right_b/frame_037.png",
+        "animations/patrol_wall_right_b/frame_038.png",
+        "animations/patrol_wall_right_b/frame_039.png",
+        "animations/patrol_wall_right_b/frame_040.png",
+        "animations/patrol_wall_right_b/frame_041.png",
+        "animations/patrol_wall_right_b/frame_042.png",
+        "animations/patrol_wall_right_b/frame_043.png",
+        "animations/patrol_wall_right_b/frame_044.png",
+        "animations/patrol_wall_right_b/frame_045.png",
+        "animations/patrol_wall_right_b/frame_046.png",
+        "animations/patrol_wall_right_b/frame_047.png",
+        "animations/patrol_wall_right_b/frame_048.png",
+        "animations/patrol_wall_right_b/frame_049.png",
+        "animations/patrol_wall_right_b/frame_050.png",
+        "animations/patrol_wall_right_b/frame_051.png",
+        "animations/patrol_wall_right_b/frame_052.png",
+        "animations/patrol_wall_right_b/frame_053.png",
+        "animations/patrol_wall_right_b/frame_054.png",
+        "animations/patrol_wall_right_b/frame_055.png",
+        "animations/patrol_wall_right_b/frame_056.png",
+        "animations/patrol_wall_right_b/frame_057.png",
+        "animations/patrol_wall_right_b/frame_058.png",
+        "animations/patrol_wall_right_b/frame_059.png",
+        "animations/patrol_wall_right_b/frame_060.png",
+        "animations/patrol_wall_right_b/frame_061.png",
+        "animations/patrol_wall_right_b/frame_062.png",
+        "animations/patrol_wall_right_b/frame_063.png",
+        "animations/patrol_wall_right_b/frame_064.png",
+        "animations/patrol_wall_right_b/frame_065.png",
+        "animations/patrol_wall_right_b/frame_066.png",
+        "animations/patrol_wall_right_b/frame_067.png",
+        "animations/patrol_wall_right_b/frame_068.png",
+        "animations/patrol_wall_right_b/frame_069.png",
+        "animations/patrol_wall_right_b/frame_070.png",
+        "animations/patrol_wall_right_b/frame_071.png",
+        "animations/patrol_wall_right_b/frame_072.png",
+        "animations/patrol_wall_right_b/frame_073.png",
+        "animations/patrol_wall_right_b/frame_074.png",
+        "animations/patrol_wall_right_b/frame_075.png",
+        "animations/patrol_wall_right_b/frame_076.png",
+        "animations/patrol_wall_right_b/frame_077.png",
+        "animations/patrol_wall_right_b/frame_078.png",
+        "animations/patrol_wall_right_b/frame_079.png",
+        "animations/patrol_wall_right_b/frame_080.png",
+        "animations/patrol_wall_right_b/frame_081.png",
+        "animations/patrol_wall_right_b/frame_082.png",
+        "animations/patrol_wall_right_b/frame_083.png",
+        "animations/patrol_wall_right_b/frame_084.png",
+        "animations/patrol_wall_right_b/frame_085.png",
+        "animations/patrol_wall_right_b/frame_086.png",
+        "animations/patrol_wall_right_b/frame_087.png",
+        "animations/patrol_wall_right_b/frame_088.png",
+        "animations/patrol_wall_right_b/frame_089.png",
+        "animations/patrol_wall_right_b/frame_090.png",
+        "animations/patrol_wall_right_b/frame_091.png",
+        "animations/patrol_wall_right_b/frame_092.png",
+        "animations/patrol_wall_right_b/frame_093.png",
+        "animations/patrol_wall_right_b/frame_094.png",
+        "animations/patrol_wall_right_b/frame_095.png",
+        "animations/patrol_wall_right_b/frame_096.png",
+        "animations/patrol_wall_right_b/frame_097.png",
+        "animations/patrol_wall_right_b/frame_098.png",
+        "animations/patrol_wall_right_b/frame_099.png",
+        "animations/patrol_wall_right_b/frame_100.png",
+        "animations/patrol_wall_right_b/frame_101.png",
+        "animations/patrol_wall_right_b/frame_102.png",
+        "animations/patrol_wall_right_b/frame_103.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "visualBounds": {
+        "x": 267,
+        "y": 6,
+        "width": 228,
+        "height": 500
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.5
+      },
+      "hitArea": [
+        {
+          "x": 184,
+          "y": 176
+        },
+        {
+          "x": 315,
+          "y": 174
+        },
+        {
+          "x": 338,
+          "y": 292
+        },
+        {
+          "x": 313,
+          "y": 472
+        },
+        {
+          "x": 197,
+          "y": 472
+        },
+        {
+          "x": 169,
+          "y": 295
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 297.024,
+        "frameProgress": [
+          0,
+          0.005172355067,
+          0.012235965366,
+          0.0240725689,
+          0.030828466188,
+          0.038625850129,
+          0.054401937591,
+          0.062204344573,
+          0.070578031456,
+          0.0885553915,
+          0.097098901803,
+          0.105509674469,
+          0.123436171051,
+          0.131798833488,
+          0.140158742691,
+          0.158091351176,
+          0.166475744823,
+          0.174841765929,
+          0.192890086201,
+          0.201806935929,
+          0.210436609098,
+          0.227753598188,
+          0.236868793549,
+          0.244544227189,
+          0.258493408201,
+          0.266393520453,
+          0.274276482544,
+          0.288130739144,
+          0.295945054553,
+          0.30344183877,
+          0.316851756584,
+          0.324840243957,
+          0.332549344858,
+          0.34484611367,
+          0.353003455307,
+          0.360644646177,
+          0.372132974842,
+          0.379712874032,
+          0.387482840737,
+          0.399395296323,
+          0.40737484029,
+          0.415122396685,
+          0.426513314742,
+          0.434222737928,
+          0.441917071275,
+          0.453985086873,
+          0.461286647016,
+          0.468162158039,
+          0.479460752984,
+          0.486497406455,
+          0.493936720369,
+          0.506440384572,
+          0.514028502026,
+          0.522180054045,
+          0.537120640941,
+          0.545272710918,
+          0.554468613323,
+          0.572727680291,
+          0.581582057395,
+          0.590080261348,
+          0.608174265504,
+          0.617183518914,
+          0.625892299213,
+          0.643890108234,
+          0.652324962487,
+          0.660705175639,
+          0.678749559431,
+          0.68765003018,
+          0.696549706727,
+          0.714714712547,
+          0.723503527695,
+          0.731983292348,
+          0.749948428587,
+          0.758507565103,
+          0.76592591899,
+          0.779725882096,
+          0.787117958253,
+          0.79356694824,
+          0.803963720992,
+          0.8104892076,
+          0.816835158503,
+          0.826450609081,
+          0.832891396917,
+          0.839401657867,
+          0.850309107147,
+          0.856860457118,
+          0.863999758327,
+          0.876994204872,
+          0.884074394428,
+          0.892221505822,
+          0.909263606615,
+          0.917374005156,
+          0.925732837006,
+          0.943658256236,
+          0.952017088087,
+          0.956632472703,
+          0.961247857318,
+          0.965863241933,
+          0.970478626549,
+          0.975399647741,
+          0.981101740185,
+          0.986022761377,
+          0.990638145993,
+          0.995253530608,
+          1
+        ]
+      }
+    },
+    "patrol_floor_to_wall_left_a": {
+      "frames": [
+        "animations/patrol_floor_to_wall_left_a/frame_000.png",
+        "animations/patrol_floor_to_wall_left_a/frame_001.png",
+        "animations/patrol_floor_to_wall_left_a/frame_002.png",
+        "animations/patrol_floor_to_wall_left_a/frame_003.png",
+        "animations/patrol_floor_to_wall_left_a/frame_004.png",
+        "animations/patrol_floor_to_wall_left_a/frame_005.png",
+        "animations/patrol_floor_to_wall_left_a/frame_006.png",
+        "animations/patrol_floor_to_wall_left_a/frame_007.png",
+        "animations/patrol_floor_to_wall_left_a/frame_008.png",
+        "animations/patrol_floor_to_wall_left_a/frame_009.png",
+        "animations/patrol_floor_to_wall_left_a/frame_010.png",
+        "animations/patrol_floor_to_wall_left_a/frame_011.png",
+        "animations/patrol_floor_to_wall_left_a/frame_012.png",
+        "animations/patrol_floor_to_wall_left_a/frame_013.png",
+        "animations/patrol_floor_to_wall_left_a/frame_014.png",
+        "animations/patrol_floor_to_wall_left_a/frame_015.png",
+        "animations/patrol_floor_to_wall_left_a/frame_016.png",
+        "animations/patrol_floor_to_wall_left_a/frame_017.png",
+        "animations/patrol_floor_to_wall_left_a/frame_018.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        70,
+        80,
+        90,
+        100,
+        110,
+        100,
+        110,
+        120,
+        120,
+        130,
+        130,
+        140,
+        140,
+        145,
+        145,
+        150,
+        160,
+        500
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 19,
+        "y": 18,
+        "width": 348,
+        "height": 454
+      },
+      "hitArea": [
+        {
+          "x": 19,
+          "y": 18
+        },
+        {
+          "x": 367,
+          "y": 18
+        },
+        {
+          "x": 367,
+          "y": 472
+        },
+        {
+          "x": 19,
+          "y": 472
+        }
+      ]
+    },
+    "patrol_floor_to_wall_left_b": {
+      "frames": [
+        "animations/patrol_floor_to_wall_left_b/frame_000.png",
+        "animations/patrol_floor_to_wall_left_b/frame_001.png",
+        "animations/patrol_floor_to_wall_left_b/frame_002.png",
+        "animations/patrol_floor_to_wall_left_b/frame_003.png",
+        "animations/patrol_floor_to_wall_left_b/frame_004.png",
+        "animations/patrol_floor_to_wall_left_b/frame_005.png",
+        "animations/patrol_floor_to_wall_left_b/frame_006.png",
+        "animations/patrol_floor_to_wall_left_b/frame_007.png",
+        "animations/patrol_floor_to_wall_left_b/frame_008.png",
+        "animations/patrol_floor_to_wall_left_b/frame_009.png",
+        "animations/patrol_floor_to_wall_left_b/frame_010.png",
+        "animations/patrol_floor_to_wall_left_b/frame_011.png",
+        "animations/patrol_floor_to_wall_left_b/frame_012.png",
+        "animations/patrol_floor_to_wall_left_b/frame_013.png",
+        "animations/patrol_floor_to_wall_left_b/frame_014.png",
+        "animations/patrol_floor_to_wall_left_b/frame_015.png",
+        "animations/patrol_floor_to_wall_left_b/frame_016.png",
+        "animations/patrol_floor_to_wall_left_b/frame_017.png",
+        "animations/patrol_floor_to_wall_left_b/frame_018.png"
+      ],
+      "frameDurationsMs": [
+        60,
+        70,
+        80,
+        90,
+        100,
+        110,
+        100,
+        110,
+        120,
+        120,
+        130,
+        130,
+        140,
+        140,
+        145,
+        145,
+        150,
+        160,
+        500
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 18,
+        "y": 18,
+        "width": 349,
+        "height": 456
+      },
+      "hitArea": [
+        {
+          "x": 18,
+          "y": 18
+        },
+        {
+          "x": 367,
+          "y": 18
+        },
+        {
+          "x": 367,
+          "y": 474
+        },
+        {
+          "x": 18,
+          "y": 474
+        }
+      ]
+    },
+    "patrol_floor_to_wall_right_a": {
+      "frames": [
+        "animations/patrol_floor_to_wall_right_a/frame_000.png",
+        "animations/patrol_floor_to_wall_right_a/frame_001.png",
+        "animations/patrol_floor_to_wall_right_a/frame_002.png",
+        "animations/patrol_floor_to_wall_right_a/frame_003.png",
+        "animations/patrol_floor_to_wall_right_a/frame_004.png",
+        "animations/patrol_floor_to_wall_right_a/frame_005.png",
+        "animations/patrol_floor_to_wall_right_a/frame_006.png",
+        "animations/patrol_floor_to_wall_right_a/frame_007.png",
+        "animations/patrol_floor_to_wall_right_a/frame_008.png",
+        "animations/patrol_floor_to_wall_right_a/frame_009.png",
+        "animations/patrol_floor_to_wall_right_a/frame_010.png",
+        "animations/patrol_floor_to_wall_right_a/frame_011.png",
+        "animations/patrol_floor_to_wall_right_a/frame_012.png",
+        "animations/patrol_floor_to_wall_right_a/frame_013.png",
+        "animations/patrol_floor_to_wall_right_a/frame_014.png",
+        "animations/patrol_floor_to_wall_right_a/frame_015.png",
+        "animations/patrol_floor_to_wall_right_a/frame_016.png",
+        "animations/patrol_floor_to_wall_right_a/frame_017.png",
+        "animations/patrol_floor_to_wall_right_a/frame_018.png",
+        "animations/patrol_floor_to_wall_right_a/frame_019.png"
+      ],
+      "frameDurationsMs": [
+        55,
+        60,
+        60,
+        65,
+        70,
+        65,
+        65,
+        65,
+        65,
+        60,
+        55,
+        55,
+        60,
+        60,
+        55,
+        55,
+        65,
+        70,
+        70,
+        80
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 139,
+        "y": 20,
+        "width": 353,
+        "height": 481
+      },
+      "hitArea": [
+        {
+          "x": 139,
+          "y": 20
+        },
+        {
+          "x": 492,
+          "y": 20
+        },
+        {
+          "x": 492,
+          "y": 501
+        },
+        {
+          "x": 139,
+          "y": 501
+        }
+      ]
+    },
+    "patrol_floor_to_wall_right_b": {
+      "frames": [
+        "animations/patrol_floor_to_wall_right_b/frame_000.png",
+        "animations/patrol_floor_to_wall_right_b/frame_001.png",
+        "animations/patrol_floor_to_wall_right_b/frame_002.png",
+        "animations/patrol_floor_to_wall_right_b/frame_003.png",
+        "animations/patrol_floor_to_wall_right_b/frame_004.png",
+        "animations/patrol_floor_to_wall_right_b/frame_005.png",
+        "animations/patrol_floor_to_wall_right_b/frame_006.png",
+        "animations/patrol_floor_to_wall_right_b/frame_007.png",
+        "animations/patrol_floor_to_wall_right_b/frame_008.png",
+        "animations/patrol_floor_to_wall_right_b/frame_009.png",
+        "animations/patrol_floor_to_wall_right_b/frame_010.png",
+        "animations/patrol_floor_to_wall_right_b/frame_011.png",
+        "animations/patrol_floor_to_wall_right_b/frame_012.png",
+        "animations/patrol_floor_to_wall_right_b/frame_013.png",
+        "animations/patrol_floor_to_wall_right_b/frame_014.png",
+        "animations/patrol_floor_to_wall_right_b/frame_015.png",
+        "animations/patrol_floor_to_wall_right_b/frame_016.png",
+        "animations/patrol_floor_to_wall_right_b/frame_017.png",
+        "animations/patrol_floor_to_wall_right_b/frame_018.png",
+        "animations/patrol_floor_to_wall_right_b/frame_019.png"
+      ],
+      "frameDurationsMs": [
+        55,
+        60,
+        60,
+        65,
+        70,
+        65,
+        65,
+        65,
+        65,
+        60,
+        55,
+        55,
+        60,
+        60,
+        55,
+        55,
+        65,
+        70,
+        70,
+        80
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 139,
+        "y": 20,
+        "width": 353,
+        "height": 457
+      },
+      "hitArea": [
+        {
+          "x": 139,
+          "y": 20
+        },
+        {
+          "x": 492,
+          "y": 20
+        },
+        {
+          "x": 492,
+          "y": 477
+        },
+        {
+          "x": 139,
+          "y": 477
+        }
+      ]
+    },
+    "patrol_wall_left_to_floor_right_a": {
+      "frames": [
+        "animations/patrol_wall_left_to_floor_right_a/frame_000.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_001.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_002.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_003.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_004.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_005.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_006.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_007.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_008.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_009.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_010.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_011.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_012.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_013.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_014.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_015.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_016.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_017.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_018.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_019.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_020.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_021.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_022.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_023.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_024.png",
+        "animations/patrol_wall_left_to_floor_right_a/frame_025.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        70,
+        70,
+        70,
+        70,
+        60,
+        60,
+        70,
+        70,
+        60,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        60,
+        60,
+        60,
+        60,
+        50,
+        50
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 19,
+        "y": 17,
+        "width": 313,
+        "height": 483
+      },
+      "hitArea": [
+        {
+          "x": 19,
+          "y": 17
+        },
+        {
+          "x": 332,
+          "y": 17
+        },
+        {
+          "x": 332,
+          "y": 500
+        },
+        {
+          "x": 19,
+          "y": 500
+        }
+      ]
+    },
+    "patrol_wall_left_to_floor_right_b": {
+      "frames": [
+        "animations/patrol_wall_left_to_floor_right_b/frame_000.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_001.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_002.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_003.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_004.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_005.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_006.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_007.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_008.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_009.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_010.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_011.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_012.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_013.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_014.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_015.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_016.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_017.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_018.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_019.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_020.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_021.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_022.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_023.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_024.png",
+        "animations/patrol_wall_left_to_floor_right_b/frame_025.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        70,
+        70,
+        70,
+        70,
+        60,
+        60,
+        70,
+        70,
+        60,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        60,
+        60,
+        60,
+        60,
+        50,
+        50
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.0390625,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 18,
+        "y": 17,
+        "width": 314,
+        "height": 483
+      },
+      "hitArea": [
+        {
+          "x": 18,
+          "y": 17
+        },
+        {
+          "x": 332,
+          "y": 17
+        },
+        {
+          "x": 332,
+          "y": 500
+        },
+        {
+          "x": 18,
+          "y": 500
+        }
+      ]
+    },
+    "patrol_wall_right_to_floor_left_a": {
+      "frames": [
+        "animations/patrol_wall_right_to_floor_left_a/frame_000.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_001.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_002.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_003.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_004.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_005.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_006.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_007.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_008.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_009.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_010.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_011.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_012.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_013.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_014.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_015.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_016.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_017.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_018.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_019.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_020.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_021.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_022.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_023.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_024.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_025.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_026.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_027.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_028.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_029.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_030.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_031.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_032.png",
+        "animations/patrol_wall_right_to_floor_left_a/frame_033.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        65,
+        65,
+        65,
+        65,
+        60,
+        60,
+        65,
+        65,
+        60,
+        65,
+        70,
+        70,
+        65,
+        70,
+        70,
+        65,
+        65,
+        65,
+        65,
+        60,
+        60,
+        60,
+        60,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 147,
+        "y": 17,
+        "width": 345,
+        "height": 484
+      },
+      "hitArea": [
+        {
+          "x": 147,
+          "y": 17
+        },
+        {
+          "x": 492,
+          "y": 17
+        },
+        {
+          "x": 492,
+          "y": 501
+        },
+        {
+          "x": 147,
+          "y": 501
+        }
+      ]
+    },
+    "patrol_wall_right_to_floor_left_b": {
+      "frames": [
+        "animations/patrol_wall_right_to_floor_left_b/frame_000.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_001.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_002.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_003.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_004.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_005.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_006.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_007.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_008.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_009.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_010.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_011.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_012.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_013.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_014.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_015.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_016.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_017.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_018.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_019.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_020.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_021.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_022.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_023.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_024.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_025.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_026.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_027.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_028.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_029.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_030.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_031.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_032.png",
+        "animations/patrol_wall_right_to_floor_left_b/frame_033.png"
+      ],
+      "frameDurationsMs": [
+        80,
+        65,
+        65,
+        65,
+        65,
+        60,
+        60,
+        65,
+        65,
+        60,
+        65,
+        70,
+        70,
+        65,
+        70,
+        70,
+        65,
+        65,
+        65,
+        65,
+        60,
+        60,
+        60,
+        60,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 512,
+        "height": 512
+      },
+      "placement": {
+        "dock": "bottom-right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9609375,
+        "y": 0.96875
+      },
+      "visualBounds": {
+        "x": 147,
+        "y": 17,
+        "width": 345,
+        "height": 483
+      },
+      "hitArea": [
+        {
+          "x": 147,
+          "y": 17
+        },
+        {
+          "x": 492,
+          "y": 17
+        },
+        {
+          "x": 492,
+          "y": 500
+        },
+        {
+          "x": 147,
+          "y": 500
+        }
+      ]
+    },
+    "patrol_balloon_depart_left": {
+      "frames": [
+        "animations/patrol_balloon_depart_left/frame_000.png",
+        "animations/patrol_balloon_depart_left/frame_001.png",
+        "animations/patrol_balloon_depart_left/frame_002.png",
+        "animations/patrol_balloon_depart_left/frame_003.png",
+        "animations/patrol_balloon_depart_left/frame_004.png",
+        "animations/patrol_balloon_depart_left/frame_005.png",
+        "animations/patrol_balloon_depart_left/frame_006.png",
+        "animations/patrol_balloon_depart_left/frame_007.png",
+        "animations/patrol_balloon_depart_left/frame_008.png",
+        "animations/patrol_balloon_depart_left/frame_009.png",
+        "animations/patrol_balloon_depart_left/frame_010.png",
+        "animations/patrol_balloon_depart_left/frame_011.png",
+        "animations/patrol_balloon_depart_left/frame_012.png",
+        "animations/patrol_balloon_depart_left/frame_013.png",
+        "animations/patrol_balloon_depart_left/frame_014.png"
+      ],
+      "frameDurationsMs": [
+        135,
+        105,
+        120,
+        150,
+        190,
+        220,
+        170,
+        165,
+        185,
+        100,
+        95,
+        95,
+        100,
+        105,
+        650
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.026041666666666668,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 18,
+        "y": 58,
+        "width": 494,
+        "height": 542
+      },
+      "hitArea": [
+        {
+          "x": 18,
+          "y": 58
+        },
+        {
+          "x": 512,
+          "y": 58
+        },
+        {
+          "x": 512,
+          "y": 600
+        },
+        {
+          "x": 18,
+          "y": 600
+        }
+      ]
+    },
+    "patrol_balloon_arrive_right": {
+      "frames": [
+        "animations/patrol_balloon_arrive_right/frame_000.png",
+        "animations/patrol_balloon_arrive_right/frame_001.png",
+        "animations/patrol_balloon_arrive_right/frame_002.png",
+        "animations/patrol_balloon_arrive_right/frame_003.png",
+        "animations/patrol_balloon_arrive_right/frame_004.png",
+        "animations/patrol_balloon_arrive_right/frame_005.png",
+        "animations/patrol_balloon_arrive_right/frame_006.png",
+        "animations/patrol_balloon_arrive_right/frame_007.png",
+        "animations/patrol_balloon_arrive_right/frame_008.png",
+        "animations/patrol_balloon_arrive_right/frame_009.png",
+        "animations/patrol_balloon_arrive_right/frame_010.png",
+        "animations/patrol_balloon_arrive_right/frame_011.png",
+        "animations/patrol_balloon_arrive_right/frame_012.png",
+        "animations/patrol_balloon_arrive_right/frame_013.png",
+        "animations/patrol_balloon_arrive_right/frame_014.png",
+        "animations/patrol_balloon_arrive_right/frame_015.png",
+        "animations/patrol_balloon_arrive_right/frame_016.png"
+      ],
+      "frameDurationsMs": [
+        110,
+        95,
+        105,
+        120,
+        145,
+        130,
+        165,
+        190,
+        165,
+        190,
+        155,
+        115,
+        105,
+        105,
+        115,
+        130,
+        550
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9739583333333334,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 169,
+        "y": 59,
+        "width": 579,
+        "height": 572
+      },
+      "hitArea": [
+        {
+          "x": 169,
+          "y": 59
+        },
+        {
+          "x": 748,
+          "y": 59
+        },
+        {
+          "x": 748,
+          "y": 631
+        },
+        {
+          "x": 169,
+          "y": 631
+        }
+      ]
+    },
+    "patrol_balloon_depart_right": {
+      "frames": [
+        "animations/patrol_balloon_depart_right/frame_000.png",
+        "animations/patrol_balloon_depart_right/frame_001.png",
+        "animations/patrol_balloon_depart_right/frame_002.png",
+        "animations/patrol_balloon_depart_right/frame_003.png",
+        "animations/patrol_balloon_depart_right/frame_004.png",
+        "animations/patrol_balloon_depart_right/frame_005.png",
+        "animations/patrol_balloon_depart_right/frame_006.png",
+        "animations/patrol_balloon_depart_right/frame_007.png",
+        "animations/patrol_balloon_depart_right/frame_008.png",
+        "animations/patrol_balloon_depart_right/frame_009.png",
+        "animations/patrol_balloon_depart_right/frame_010.png",
+        "animations/patrol_balloon_depart_right/frame_011.png",
+        "animations/patrol_balloon_depart_right/frame_012.png",
+        "animations/patrol_balloon_depart_right/frame_013.png",
+        "animations/patrol_balloon_depart_right/frame_014.png",
+        "animations/patrol_balloon_depart_right/frame_015.png",
+        "animations/patrol_balloon_depart_right/frame_016.png",
+        "animations/patrol_balloon_depart_right/frame_017.png"
+      ],
+      "frameDurationsMs": [
+        160,
+        110,
+        120,
+        130,
+        150,
+        110,
+        110,
+        130,
+        130,
+        140,
+        150,
+        110,
+        110,
+        110,
+        120,
+        110,
+        110,
+        120
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9739583333333334,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 278,
+        "y": 57,
+        "width": 470,
+        "height": 593
+      },
+      "hitArea": [
+        {
+          "x": 278,
+          "y": 57
+        },
+        {
+          "x": 748,
+          "y": 57
+        },
+        {
+          "x": 748,
+          "y": 650
+        },
+        {
+          "x": 278,
+          "y": 650
+        }
+      ]
+    },
+    "patrol_balloon_arrive_left_a": {
+      "frames": [
+        "animations/patrol_balloon_arrive_left_a/frame_000.png",
+        "animations/patrol_balloon_arrive_left_a/frame_001.png",
+        "animations/patrol_balloon_arrive_left_a/frame_002.png",
+        "animations/patrol_balloon_arrive_left_a/frame_003.png",
+        "animations/patrol_balloon_arrive_left_a/frame_004.png",
+        "animations/patrol_balloon_arrive_left_a/frame_005.png",
+        "animations/patrol_balloon_arrive_left_a/frame_006.png",
+        "animations/patrol_balloon_arrive_left_a/frame_007.png",
+        "animations/patrol_balloon_arrive_left_a/frame_008.png",
+        "animations/patrol_balloon_arrive_left_a/frame_009.png",
+        "animations/patrol_balloon_arrive_left_a/frame_010.png",
+        "animations/patrol_balloon_arrive_left_a/frame_011.png",
+        "animations/patrol_balloon_arrive_left_a/frame_012.png",
+        "animations/patrol_balloon_arrive_left_a/frame_013.png",
+        "animations/patrol_balloon_arrive_left_a/frame_014.png",
+        "animations/patrol_balloon_arrive_left_a/frame_015.png",
+        "animations/patrol_balloon_arrive_left_a/frame_016.png",
+        "animations/patrol_balloon_arrive_left_a/frame_017.png",
+        "animations/patrol_balloon_arrive_left_a/frame_018.png",
+        "animations/patrol_balloon_arrive_left_a/frame_019.png",
+        "animations/patrol_balloon_arrive_left_a/frame_020.png",
+        "animations/patrol_balloon_arrive_left_a/frame_021.png",
+        "animations/patrol_balloon_arrive_left_a/frame_022.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        90,
+        95,
+        105,
+        120,
+        100,
+        105,
+        110,
+        120,
+        130,
+        140,
+        150,
+        140,
+        120,
+        140,
+        150,
+        160,
+        100,
+        105,
+        110,
+        115,
+        120,
+        550
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.026041666666666668,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 20,
+        "y": 57,
+        "width": 640,
+        "height": 574
+      },
+      "hitArea": [
+        {
+          "x": 20,
+          "y": 57
+        },
+        {
+          "x": 660,
+          "y": 57
+        },
+        {
+          "x": 660,
+          "y": 631
+        },
+        {
+          "x": 20,
+          "y": 631
+        }
+      ]
+    },
+    "patrol_balloon_arrive_left_b": {
+      "frames": [
+        "animations/patrol_balloon_arrive_left_b/frame_000.png",
+        "animations/patrol_balloon_arrive_left_b/frame_001.png",
+        "animations/patrol_balloon_arrive_left_b/frame_002.png",
+        "animations/patrol_balloon_arrive_left_b/frame_003.png",
+        "animations/patrol_balloon_arrive_left_b/frame_004.png",
+        "animations/patrol_balloon_arrive_left_b/frame_005.png",
+        "animations/patrol_balloon_arrive_left_b/frame_006.png",
+        "animations/patrol_balloon_arrive_left_b/frame_007.png",
+        "animations/patrol_balloon_arrive_left_b/frame_008.png",
+        "animations/patrol_balloon_arrive_left_b/frame_009.png",
+        "animations/patrol_balloon_arrive_left_b/frame_010.png",
+        "animations/patrol_balloon_arrive_left_b/frame_011.png",
+        "animations/patrol_balloon_arrive_left_b/frame_012.png",
+        "animations/patrol_balloon_arrive_left_b/frame_013.png",
+        "animations/patrol_balloon_arrive_left_b/frame_014.png",
+        "animations/patrol_balloon_arrive_left_b/frame_015.png",
+        "animations/patrol_balloon_arrive_left_b/frame_016.png",
+        "animations/patrol_balloon_arrive_left_b/frame_017.png",
+        "animations/patrol_balloon_arrive_left_b/frame_018.png",
+        "animations/patrol_balloon_arrive_left_b/frame_019.png",
+        "animations/patrol_balloon_arrive_left_b/frame_020.png",
+        "animations/patrol_balloon_arrive_left_b/frame_021.png",
+        "animations/patrol_balloon_arrive_left_b/frame_022.png"
+      ],
+      "frameDurationsMs": [
+        90,
+        90,
+        95,
+        105,
+        120,
+        100,
+        105,
+        110,
+        120,
+        130,
+        140,
+        150,
+        140,
+        120,
+        140,
+        150,
+        160,
+        100,
+        105,
+        110,
+        115,
+        120,
+        550
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.026041666666666668,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 20,
+        "y": 57,
+        "width": 640,
+        "height": 573
+      },
+      "hitArea": [
+        {
+          "x": 20,
+          "y": 57
+        },
+        {
+          "x": 660,
+          "y": 57
+        },
+        {
+          "x": 660,
+          "y": 630
+        },
+        {
+          "x": 20,
+          "y": 630
+        }
+      ]
+    },
+    "patrol_flight_left": {
+      "frames": [
+        "animations/patrol_flight_left/frame_000.png",
+        "animations/patrol_flight_left/frame_001.png",
+        "animations/patrol_flight_left/frame_002.png",
+        "animations/patrol_flight_left/frame_003.png",
+        "animations/patrol_flight_left/frame_004.png",
+        "animations/patrol_flight_left/frame_005.png",
+        "animations/patrol_flight_left/frame_006.png",
+        "animations/patrol_flight_left/frame_007.png",
+        "animations/patrol_flight_left/frame_008.png",
+        "animations/patrol_flight_left/frame_009.png",
+        "animations/patrol_flight_left/frame_010.png",
+        "animations/patrol_flight_left/frame_011.png",
+        "animations/patrol_flight_left/frame_012.png",
+        "animations/patrol_flight_left/frame_013.png",
+        "animations/patrol_flight_left/frame_014.png",
+        "animations/patrol_flight_left/frame_015.png",
+        "animations/patrol_flight_left/frame_016.png",
+        "animations/patrol_flight_left/frame_017.png",
+        "animations/patrol_flight_left/frame_018.png",
+        "animations/patrol_flight_left/frame_019.png",
+        "animations/patrol_flight_left/frame_020.png",
+        "animations/patrol_flight_left/frame_021.png",
+        "animations/patrol_flight_left/frame_022.png",
+        "animations/patrol_flight_left/frame_023.png",
+        "animations/patrol_flight_left/frame_024.png",
+        "animations/patrol_flight_left/frame_025.png",
+        "animations/patrol_flight_left/frame_026.png",
+        "animations/patrol_flight_left/frame_027.png",
+        "animations/patrol_flight_left/frame_028.png",
+        "animations/patrol_flight_left/frame_029.png",
+        "animations/patrol_flight_left/frame_030.png",
+        "animations/patrol_flight_left/frame_031.png",
+        "animations/patrol_flight_left/frame_032.png",
+        "animations/patrol_flight_left/frame_033.png",
+        "animations/patrol_flight_left/frame_034.png",
+        "animations/patrol_flight_left/frame_035.png",
+        "animations/patrol_flight_left/frame_036.png",
+        "animations/patrol_flight_left/frame_037.png",
+        "animations/patrol_flight_left/frame_038.png",
+        "animations/patrol_flight_left/frame_039.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 768
+      },
+      "placement": {
+        "dock": "top",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.020833333333333332
+      },
+      "visualBounds": {
+        "x": 61,
+        "y": 50,
+        "width": 390,
+        "height": 546
+      },
+      "hitArea": [
+        {
+          "x": 61,
+          "y": 50
+        },
+        {
+          "x": 451,
+          "y": 50
+        },
+        {
+          "x": 451,
+          "y": 596
+        },
+        {
+          "x": 61,
+          "y": 596
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 120.96,
+        "frameProgress": [
+          0,
+          0.025468069745,
+          0.050094995468,
+          0.075211419487,
+          0.099481292878,
+          0.12577787109,
+          0.151879854734,
+          0.175582117736,
+          0.202020611518,
+          0.231621994976,
+          0.258775147113,
+          0.280698942933,
+          0.302508547742,
+          0.328518884588,
+          0.355197467479,
+          0.379370358873,
+          0.401218870847,
+          0.421738846786,
+          0.442645409256,
+          0.463904175189,
+          0.484417320017,
+          0.505684255121,
+          0.529038348754,
+          0.554375633351,
+          0.581640987792,
+          0.610300362651,
+          0.637442271903,
+          0.662540032022,
+          0.690143554983,
+          0.719338239617,
+          0.745748984912,
+          0.768372710956,
+          0.789867723504,
+          0.813148602591,
+          0.83822203082,
+          0.865873049024,
+          0.894627084058,
+          0.919883274756,
+          0.943486640749,
+          0.971048303033,
+          1
+        ]
+      }
+    },
+    "patrol_flight_right": {
+      "frames": [
+        "animations/patrol_flight_right/frame_000.png",
+        "animations/patrol_flight_right/frame_001.png",
+        "animations/patrol_flight_right/frame_002.png",
+        "animations/patrol_flight_right/frame_003.png",
+        "animations/patrol_flight_right/frame_004.png",
+        "animations/patrol_flight_right/frame_005.png",
+        "animations/patrol_flight_right/frame_006.png",
+        "animations/patrol_flight_right/frame_007.png",
+        "animations/patrol_flight_right/frame_008.png",
+        "animations/patrol_flight_right/frame_009.png",
+        "animations/patrol_flight_right/frame_010.png",
+        "animations/patrol_flight_right/frame_011.png",
+        "animations/patrol_flight_right/frame_012.png",
+        "animations/patrol_flight_right/frame_013.png",
+        "animations/patrol_flight_right/frame_014.png",
+        "animations/patrol_flight_right/frame_015.png",
+        "animations/patrol_flight_right/frame_016.png",
+        "animations/patrol_flight_right/frame_017.png",
+        "animations/patrol_flight_right/frame_018.png",
+        "animations/patrol_flight_right/frame_019.png",
+        "animations/patrol_flight_right/frame_020.png",
+        "animations/patrol_flight_right/frame_021.png",
+        "animations/patrol_flight_right/frame_022.png",
+        "animations/patrol_flight_right/frame_023.png"
+      ],
+      "frameDurationsMs": [
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "loop": true,
+      "canvas": {
+        "width": 512,
+        "height": 768
+      },
+      "placement": {
+        "dock": "top",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.020833333333333332
+      },
+      "visualBounds": {
+        "x": 96,
+        "y": 59,
+        "width": 321,
+        "height": 515
+      },
+      "hitArea": [
+        {
+          "x": 96,
+          "y": 59
+        },
+        {
+          "x": 417,
+          "y": 59
+        },
+        {
+          "x": 417,
+          "y": 574
+        },
+        {
+          "x": 96,
+          "y": 574
+        }
+      ],
+      "rootMotion": {
+        "cycleAdvancePx": 72.576,
+        "frameProgress": [
+          0,
+          0.039549712408,
+          0.081926792555,
+          0.126760880513,
+          0.168125026914,
+          0.206380490905,
+          0.247438824249,
+          0.28862262061,
+          0.327119058905,
+          0.369127336983,
+          0.415027604093,
+          0.458043378089,
+          0.497493709567,
+          0.539875549169,
+          0.584997566151,
+          0.626642341379,
+          0.665232255806,
+          0.707060349546,
+          0.749000892235,
+          0.788045797103,
+          0.830824003316,
+          0.877362459238,
+          0.920590692194,
+          0.960305510043,
+          1
+        ]
+      }
+    },
+    "patrol_balloon_depart_left_b": {
+      "frames": [
+        "animations/patrol_balloon_depart_left_b/frame_000.png",
+        "animations/patrol_balloon_depart_left_b/frame_001.png",
+        "animations/patrol_balloon_depart_left_b/frame_002.png",
+        "animations/patrol_balloon_depart_left_b/frame_003.png",
+        "animations/patrol_balloon_depart_left_b/frame_004.png",
+        "animations/patrol_balloon_depart_left_b/frame_005.png",
+        "animations/patrol_balloon_depart_left_b/frame_006.png",
+        "animations/patrol_balloon_depart_left_b/frame_007.png",
+        "animations/patrol_balloon_depart_left_b/frame_008.png",
+        "animations/patrol_balloon_depart_left_b/frame_009.png",
+        "animations/patrol_balloon_depart_left_b/frame_010.png",
+        "animations/patrol_balloon_depart_left_b/frame_011.png",
+        "animations/patrol_balloon_depart_left_b/frame_012.png",
+        "animations/patrol_balloon_depart_left_b/frame_013.png",
+        "animations/patrol_balloon_depart_left_b/frame_014.png"
+      ],
+      "frameDurationsMs": [
+        135,
+        105,
+        120,
+        150,
+        190,
+        220,
+        170,
+        165,
+        185,
+        100,
+        95,
+        95,
+        100,
+        105,
+        650
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "left",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.026041666666666668,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 18,
+        "y": 58,
+        "width": 494,
+        "height": 571
+      },
+      "hitArea": [
+        {
+          "x": 18,
+          "y": 58
+        },
+        {
+          "x": 512,
+          "y": 58
+        },
+        {
+          "x": 512,
+          "y": 629
+        },
+        {
+          "x": 18,
+          "y": 629
+        }
+      ]
+    },
+    "patrol_balloon_arrive_right_b": {
+      "frames": [
+        "animations/patrol_balloon_arrive_right_b/frame_000.png",
+        "animations/patrol_balloon_arrive_right_b/frame_001.png",
+        "animations/patrol_balloon_arrive_right_b/frame_002.png",
+        "animations/patrol_balloon_arrive_right_b/frame_003.png",
+        "animations/patrol_balloon_arrive_right_b/frame_004.png",
+        "animations/patrol_balloon_arrive_right_b/frame_005.png",
+        "animations/patrol_balloon_arrive_right_b/frame_006.png",
+        "animations/patrol_balloon_arrive_right_b/frame_007.png",
+        "animations/patrol_balloon_arrive_right_b/frame_008.png",
+        "animations/patrol_balloon_arrive_right_b/frame_009.png",
+        "animations/patrol_balloon_arrive_right_b/frame_010.png",
+        "animations/patrol_balloon_arrive_right_b/frame_011.png",
+        "animations/patrol_balloon_arrive_right_b/frame_012.png",
+        "animations/patrol_balloon_arrive_right_b/frame_013.png",
+        "animations/patrol_balloon_arrive_right_b/frame_014.png",
+        "animations/patrol_balloon_arrive_right_b/frame_015.png",
+        "animations/patrol_balloon_arrive_right_b/frame_016.png"
+      ],
+      "frameDurationsMs": [
+        110,
+        95,
+        105,
+        120,
+        145,
+        130,
+        165,
+        190,
+        165,
+        190,
+        155,
+        115,
+        105,
+        105,
+        115,
+        130,
+        550
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9739583333333334,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 169,
+        "y": 59,
+        "width": 579,
+        "height": 572
+      },
+      "hitArea": [
+        {
+          "x": 169,
+          "y": 59
+        },
+        {
+          "x": 748,
+          "y": 59
+        },
+        {
+          "x": 748,
+          "y": 631
+        },
+        {
+          "x": 169,
+          "y": 631
+        }
+      ]
+    },
+    "patrol_balloon_depart_right_b": {
+      "frames": [
+        "animations/patrol_balloon_depart_right_b/frame_000.png",
+        "animations/patrol_balloon_depart_right_b/frame_001.png",
+        "animations/patrol_balloon_depart_right_b/frame_002.png",
+        "animations/patrol_balloon_depart_right_b/frame_003.png",
+        "animations/patrol_balloon_depart_right_b/frame_004.png",
+        "animations/patrol_balloon_depart_right_b/frame_005.png",
+        "animations/patrol_balloon_depart_right_b/frame_006.png",
+        "animations/patrol_balloon_depart_right_b/frame_007.png",
+        "animations/patrol_balloon_depart_right_b/frame_008.png",
+        "animations/patrol_balloon_depart_right_b/frame_009.png",
+        "animations/patrol_balloon_depart_right_b/frame_010.png",
+        "animations/patrol_balloon_depart_right_b/frame_011.png",
+        "animations/patrol_balloon_depart_right_b/frame_012.png",
+        "animations/patrol_balloon_depart_right_b/frame_013.png",
+        "animations/patrol_balloon_depart_right_b/frame_014.png",
+        "animations/patrol_balloon_depart_right_b/frame_015.png",
+        "animations/patrol_balloon_depart_right_b/frame_016.png",
+        "animations/patrol_balloon_depart_right_b/frame_017.png"
+      ],
+      "frameDurationsMs": [
+        160,
+        110,
+        120,
+        130,
+        150,
+        110,
+        110,
+        130,
+        130,
+        140,
+        150,
+        110,
+        110,
+        110,
+        120,
+        110,
+        110,
+        120
+      ],
+      "loop": false,
+      "canvas": {
+        "width": 768,
+        "height": 768
+      },
+      "placement": {
+        "dock": "right",
+        "inset": 16
+      },
+      "anchor": {
+        "x": 0.9739583333333334,
+        "y": 0.5
+      },
+      "visualBounds": {
+        "x": 278,
+        "y": 57,
+        "width": 470,
+        "height": 593
+      },
+      "hitArea": [
+        {
+          "x": 278,
+          "y": 57
+        },
+        {
+          "x": 748,
+          "y": 57
+        },
+        {
+          "x": 748,
+          "y": 650
+        },
+        {
+          "x": 278,
+          "y": 650
+        }
+      ]
+    }
+  }
+}

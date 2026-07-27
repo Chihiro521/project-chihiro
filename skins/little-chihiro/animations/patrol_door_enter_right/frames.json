@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "action": "patrol_door_enter_right",
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "frameOrder": [
+    "frame_00.png",
+    "frame_01.png",
+    "frame_02.png",
+    "frame_03.png",
+    "frame_04.png",
+    "frame_05.png",
+    "frame_06.png",
+    "frame_07.png"
+  ],
+  "placement": {
+    "dock": "bottom-right",
+    "inset": 16
+  },
+  "anchor": {
+    "x": 0.9609375,
+    "y": 0.9844378810975609
+  },
+  "motion": {
+    "kind": "one-shot",
+    "phase": "enter",
+    "side": "right",
+    "frameDurationMs": 95
+  },
+  "normalization": {
+    "mode": "one-uniform-scale-per-action",
+    "targetHeadWidth": 123,
+    "edgeContactX": 492,
+    "visibleBottom": 497,
+    "doorAnchorY": 504.0321951219512,
+    "exactFloorOffset": [
+      -20,
+      25
+    ],
+    "sharedClosedDoorBoundary": "patrol_door_enter_right/frame_07.png",
+    "v18Boundary": {
+      "source": "patrol_floor_right/frame_00.png",
+      "target": "right-floor-to-door-entry",
+      "offset": [
+        -20,
+        25
+      ],
+      "operation": "exact-rgba-integer-translation"
+    }
+  },
+  "bounds": {
+    "alphaThreshold": 2,
+    "union": {
+      "x": 52,
+      "y": 53,
+      "width": 440,
+      "height": 444
+    },
+    "frames": [
+      {
+        "file": "frame_00.png",
+        "visibleBounds": {
+          "x": 149,
+          "y": 53,
+          "width": 186,
+          "height": 444,
+          "right": 335,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_01.png",
+        "visibleBounds": {
+          "x": 52,
+          "y": 60,
+          "width": 440,
+          "height": 437,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_02.png",
+        "visibleBounds": {
+          "x": 160,
+          "y": 58,
+          "width": 332,
+          "height": 439,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_03.png",
+        "visibleBounds": {
+          "x": 202,
+          "y": 59,
+          "width": 290,
+          "height": 438,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_04.png",
+        "visibleBounds": {
+          "x": 282,
+          "y": 76,
+          "width": 210,
+          "height": 421,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_05.png",
+        "visibleBounds": {
+          "x": 316,
+          "y": 76,
+          "width": 176,
+          "height": 421,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_06.png",
+        "visibleBounds": {
+          "x": 332,
+          "y": 77,
+          "width": 160,
+          "height": 420,
+          "right": 492,
+          "bottom": 497
+        }
+      },
+      {
+        "file": "frame_07.png",
+        "visibleBounds": {
+          "x": 309,
+          "y": 80,
+          "width": 183,
+          "height": 417,
+          "right": 492,
+          "bottom": 497
+        }
+      }
+    ]
+  }
+}

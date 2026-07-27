@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/core/sprite_player.gd" id="2_player"]
+[ext_resource type="Script" path="res://scripts/platform/desktop_window.gd" id="3_window"]
+[ext_resource type="Texture2D" path="res://assets/icon.png" id="4_icon"]
+
+[node name="LittleChihiro" type="Node"]
+script = ExtResource("1_main")
+
+[node name="PetSprite" type="Sprite2D" parent="."]
+centered = false
+
+[node name="SpritePlayer" type="Node" parent="."]
+script = ExtResource("2_player")
+sprite_path = NodePath("../PetSprite")
+
+[node name="DesktopWindow" type="Node" parent="."]
+script = ExtResource("3_window")
+
+[node name="Menu" type="PopupMenu" parent="."]
+prefer_native_menu = true
+
+[node name="TrayMenu" type="PopupMenu" parent="."]
+prefer_native_menu = true
+
+[node name="StatusIndicator" type="StatusIndicator" parent="."]
+icon = ExtResource("4_icon")
+tooltip = "小千寻桌宠"
+menu = NodePath("../TrayMenu")
+

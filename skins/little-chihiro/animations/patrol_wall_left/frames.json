@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "action": "patrol_wall_left",
+  "canvas": {
+    "width": 512,
+    "height": 512
+  },
+  "frameOrder": [
+    "frame_00.png",
+    "frame_01.png",
+    "frame_02.png",
+    "frame_03.png",
+    "frame_04.png",
+    "frame_05.png",
+    "frame_06.png",
+    "frame_07.png"
+  ],
+  "placement": {
+    "dock": "left",
+    "inset": 16
+  },
+  "anchor": {
+    "x": 0.0390625,
+    "y": 0.5
+  },
+  "motion": {
+    "kind": "loop",
+    "canonicalPlayback": "climb-up",
+    "reversePlayback": "climb-down",
+    "frameDurationMs": 120
+  },
+  "reference": {
+    "frame": "frame_00.png",
+    "normalization": "one-uniform-scale-per-action",
+    "scaleKey": "head-width",
+    "canonicalBodyHeight": null,
+    "canonicalHeadWidth": 124,
+    "measuredBodyHeight": 255,
+    "measuredHeadWidth": 124,
+    "measuredHeadHeight": 110,
+    "appliedScale": 0.879433
+  },
+  "normalization": {
+    "mode": "uniform-action-scale-edge-aligned",
+    "edgePadding": 20,
+    "verticalAlignment": "visible-bounds-center"
+  },
+  "bounds": {
+    "alphaThreshold": 2,
+    "union": {
+      "x": 20,
+      "y": 70,
+      "width": 144,
+      "height": 372
+    },
+    "frames": [
+      {
+        "file": "frame_00.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 74,
+          "width": 143,
+          "height": 365,
+          "right": 163,
+          "bottom": 439
+        }
+      },
+      {
+        "file": "frame_01.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 72,
+          "width": 144,
+          "height": 368,
+          "right": 164,
+          "bottom": 440
+        }
+      },
+      {
+        "file": "frame_02.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 71,
+          "width": 142,
+          "height": 371,
+          "right": 162,
+          "bottom": 442
+        }
+      },
+      {
+        "file": "frame_03.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 73,
+          "width": 142,
+          "height": 367,
+          "right": 162,
+          "bottom": 440
+        }
+      },
+      {
+        "file": "frame_04.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 72,
+          "width": 133,
+          "height": 369,
+          "right": 153,
+          "bottom": 441
+        }
+      },
+      {
+        "file": "frame_05.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 71,
+          "width": 139,
+          "height": 370,
+          "right": 159,
+          "bottom": 441
+        }
+      },
+      {
+        "file": "frame_06.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 70,
+          "width": 138,
+          "height": 372,
+          "right": 158,
+          "bottom": 442
+        }
+      },
+      {
+        "file": "frame_07.png",
+        "visibleBounds": {
+          "x": 20,
+          "y": 72,
+          "width": 142,
+          "height": 368,
+          "right": 162,
+          "bottom": 440
+        }
+      }
+    ]
+  }
+}
