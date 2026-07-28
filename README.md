@@ -8,6 +8,7 @@ Godot 4.7/GDScript 承担。
 
 - 透明、无边框、置顶、不可缩放的 Windows 桌宠窗口
 - Godot `StatusIndicator` 原生托盘菜单
+- 2D 编辑器内显示待机帧预览，运行时再由逐帧播放器接管纹理
 - 原 `pet.json` schema v1，以及 62 组动作、1311 张运行帧
 - 自定义逐帧播放器：独立帧时长、片段、倒放、循环与确定性循环变体
 - `boot / idle / float / edge_patrol / dragged / drag_fall / land` 等状态机
@@ -55,4 +56,3 @@ skins/little-chihiro/           # 原 pet.json 与透明 PNG
 
 `DesktopWindowBridge.get_system_context()` 留有 Godot 原生扩展挂点，用于后续接入
 Win32 外部前台全屏窗口识别；其余桌宠运行路径不依赖平台扩展。
-
