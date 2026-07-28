@@ -1,0 +1,21 @@
+{
+  "model_sheet": "../../character-reference/model-sheet.png",
+  "poses": [
+    {
+      "role": "center",
+      "production_frame": 0,
+      "source": "../../../../skins/little-chihiro/animations/gaze/frame_04.png"
+    },
+    {
+      "role": "viewer_left",
+      "production_frame": 3,
+      "source": "../../../../skins/little-chihiro/animations/gaze/frame_03.png"
+    },
+    {
+      "role": "viewer_right",
+      "production_frame": 9,
+      "source": "../../../../skins/little-chihiro/animations/gaze/frame_05.png"
+    }
+  ],
+  "status": "user_approved"
+}

@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 63, "manifest should contain 63 animations")
+	_expect(manifest.animation_names().size() == 64, "manifest should contain 64 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -40,6 +40,14 @@ func _test_manifest() -> void:
 	for duration in breathe_durations:
 		breathes_at_four_fps = breathes_at_four_fps and is_equal_approx(float(duration), 250.0)
 	_expect(breathes_at_four_fps, "idle breathing should play at four FPS")
+	var look_around := manifest.clip("look_around")
+	_expect((look_around.get("frames", []) as Array).size() == 12, "look-around should contain twelve directed poses")
+	_expect(not bool(look_around.get("loop", true)), "look-around should return to idle after one scan")
+	var look_durations: Array = look_around.get("frameDurationsMs", [])
+	var looks_at_six_fps := look_durations.size() == 12
+	for duration in look_durations:
+		looks_at_six_fps = looks_at_six_fps and is_equal_approx(float(duration), 167.0)
+	_expect(looks_at_six_fps, "look-around should play at approximately six FPS")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -48,7 +56,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1319, "manifest should expose 1319 runtime frames")
+	_expect(frame_count == 1331, "manifest should expose 1331 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -167,6 +175,8 @@ func _test_behavior_director() -> void:
 	var breathe_intent := director.create_intent("breathe_shift", needs, context, 90000)
 	_expect(str(breathe_intent.get("clip", "")) == "idle_breathe", "breathing behavior uses the approved animation")
 	_expect(int((breathe_intent.get("session", {}) as Dictionary).get("max_duration_ms", 0)) == 2000, "breathing session ends on the two-second loop seam")
+	var look_intent := director.create_intent("look_around", needs, context, 92000)
+	_expect(str(look_intent.get("clip", "")) == "look_around", "look-around behavior uses the approved directed scan")
 	var selected_ids: Array[String] = []
 	for index in range(8):
 		var intent := director.select_intent(needs, context, 100000 + index * 200000)

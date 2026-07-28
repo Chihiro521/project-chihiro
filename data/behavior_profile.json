@@ -39,9 +39,9 @@
         "effects": {"boredom": -0.5}, "session": {"type": "one_shot", "max_duration_ms": 2000}
       },
       {
-        "id": "look_around", "clip": "idle_blink", "fallback_clip": "react", "state": "micro_idle",
+        "id": "look_around", "clip": "look_around", "fallback_clip": "idle_blink", "state": "micro_idle",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 26000,
-        "preconditions": {"requires_any_clips": ["idle_blink", "react"], "needs": {"energy": {"min": 18}}},
+        "preconditions": {"requires_any_clips": ["look_around", "idle_blink", "react"], "needs": {"energy": {"min": 18}}},
         "score_weights": {"base": 12, "needs": {"curiosity": 0.35, "boredom": 0.08}},
         "effects": {"curiosity": -2, "boredom": -1}, "session": {"type": "one_shot"}
       },

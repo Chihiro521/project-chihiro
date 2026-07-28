@@ -1,0 +1,61 @@
+{
+  "name": "look_around",
+  "frame_count": 12,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, ash-blonde bob, navy A-line dress, tan satchel and rabbit charm remain identical to the canonical model sheet.",
+    "proportions": "Approximately four heads tall with both feet planted and no root-scale change.",
+    "face_and_markings": "Muted blue-gray eyes, pale rounded face and fixed fringe; only gaze and restrained head yaw may change.",
+    "costume": "Cream collar, orange ribbon, brass buttons, lace hem, tan strap and rabbit charm stay structurally unchanged.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished anime sprite with fine dark outlines and restrained warm cel shading; fixed orthographic camera and neutral light."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.17,
+    "max_alpha_coverage": 0.5,
+    "max_color_jsd": 0.12,
+    "max_area_drift": 0.12,
+    "max_bbox_aspect_drift": 0.1,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 10.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.2,
+    "max_motion_energy_delta": 0.1,
+    "max_centroid_acceleration_px": 8.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "front center; neutral observation begins"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.091, "role": "in-between", "pose": "eyes and chin lift to begin the scan"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.182, "role": "breakdown", "pose": "gaze arcs from upper center toward upper viewer-left"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.273, "role": "key", "pose": "clear viewer-left observation; feet and torso remain settled"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.364, "role": "in-between", "pose": "gaze drops toward lower viewer-left"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.455, "role": "breakdown", "pose": "head settles through lower center"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.545, "role": "key", "pose": "brief centered blink before scanning the other side"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.636, "role": "in-between", "pose": "eyes and chin lift again"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.727, "role": "breakdown", "pose": "gaze arcs from upper center toward upper viewer-right"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.818, "role": "key", "pose": "clear viewer-right observation; bag and rabbit stay quiet"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.909, "role": "in-between", "pose": "gaze drops through lower viewer-right"},
+    {"index": 11, "file": "frame_011.png", "phase": 1.0, "role": "key", "pose": "front center exit ready to resume idle"}
+  ]
+}

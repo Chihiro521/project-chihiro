@@ -1,0 +1,17 @@
+{
+  "method": "ordered reuse of existing approved gaze and blink frames",
+  "frames": [
+    {"output": "frame_000.png", "source": "skins/little-chihiro/animations/gaze/frame_04.png", "pose": "center"},
+    {"output": "frame_001.png", "source": "skins/little-chihiro/animations/gaze/frame_01.png", "pose": "up"},
+    {"output": "frame_002.png", "source": "skins/little-chihiro/animations/gaze/frame_00.png", "pose": "up-left"},
+    {"output": "frame_003.png", "source": "skins/little-chihiro/animations/gaze/frame_03.png", "pose": "left"},
+    {"output": "frame_004.png", "source": "skins/little-chihiro/animations/gaze/frame_06.png", "pose": "down-left"},
+    {"output": "frame_005.png", "source": "skins/little-chihiro/animations/gaze/frame_07.png", "pose": "down"},
+    {"output": "frame_006.png", "source": "skins/little-chihiro/animations/idle_blink/frame_04.png", "pose": "center blink"},
+    {"output": "frame_007.png", "source": "skins/little-chihiro/animations/gaze/frame_01.png", "pose": "up"},
+    {"output": "frame_008.png", "source": "skins/little-chihiro/animations/gaze/frame_02.png", "pose": "up-right"},
+    {"output": "frame_009.png", "source": "skins/little-chihiro/animations/gaze/frame_05.png", "pose": "right"},
+    {"output": "frame_010.png", "source": "skins/little-chihiro/animations/gaze/frame_08.png", "pose": "down-right"},
+    {"output": "frame_011.png", "source": "skins/little-chihiro/animations/gaze/frame_04.png", "pose": "center"}
+  ]
+}

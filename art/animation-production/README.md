@@ -10,3 +10,4 @@ This folder holds approval and QA artifacts for new v0.21 frame sequences.
 ## Accepted sequences
 
 - `idle_breathe`: eight phases at 4 FPS, fixed 512×512 cells and pivot `(256, 492)`. It reuses the approved front anchor through a Godot CanvasItem UV deformation so character identity and costume pixels do not drift. Automated QA and user semantic review passed; the approved anchor's intentional padding is documented by `min_alpha_coverage: 0.17`. The fixed-grid sheet and metadata live in `idle_breathe/package/`.
+- `look_around`: twelve directed poses at 6 FPS, fixed 512×512 cells and pivot `(256, 492)`. It reorders existing approved gaze frames into a left/right scan with one centered blink, so no production pixels are redrawn. Automated QA and user semantic review passed; package artifacts live in `look_around/package/`.
