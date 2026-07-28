@@ -1,5 +1,10 @@
 .godot/
+.cache/
 build/
+native/windows/extension_api.json
+native/windows/bin/
+native/windows/build/
+native/windows/.sconsign.dblite
+native/windows/src/*.obj.import
 *.tmp
 *.log
-

@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+import os
+
+
+godot_cpp_dir = ARGUMENTS.get("godot_cpp_dir", "godot-cpp")
+if not os.path.isfile(os.path.join(godot_cpp_dir, "SConstruct")):
+    raise FileNotFoundError(
+        "godot-cpp was not found. Pass godot_cpp_dir=<path-to-godot-cpp> "
+        "or place it at native/windows/godot-cpp."
+    )
+
+env = SConscript(os.path.join(godot_cpp_dir, "SConstruct"))
+env.Append(CPPPATH=["src"])
+env.Append(LIBS=["dwmapi", "user32"])
+env["SHLIBPREFIX"] = ""
+
+sources = Glob("src/*.cpp")
+objects = []
+for source in sources:
+    source_path = str(source)
+    object_name = os.path.splitext(os.path.basename(source_path))[0]
+    objects.append(
+        env.SharedObject(
+            target=os.path.join("build", object_name + env["suffix"]),
+            source=source,
+        )
+    )
+target = "bin/little_chihiro_windows{}{}".format(env["suffix"], env["SHLIBSUFFIX"])
+library = env.SharedLibrary(target=target, source=objects)
+
+env.NoCache(library)
+Default(library)
