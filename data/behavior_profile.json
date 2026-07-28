@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "needs": {
+    "initial": {"energy": 72, "boredom": 20, "curiosity": 35, "irritation": 0, "affection": 40},
+    "rates_per_minute": {
+      "awake": {"energy": -1.2, "boredom": 0.75, "curiosity": -3, "irritation": -5},
+      "sleeping": {"energy": 12, "boredom": -1.5, "curiosity": -3, "irritation": -7}
+    },
+    "event_effects": {
+      "novel_window": {"curiosity": 18, "boredom": -5},
+      "cursor_gesture": {"curiosity": 8, "boredom": -3},
+      "head_pat_accepted": {"affection": 0.08, "irritation": -4, "boredom": -2},
+      "friendly_interaction": {"affection": 0.04, "boredom": -4},
+      "rapid_poke": {"affection": -0.3, "irritation": 12},
+      "rough_drag": {"affection": -0.5, "irritation": 18},
+      "behavior_completed": {"boredom": -3}
+    }
+  },
+  "relationship": {
+    "tiers": [
+      {"id": "distant", "min": 0},
+      {"id": "guarded", "min": 20},
+      {"id": "familiar", "min": 40},
+      {"id": "trusted", "min": 60},
+      {"id": "close", "min": 80}
+    ]
+  },
+  "director": {
+    "default_seed": 21013,
+    "recent_history_size": 3,
+    "score_floor": 0.01,
+    "global_blockers": ["fullscreen", "dragging", "menu_open", "direct_interaction"],
+    "behaviors": [
+      {
+        "id": "breathe_shift", "clip": "idle", "fallback_clip": "idle", "state": "micro_idle",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 18000,
+        "preconditions": {"requires_clips": ["idle"], "forbids_any": ["on_platform"]},
+        "score_weights": {"base": 18, "needs": {"boredom": 0.05, "irritation": -0.03}},
+        "effects": {"boredom": -0.5}, "session": {"type": "one_shot", "max_duration_ms": 2400}
+      },
+      {
+        "id": "look_around", "clip": "idle_blink", "fallback_clip": "react", "state": "micro_idle",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 26000,
+        "preconditions": {"requires_any_clips": ["idle_blink", "react"], "needs": {"energy": {"min": 18}}},
+        "score_weights": {"base": 12, "needs": {"curiosity": 0.35, "boredom": 0.08}},
+        "effects": {"curiosity": -2, "boredom": -1}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "straighten_bag", "clip": "straighten_bag", "fallback_clip": "idle_blink", "state": "self_care",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 90000,
+        "preconditions": {"requires_any_clips": ["straighten_bag", "idle_blink"], "needs": {"energy": {"min": 20}}},
+        "score_weights": {"base": 10, "needs": {"boredom": 0.2, "irritation": 0.05}},
+        "effects": {"boredom": -4, "irritation": -2, "energy": -1}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "inspect_rabbit", "clip": "inspect_rabbit", "fallback_clip": "react", "state": "self_care",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 110000,
+        "preconditions": {"requires_any_clips": ["inspect_rabbit", "react"], "needs": {"energy": {"min": 18}}},
+        "score_weights": {"base": 11, "needs": {"boredom": 0.25, "curiosity": 0.1}, "relationship": {"close": 5}},
+        "effects": {"boredom": -5, "irritation": -3}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "tidy_clothes", "clip": "tidy_clothes", "fallback_clip": "idle_blink", "state": "self_care",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 120000,
+        "preconditions": {"requires_any_clips": ["tidy_clothes", "idle_blink"], "needs": {"energy": {"min": 24}}},
+        "score_weights": {"base": 8, "needs": {"boredom": 0.18}},
+        "effects": {"boredom": -3, "energy": -1}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "stretch", "clip": "stretch", "fallback_clip": "react", "state": "self_care",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 80000,
+        "preconditions": {"requires_any_clips": ["stretch", "react"], "needs": {"energy": {"min": 25, "max": 70}}},
+        "score_weights": {"base": 15, "needs": {"boredom": 0.12, "energy": -0.08}},
+        "effects": {"energy": 2, "boredom": -4}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "reason_pose", "clip": "reason_pose", "fallback_clip": "react", "state": "personality",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 130000,
+        "preconditions": {"requires_any_clips": ["reason_pose", "react"], "needs": {"energy": {"min": 32}, "curiosity": {"min": 35}}},
+        "score_weights": {"base": 7, "needs": {"curiosity": 0.45}},
+        "effects": {"curiosity": -10, "boredom": -5, "energy": -2}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "sit_rest", "clip": "sit_enter", "fallback_clip": "idle", "state": "rest",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 150000,
+        "preconditions": {"requires_clips": ["sit_enter", "sit_loop", "sit_exit"], "needs": {"energy": {"max": 58}}},
+        "score_weights": {"base": 28, "needs": {"energy": -0.35, "boredom": 0.05}},
+        "effects": {"energy": 4, "boredom": -2},
+        "session": {"type": "sequence", "enter": "sit_enter", "loop": "sit_loop", "exit": "sit_exit", "max_duration_ms": 22000}
+      },
+      {
+        "id": "nap", "clip": "nap_enter", "fallback_clip": "idle", "state": "sleep",
+        "priority": "autonomous", "interrupt_policy": "wake_then_idle", "resume_policy": "never", "cooldown_ms": 240000,
+        "preconditions": {"requires_clips": ["nap_enter", "nap_loop", "nap_wake"], "needs": {"energy": {"max": 25}}, "forbids_any": ["on_platform"]},
+        "score_weights": {"base": 80, "needs": {"energy": -1}}, "effects": {"boredom": -3},
+        "session": {"type": "sequence", "enter": "nap_enter", "loop": "nap_loop", "exit": "nap_wake"}
+      },
+      {
+        "id": "return_wave", "clip": "return_wave", "fallback_clip": "react", "state": "relationship",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 300000,
+        "preconditions": {"requires_any_clips": ["return_wave", "react"], "relationship": {"min": "familiar"}, "context": {"returned_after_seconds": {"min": 1800}}},
+        "score_weights": {"base": 90, "needs": {"affection": 0.3}},
+        "effects": {"boredom": -8, "affection": 0.02}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "window_walk", "clip": "patrol_floor_right", "fallback_clip": "patrol_floor_left", "state": "window_platform",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 45000,
+        "preconditions": {"requires_all": ["has_platform", "on_platform"], "requires_any_clips": ["patrol_floor_left", "patrol_floor_right"], "needs": {"energy": {"min": 28}}},
+        "score_weights": {"base": 16, "needs": {"boredom": 0.35, "curiosity": 0.15}},
+        "effects": {"boredom": -9, "curiosity": -3, "energy": -4}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "window_sit", "clip": "window_sit_enter", "fallback_clip": "idle", "state": "window_platform",
+        "priority": "autonomous", "interrupt_policy": "resume_if_platform_valid", "resume_policy": "platform_valid", "cooldown_ms": 70000,
+        "preconditions": {"requires_all": ["has_platform", "on_platform"], "requires_clips": ["window_sit_enter", "window_sit_loop", "window_sit_exit"]},
+        "score_weights": {"base": 14, "needs": {"energy": -0.18, "curiosity": 0.1}},
+        "effects": {"energy": 3, "boredom": -4},
+        "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
+      },
+      {
+        "id": "head_pat_accept", "clip": "head_pat", "fallback_clip": "react", "state": "direct_interaction",
+        "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
+        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"affection": 0.08}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "head_pat_refuse", "clip": "head_pat_refuse", "fallback_clip": "react", "state": "direct_interaction",
+        "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
+        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"irritation": 2}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "guard_bag_annoyed", "clip": "guard_bag_annoyed", "fallback_clip": "poke_cheek", "state": "direct_interaction",
+        "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
+        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"irritation": 8}, "session": {"type": "one_shot"}
+      },
+      {
+        "id": "window_land_recover", "clip": "window_land_recover", "fallback_clip": "land", "state": "window_platform",
+        "priority": "window_move", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
+        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"energy": -2}, "session": {"type": "one_shot"}
+      }
+    ]
+  }
+}

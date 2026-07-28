@@ -9,14 +9,22 @@ const ACTIVE_STATES := {
 	"head_pat": true, "poke_cheek": true, "menu_wait": true, "clock_scare": true,
 	"react": true, "turn": true, "takeoff": true, "float": true,
 	"edge_patrol": true, "drag_fall": true, "land": true, "dragged": true,
+	"ambient_action": true, "sleeping": true, "platform_transition": true,
+	"platform_walk": true, "platform_sit": true,
 }
 const DIRECT_INTERACTION_STATES := {
 	"idle": true, "notice": true, "cursor_track": true, "cursor_startle": true,
 	"cursor_annoyed": true, "cursor_dizzy": true, "react": true, "turn": true,
 	"takeoff": true, "float": true, "edge_patrol": true, "drag_fall": true,
 	"land": true, "head_pat": true, "poke_cheek": true, "clock_scare": true,
+	"ambient_action": true, "sleeping": true, "platform_transition": true,
+	"platform_walk": true, "platform_sit": true,
 }
 const PASSIVE_CURSOR_STATES := {"idle": true, "notice": true, "cursor_track": true}
+const AUTONOMOUS_ACTION_STATES := {
+	"ambient_action": true, "sleeping": true, "platform_transition": true,
+	"platform_walk": true, "platform_sit": true,
+}
 
 var state := "boot"
 
@@ -46,6 +54,8 @@ func _reduce(current: String, event: Dictionary) -> String:
 		return "drag_fall" if event_type == "DRAG_END" else current
 	if event_type == "MENU_OPEN" and current != "boot":
 		return "menu_wait"
+	if event_type == "PLATFORM_LOST" and ACTIVE_STATES.has(current) and current != "boot":
+		return "drag_fall"
 	if current == "menu_wait":
 		if event_type == "MENU_SELECT_CLOCK":
 			return "clock_scare"
@@ -71,6 +81,11 @@ func _reduce(current: String, event: Dictionary) -> String:
 		"cursor_annoyed", "cursor_dizzy",
 	]:
 		return str(event.get("resume", "idle"))
+	if AUTONOMOUS_ACTION_STATES.has(current):
+		if event_type in ["ACTION_END", "CLIP_END"]:
+			return "idle"
+		if current == "sleeping" and event_type == "SLEEP_WAKE":
+			return "ambient_action" if bool(event.get("play_wake", true)) else "idle"
 	match current:
 		"boot":
 			return "idle" if event_type == "CLIP_END" else current
@@ -79,6 +94,9 @@ func _reduce(current: String, event: Dictionary) -> String:
 			if event_type == "CLICK": return "react"
 			if event_type == "EDGE_PATROL_START": return "edge_patrol"
 			if event_type == "WANDER": return "takeoff" if not bool(event.get("needs_turn", true)) else "turn"
+			if event_type == "ACTION_START":
+				var requested := str(event.get("state", "ambient_action"))
+				return requested if AUTONOMOUS_ACTION_STATES.has(requested) else "ambient_action"
 		"notice":
 			if event_type == "POINTER_LEAVE": return "idle"
 			if event_type == "CLICK": return "react"
@@ -100,4 +118,3 @@ func _reduce(current: String, event: Dictionary) -> String:
 		"land":
 			if event_type == "CLIP_END": return "idle"
 	return current
-
