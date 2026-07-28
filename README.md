@@ -43,7 +43,7 @@ Godot 4.7/GDScript 承担。
 & 'D:\godot\引擎版本\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe' --headless --path 'D:\workspace\project-chihiro' --log-file 'D:\workspace\project-chihiro\godot-tests.log' --script res://scripts/tests/run_tests.gd
 ```
 
-当前基线为 `PASS: 131 assertions`。
+当前基线为 `PASS: 147 assertions`。
 
 先构建 Windows GDExtension（详见 `native/windows/README.md`），再安装 Godot
 4.7.1 export templates 并导出：

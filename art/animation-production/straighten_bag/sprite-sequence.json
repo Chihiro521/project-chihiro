@@ -1,0 +1,87 @@
+{
+  "name": "straighten_bag",
+  "frame_count": 10,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, ash-blonde bob, compact navy A-line dress, small tan satchel and small rabbit charm remain identical to the canonical model sheet.",
+    "proportions": "Approximately four heads tall with both feet planted, fixed root scale and the same canvas margins as the canonical idle frame.",
+    "face_and_markings": "Muted blue-gray eyes, pale rounded face and fixed fringe; only a slight downward gaze and restrained chin dip may change.",
+    "costume": "Cream collar, orange ribbon, the existing brass buttons, lace hem, tan strap and rabbit charm stay structurally unchanged; no pockets, extra fasteners or enlarged accessories.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished anime sprite with fine dark outlines and restrained warm cel shading; fixed orthographic camera and neutral light. The idle frame is authoritative and must be edited minimally rather than redrawn."
+  },
+  "action_contract": {
+    "intent": "She notices the satchel strap has shifted, looks down, pinches and slides it into place while supporting the bag, then settles back into idle.",
+    "peak_pose": "Chin and eyes angle toward the strap; the upper hand pulls it upward near the chest while the lower hand grips the same strap above the satchel and pulls downward. The satchel rises slightly and the rabbit charm swings outward.",
+    "locked_elements": "Feet, root position, body scale, dress silhouette, hat, hair, facial identity, accessory size and overall camera remain fixed.",
+    "allowed_motion": "Forearms and hands, a small chin dip, the strap around the touched section, an 8 to 12 pixel bag lift, and a restrained rabbit-charm swing.",
+    "forbidden_changes": "No new props, pockets, buttons, folds, scenery, shadow, text, camera move, torso tilt, stepping, adult proportions, enlarged bag or enlarged rabbit."
+  },
+  "key_pose_sources": {
+    "k00_direct_master": "key-poses/k00_master_chroma.png",
+    "k04_direct_master": "key-poses/k04_master_chroma.png",
+    "status": "accepted_and_packaged",
+    "strategy": "The optical-flow sequence was rejected for poor motion quality. Generate every intermediate frame directly at high resolution, in temporal order, with K0, K4 and the nearest approved neighbor supplied on every call. No optical flow, cross-fade, morph or synthetic interpolation is allowed."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.155,
+    "max_alpha_coverage": 0.52,
+    "max_color_jsd": 0.17,
+    "max_area_drift": 0.2,
+    "max_bbox_aspect_drift": 0.2,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 16.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.24,
+    "max_motion_energy_delta": 0.12,
+    "max_centroid_acceleration_px": 15.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "min_alpha_coverage": "The direct drawings use a slim 453px-tall production silhouette.",
+    "max_color_jsd": "Directly drawn F3 reaches 0.156 color JSD while preserving the locked palette and identity under semantic review.",
+    "max_area_drift": "The satchel and rabbit swing outward at F2-F3; character height and foot baseline remain fixed while the full alpha bounds widen by up to 18 percent.",
+    "max_bbox_aspect_drift": "The same intentional accessory swing widens the full-frame alpha bounds without changing body proportions.",
+    "max_center_range_px": "The visible centroid follows the outward satchel/rabbit arc; feet and root stay locked, with a measured full-alpha center range of 15px.",
+    "max_centroid_acceleration_px": "The direct peak drawing creates a 14px full-alpha centroid impulse from the accessory swing; the character root remains stationary."
+  },
+  "post_process": {
+    "generation": "Each frame is a separate built-in image generation call using both endpoint masters and the nearest accepted temporal neighbor.",
+    "forbidden": "No optical flow, cross-fade, morphing or algorithmic in-between generation.",
+    "background_removal": "Each frame uses a sampled hard chroma key followed by RGB-only edge despill. The accepted alpha matte, dimensions and geometry remain byte-for-byte unchanged.",
+    "despill_validation": "All ten alpha channels and every RGBA pixel at alpha >= 252 match the approved inputs; 31,518 magenta-dominant partial-edge pixels were reduced to zero.",
+    "final_downsample": "Each direct high-resolution frame is converted to alpha and downsampled once into a fixed 512x512 cell with a y=472 baseline."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "canonical front idle; notices the shifted strap"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.111, "role": "in-between", "pose": "gaze lowers; hands begin to leave rest"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.222, "role": "breakdown", "pose": "upper hand reaches the chest strap; lower hand approaches the bag"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.333, "role": "breakdown", "pose": "fingers take the strap and bag weight; bag and rabbit reach their widest outward arc"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.444, "role": "key", "pose": "peak adjustment: strap pinched, bag supported and slightly lifted"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.556, "role": "breakdown", "pose": "strap slides into place; rabbit charm trails the small bag motion"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.667, "role": "in-between", "pose": "bag settles; upper hand releases the strap"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.778, "role": "breakdown", "pose": "hands return while gaze lifts"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.889, "role": "in-between", "pose": "near-neutral recovery with a small settling half-blink"},
+    {"index": 9, "file": "frame_009.png", "phase": 1.0, "role": "key", "pose": "canonical front idle exit"}
+  ]
+}
