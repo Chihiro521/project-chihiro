@@ -1,0 +1,245 @@
+{
+  "name": "inspect_rabbit",
+  "image": "inspect_rabbit-sheet.png",
+  "frame_width": 512,
+  "frame_height": 512,
+  "columns": 4,
+  "rows": 4,
+  "frame_count": 15,
+  "fps": 6.0,
+  "loop": false,
+  "fixed_cells": true,
+  "trimmed": false,
+  "acceptance": {
+    "automated_status": "PASS",
+    "qa_report": "qa-report.json",
+    "semantic_review": "accepted"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_000.png",
+      "x": 0,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 1,
+      "file": "frame_001.png",
+      "x": 512,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.071,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 2,
+      "file": "frame_002.png",
+      "x": 1024,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.143,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 3,
+      "file": "frame_003.png",
+      "x": 1536,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.214,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 4,
+      "file": "frame_004.png",
+      "x": 0,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.286,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 5,
+      "file": "frame_005.png",
+      "x": 512,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.357,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 6,
+      "file": "frame_006.png",
+      "x": 1024,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.429,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 7,
+      "file": "frame_007.png",
+      "x": 1536,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.5,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 8,
+      "file": "frame_008.png",
+      "x": 0,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.571,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 9,
+      "file": "frame_009.png",
+      "x": 512,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.643,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 10,
+      "file": "frame_010.png",
+      "x": 1024,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.714,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 11,
+      "file": "frame_011.png",
+      "x": 1536,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.786,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 12,
+      "file": "frame_012.png",
+      "x": 0,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.857,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 13,
+      "file": "frame_013.png",
+      "x": 512,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.929,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 14,
+      "file": "frame_014.png",
+      "x": 1024,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 1.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    }
+  ]
+}

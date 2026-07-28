@@ -1,0 +1,97 @@
+{
+  "name": "inspect_rabbit",
+  "frame_count": 15,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, ash-blonde bob, compact navy A-line dress, small tan satchel and the single small rabbit charm remain identical to the approved front model.",
+    "proportions": "Approximately four heads tall with both feet planted, fixed root scale and the same canvas margins as the canonical idle frame.",
+    "face_and_markings": "Muted blue-gray eyes, pale rounded face, fixed fringe and subdued cool ash-beige hair with narrow restrained highlights; only a downward gaze, tiny head tilt and mildly analytical expression may change.",
+    "costume": "Cream collar, orange ribbon, the approved brass-button layout, lace hem, tan strap, satchel and rabbit charm stay structurally unchanged; the rabbit keeps its white body, orange bow and exact small scale.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished anime sprite with fine dark outlines and restrained warm cel shading; fixed orthographic camera and neutral light. The approved high-resolution idle frame is authoritative."
+  },
+  "action_contract": {
+    "intent": "She notices the rabbit, lifts it from the satchel with her bag-side hand, gently strokes from cheek to ear root and crown before returning to the cheek, then places it back on the bag.",
+    "first_key_pose": "The rabbit rises from the satchel toward the upper waist in her bag-side hand while the other hand remains gripping the diagonal strap; her gaze follows it.",
+    "peak_pose": "She keeps the complete rabbit supported at upper-waist height while the free fingertips travel in a continuous cheek-to-ear-root-to-crown-to-cheek caress.",
+    "locked_elements": "Feet, root position, body scale, dress silhouette, hat, hair, facial identity, satchel position, rabbit size and overall camera remain fixed.",
+    "allowed_motion": "The bag-side arm lifts and lowers the rabbit; the strap-side arm leaves the strap for a four-pose caress across cheek, ear root and crown, then returns. Head and gaze follow the rabbit while feet and root remain fixed.",
+    "forbidden_changes": "No detached or duplicated rabbit, enlarged plush, new prop, opened bag, missing strap, torso bend, stepping, adult proportions, scenery, shadow, text, camera move or costume redesign."
+  },
+  "key_pose_sources": {
+    "canonical_front": "anchors/character_front.png",
+    "canonical_gaze_left": "anchors/character_gaze_left.png",
+    "canonical_gaze_right": "anchors/character_gaze_right.png",
+    "k00_redrawn_idle": "direct-frame-sources/frame_000_chroma.png",
+    "k05_lift": "direct-frame-sources/frame_005_chroma.png",
+    "k07_pet_contact": "direct-frame-sources/frame_007_chroma.png",
+    "k08_pet_ear_root": "direct-frame-sources/frame_008_chroma.png",
+    "k09_pet_crown": "direct-frame-sources/frame_009_chroma.png",
+    "k10_pet_return": "direct-frame-sources/frame_010_chroma.png",
+    "k12_replace": "direct-frame-sources/frame_012_chroma.png",
+    "status": "accepted_and_packaged",
+    "strategy": "Every motion frame is a separate full-character image-generation call supplied with the canonical reference and its temporal neighbors. No frame uses cut-and-paste parts, local compositing, translated layers, optical flow, cross-fade, morphing or algorithmic interpolation."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.15,
+    "max_alpha_coverage": 0.52,
+    "max_color_jsd": 0.17,
+    "max_area_drift": 0.2,
+    "max_bbox_aspect_drift": 0.2,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 16.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.24,
+    "max_motion_energy_delta": 0.12,
+    "max_centroid_acceleration_px": 15.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "min_alpha_coverage": "The approved front silhouette is slim and approximately 453 pixels tall in the final 512 pixel cell.",
+    "max_area_drift": "The rabbit moves upward inside the existing body silhouette while the character root, bag and dress remain fixed.",
+    "max_center_range_px": "Only the arms, gaze and small rabbit move; the character root must stay stationary."
+  },
+  "post_process": {
+    "generation": "Frames 0 through 13 are separate full-character image-generation calls using the canonical anchor plus adjacent temporal references; the approved direct-drawn frame 0 is reused only as the intentional returned-idle endpoint at frame 14.",
+    "forbidden": "No cut-and-paste parts, local compositing, translated layers, optical flow, cross-fade, morphing or algorithmic interpolation.",
+    "background_removal": "Each generated frame uses a flat #FF00FF source background, explicit two-channel magenta chroma removal, soft edge matte and despill.",
+    "final_downsample": "Each complete redrawn character is uniformly normalized once into a fixed 512x512 cell, aligned by shoe center and the y=472 visible baseline."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "newly drawn canonical-reference neutral idle endpoint"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.071, "role": "direct", "pose": "newly drawn anticipation: head and gaze turn toward the resting rabbit"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.143, "role": "direct", "pose": "newly drawn reach: bag-side hand surrounds the rabbit while it still rests on the satchel"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.214, "role": "direct", "pose": "newly drawn first lift: fingers support the rabbit as its legs clear the bag"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.286, "role": "direct", "pose": "newly drawn continuing lift along the upward arm arc"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.357, "role": "key", "pose": "newly drawn stable one-handed hold at upper-waist height"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.429, "role": "direct", "pose": "newly drawn free-hand approach toward the rabbit's cheek"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.5, "role": "key", "pose": "newly drawn initial fingertip contact on the rabbit's cheek"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.571, "role": "direct", "pose": "newly drawn continuation: fingertips slide upward from cheek to lower ear root"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.643, "role": "key", "pose": "newly drawn petting peak: relaxed fingertips stroke the crown between the ears"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.714, "role": "direct", "pose": "newly drawn return caress from crown down to ear root and cheek"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.786, "role": "direct", "pose": "newly drawn withdrawal and airborne halfway descent toward the bag"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.857, "role": "key", "pose": "newly drawn replacement: rabbit contacts the satchel while fingers still guide it"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.929, "role": "direct", "pose": "newly drawn release: hand withdraws and gaze starts returning forward"},
+    {"index": 14, "file": "frame_014.png", "phase": 1.0, "role": "key", "pose": "intentional return to the approved directly drawn idle endpoint"}
+  ]
+}

@@ -480,6 +480,87 @@
         "height": 453
       }
     },
+    "inspect_rabbit": {
+      "frames": [
+        "animations/inspect_rabbit/frame_000.png",
+        "animations/inspect_rabbit/frame_001.png",
+        "animations/inspect_rabbit/frame_002.png",
+        "animations/inspect_rabbit/frame_003.png",
+        "animations/inspect_rabbit/frame_004.png",
+        "animations/inspect_rabbit/frame_005.png",
+        "animations/inspect_rabbit/frame_006.png",
+        "animations/inspect_rabbit/frame_007.png",
+        "animations/inspect_rabbit/frame_008.png",
+        "animations/inspect_rabbit/frame_009.png",
+        "animations/inspect_rabbit/frame_010.png",
+        "animations/inspect_rabbit/frame_011.png",
+        "animations/inspect_rabbit/frame_012.png",
+        "animations/inspect_rabbit/frame_013.png",
+        "animations/inspect_rabbit/frame_014.png"
+      ],
+      "frameDurationsMs": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 178,
+        "y": 19,
+        "width": 167,
+        "height": 453
+      }
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",
