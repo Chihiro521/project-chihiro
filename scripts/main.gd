@@ -580,6 +580,7 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 	match intent_id:
 		"straighten_bag": return "adjust_bag"
 		"inspect_rabbit": return "inspect_rabbit"
+		"tidy_clothes": return "tidy_clothes"
 		"stretch": return "stretch"
 		"reason_pose": return "think"
 		"nap": return "wake"

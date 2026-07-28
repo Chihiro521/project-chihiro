@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 66, "manifest should contain 66 animations")
+	_expect(manifest.animation_names().size() == 67, "manifest should contain 67 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -69,6 +69,19 @@ func _test_manifest() -> void:
 		var resource_path := manifest.frame_resource_path(str(frame))
 		rabbit_textures_load = rabbit_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(rabbit_textures_load, "inspect-rabbit runtime frames should import as Texture2D resources")
+	var tidy_clothes := manifest.clip("tidy_clothes")
+	_expect((tidy_clothes.get("frames", []) as Array).size() == 12, "tidy-clothes should contain twelve directly drawn poses")
+	_expect(not bool(tidy_clothes.get("loop", true)), "tidy-clothes should return to idle after smoothing the hem")
+	var tidy_durations: Array = tidy_clothes.get("frameDurationsMs", [])
+	var tidy_at_six_fps := tidy_durations.size() == 12
+	for duration in tidy_durations:
+		tidy_at_six_fps = tidy_at_six_fps and is_equal_approx(float(duration), 167.0)
+	_expect(tidy_at_six_fps, "tidy-clothes should play at approximately six FPS")
+	var tidy_textures_load := true
+	for frame in tidy_clothes.get("frames", []):
+		var resource_path := manifest.frame_resource_path(str(frame))
+		tidy_textures_load = tidy_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(tidy_textures_load, "tidy-clothes runtime frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -77,7 +90,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1356, "manifest should expose 1356 runtime frames")
+	_expect(frame_count == 1368, "manifest should expose 1368 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -202,6 +215,8 @@ func _test_behavior_director() -> void:
 	_expect(str(bag_intent.get("clip", "")) == "straighten_bag", "straighten-bag behavior uses the approved direct animation")
 	var rabbit_intent := director.create_intent("inspect_rabbit", needs, context, 96000)
 	_expect(str(rabbit_intent.get("clip", "")) == "inspect_rabbit", "inspect-rabbit behavior uses the approved direct animation")
+	var tidy_intent := director.create_intent("tidy_clothes", needs, context, 98000)
+	_expect(str(tidy_intent.get("clip", "")) == "tidy_clothes", "tidy-clothes behavior uses the approved direct animation")
 	var selected_ids: Array[String] = []
 	for index in range(8):
 		var intent := director.select_intent(needs, context, 100000 + index * 200000)
@@ -282,7 +297,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 140, "dialogue catalog contains 140 lines")
+	_expect(dialogue.line_count() == 145, "dialogue catalog contains 145 lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
@@ -292,6 +307,11 @@ func _test_state_store_and_dialogue() -> void:
 		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
 	}, 100000)
 	_expect(not line.is_empty(), "dialogue director selects a matching event line")
+	var tidy_line := dialogue.select_line({
+		"event": "tidy_clothes", "relationship_tier": "familiar", "irritation": 0,
+		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+	}, 200000)
+	_expect(not tidy_line.is_empty(), "tidy-clothes completion selects a matching dialogue line")
 	var direct_intent := PetBehaviorDirector.load_from_file("res://data/behavior_profile.json", 7).create_intent(
 		"window_land_recover", PetNeedsModel.new(_load_json("res://data/behavior_profile.json")),
 		{"available_clips": ["land"], "relationship_tier": "familiar"}, 1000,

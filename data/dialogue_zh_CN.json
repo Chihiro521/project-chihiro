@@ -129,6 +129,12 @@
     {"id":"inspect_rabbit_004","text":"它没有意见，所以很适合当研究助手。","events":["inspect_rabbit"],"tags":["action","rabbit"]},
     {"id":"inspect_rabbit_005","text":"抱紧一点，外界噪声就会小一点。","events":["inspect_rabbit"],"relationship_tiers":["trust","close"],"tags":["action","rabbit","care"]},
 
+    {"id":"tidy_clothes_001","text":"褶皱会干扰观察。现在顺眼多了。","events":["tidy_clothes"],"tags":["action","clothes","science"]},
+    {"id":"tidy_clothes_002","text":"只是清理浮尘，不是在表演。","events":["tidy_clothes"],"tags":["action","clothes"]},
+    {"id":"tidy_clothes_003","text":"衣摆校准完成。你的桌面还差得远。","events":["tidy_clothes"],"tags":["action","clothes","tease"]},
+    {"id":"tidy_clothes_004","text":"整洁能减少无意义变量。建议你也试试。","events":["tidy_clothes"],"tags":["action","clothes","science"]},
+    {"id":"tidy_clothes_005","text":"别误会，只是不喜欢灰尘。","events":["tidy_clothes"],"relationship_tiers":["wary","familiar"],"tags":["action","clothes","relationship"]},
+
     {"id":"bag_001","text":"包带偏移两厘米。已修正。","events":["adjust_bag"],"tags":["action","bag","science"]},
     {"id":"bag_002","text":"重要物品都在。你的计划不算。","events":["adjust_bag"],"tags":["action","bag","tease"]},
     {"id":"bag_003","text":"别碰包，里面是有分类秩序的。","events":["adjust_bag"],"tags":["action","bag"]},

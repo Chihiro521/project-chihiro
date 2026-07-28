@@ -1,0 +1,91 @@
+{
+  "name": "tidy_clothes",
+  "frame_count": 12,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, muted ash-beige bob, compact navy A-line dress, thin tan strap, compact satchel and its single small rabbit remain recognizable in every frame.",
+    "proportions": "Approximately four heads tall with short legs, small feet, both shoes planted, fixed root scale and the same canvas margins as the canonical character.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and subdued cool ash-beige hair with restrained highlights; only a small downward gaze and chin dip may change.",
+    "costume": "Cream collar, orange ribbon, approved brass-button layout, loose long sleeves, lace hem, cream socks, black Mary Jane shoes, tan strap, satchel and rabbit keep their exact topology and scale.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished miniature anime sprite with fine dark outlines, restrained warm cel shading, fixed orthographic camera and neutral light. The original character reference is authoritative."
+  },
+  "action_contract": {
+    "intent": "She notices a speck or crease on the lower dress, keeps one hand on the satchel strap, briskly brushes the skirt twice with the free hand, smooths the hem once, then returns to neutral.",
+    "first_key_pose": "With feet and torso fixed, her bag-side free hand reaches diagonally across the lower skirt and makes the first downward brushing contact while her gaze follows the hand.",
+    "peak_pose": "The free hand completes a clearer second sweep across the lower front-right skirt; fingers are together and the loose sleeve follows the arc while the hem reacts subtly.",
+    "settle_pose": "The same hand gently presses and smooths the lace hem back into place before withdrawing.",
+    "locked_elements": "Feet, root, body scale, hat, hair, face identity, collar, ribbon, buttons, strap route, satchel position, rabbit identity and camera remain fixed.",
+    "allowed_motion": "The bag-side arm and hand, small chin/gaze movement, restrained loose-sleeve follow-through, tiny lower-hem response and minimal satchel/rabbit secondary sway.",
+    "forbidden_changes": "No bending to shoes, knee lift, stepping, opened bag, removed rabbit, enlarged accessories, second hand leaving the strap, torso lean, adult proportions, new dirt effect, scenery, shadow, text, camera move or costume redesign."
+  },
+  "key_pose_sources": {
+    "canonical_front": "anchors/character_front.png",
+    "canonical_gaze_right": "anchors/character_gaze_right.png",
+    "approved_redrawn_idle": "anchors/approved_redrawn_idle_chroma.png",
+    "k04_first_brush": "key-poses/k04_first_brush_chroma.png",
+    "k07_second_brush": "key-poses/k07_second_brush_chroma.png",
+    "k09_hem_smooth": "key-poses/k09_hem_smooth_chroma.png",
+    "status": "full_sequence_qa_passed_semantic_accepted",
+    "strategy": "Generate each key as a complete full-character drawing from the canonical identity anchor and approved redrawn idle. After approval, generate every remaining frame separately with both temporal neighbors. No cut-and-paste, layer translation, optical flow, cross-fade, morphing or algorithmic interpolation."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.15,
+    "max_alpha_coverage": 0.52,
+    "max_color_jsd": 0.17,
+    "max_area_drift": 0.2,
+    "max_bbox_aspect_drift": 0.2,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 16.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.24,
+    "max_motion_energy_delta": 0.12,
+    "max_centroid_acceleration_px": 15.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "min_alpha_coverage": "The canonical production silhouette is slim and approximately 453 pixels tall in the final 512 pixel cell.",
+    "max_area_drift": "Only one loose sleeve and the lower hem move; the body, feet and root remain fixed.",
+    "max_center_range_px": "The hand sweeps within the existing dress silhouette and the root must remain stationary."
+  },
+  "post_process": {
+    "generation": "Every motion frame is a separate complete-character built-in image-generation call using the canonical anchor and temporal neighbors.",
+    "forbidden": "No cut-and-paste parts, local compositing, translated layers, optical flow, cross-fade, morphing or algorithmic interpolation.",
+    "background_removal": "Use a flat #FF00FF source background, two-channel magenta chroma removal, soft edge matte and despill.",
+    "final_downsample": "Uniformly normalize each complete drawing once into a fixed 512x512 cell, aligned by shoe center and the y=472 visible baseline."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "neutral idle endpoint"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.091, "role": "direct", "pose": "gaze drops toward the lower skirt"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.182, "role": "direct", "pose": "bag-side hand leaves rest and approaches the skirt"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.273, "role": "direct", "pose": "fingers align for the first downward brush"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.364, "role": "key", "pose": "first brushing contact across the lower skirt"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.455, "role": "direct", "pose": "first brush flicks away and sleeve trails"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.545, "role": "direct", "pose": "hand resets above the hem for a second sweep"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.636, "role": "key", "pose": "second stronger brush crosses the lower front-right skirt"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.727, "role": "direct", "pose": "hand decelerates near the lace edge"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.818, "role": "key", "pose": "free hand presses and smooths the lace hem once"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.909, "role": "direct", "pose": "hand withdraws and gaze begins lifting"},
+    {"index": 11, "file": "frame_011.png", "phase": 1.0, "role": "key", "pose": "intentional return to neutral idle"}
+  ]
+}

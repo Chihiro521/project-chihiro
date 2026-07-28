@@ -561,6 +561,81 @@
         "height": 453
       }
     },
+    "tidy_clothes": {
+      "frames": [
+        "animations/tidy_clothes/frame_000.png",
+        "animations/tidy_clothes/frame_001.png",
+        "animations/tidy_clothes/frame_002.png",
+        "animations/tidy_clothes/frame_003.png",
+        "animations/tidy_clothes/frame_004.png",
+        "animations/tidy_clothes/frame_005.png",
+        "animations/tidy_clothes/frame_006.png",
+        "animations/tidy_clothes/frame_007.png",
+        "animations/tidy_clothes/frame_008.png",
+        "animations/tidy_clothes/frame_009.png",
+        "animations/tidy_clothes/frame_010.png",
+        "animations/tidy_clothes/frame_011.png"
+      ],
+      "frameDurationsMs": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167
+      ],
+      "loop": false,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 20
+        },
+        {
+          "x": 370,
+          "y": 20
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 168,
+        "y": 19,
+        "width": 181,
+        "height": 453
+      }
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",
