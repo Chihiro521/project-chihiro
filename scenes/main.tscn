@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://dkvp0hrsi3d6q"]
+[gd_scene load_steps=9 format=3 uid="uid://dkvp0hrsi3d6q"]
 
 [ext_resource type="Script" uid="uid://cbifga6bt5l7e" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" uid="uid://psics7fgg3p3" path="res://scripts/core/sprite_player.gd" id="2_player"]
 [ext_resource type="Script" uid="uid://byuqdufji40qu" path="res://scripts/platform/desktop_window.gd" id="3_window"]
 [ext_resource type="Texture2D" uid="uid://cdnt6ehdjyy3n" path="res://assets/icon.png" id="4_icon"]
 [ext_resource type="Texture2D" uid="uid://buqhwyewwqmsb" path="res://skins/little-chihiro/animations/idle/frame_00.png" id="5_preview"]
+[ext_resource type="Script" path="res://scripts/ui/speech_bubble.gd" id="6_bubble"]
+[ext_resource type="Script" path="res://scripts/ui/debug_overlay.gd" id="7_debug"]
+[ext_resource type="Script" path="res://scripts/core/pet_sfx.gd" id="8_sfx"]
 
 [node name="LittleChihiro" type="Node" unique_id=1273643401]
 script = ExtResource("1_main")
@@ -19,6 +22,30 @@ offset = Vector2(-256, -491.52)
 [node name="SpritePlayer" type="Node" parent="." unique_id=140087533]
 script = ExtResource("2_player")
 sprite_path = NodePath("../PetSprite")
+
+[node name="SpeechBubble" type="PanelContainer" parent="."]
+offset_left = 72.0
+offset_top = 12.0
+offset_right = 448.0
+offset_bottom = 104.0
+script = ExtResource("6_bubble")
+
+[node name="Text" type="Label" parent="SpeechBubble"]
+custom_minimum_size = Vector2(344, 64)
+layout_mode = 2
+
+[node name="DebugOverlay" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 292.0
+offset_bottom = 142.0
+script = ExtResource("7_debug")
+
+[node name="Text" type="Label" parent="DebugOverlay"]
+layout_mode = 2
+
+[node name="SfxPlayer" type="Node" parent="."]
+script = ExtResource("8_sfx")
 
 [node name="DesktopWindow" type="Node" parent="." unique_id=684644897]
 script = ExtResource("3_window")

@@ -14,6 +14,11 @@ func _run() -> void:
 	_test_gaze()
 	_test_drag_and_umbrella()
 	_test_edge_patrol()
+	_test_life_model()
+	_test_behavior_director()
+	_test_action_session()
+	_test_state_store_and_dialogue()
+	_test_window_platforms()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
 		quit(0)
@@ -51,6 +56,12 @@ func _test_state_machine() -> void:
 	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "land completes to idle")
 	_expect(machine.dispatch({"type": "FULLSCREEN_ENTER"}) == "suspended", "fullscreen suspends")
 	_expect(machine.dispatch({"type": "FULLSCREEN_EXIT"}) == "idle", "fullscreen exit resumes idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "ambient_action"}) == "ambient_action", "autonomous action enters generic execution state")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "autonomous action returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "platform_sit"}) == "platform_sit", "platform action enters platform state")
+	_expect(machine.dispatch({"type": "PLATFORM_LOST"}) == "drag_fall", "platform loss preempts into fall")
+	_expect(machine.dispatch({"type": "ARRIVE"}) == "land", "platform fall can land")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "platform landing returns idle")
 
 func _test_render_box() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
@@ -113,6 +124,181 @@ func _test_edge_patrol() -> void:
 			var point := Vector2(pose[key])
 			_expect(point.x >= float(bounds.min_x) - 0.01 and point.x <= float(bounds.max_x) + 0.01, "route x stays inside work area")
 			_expect(point.y >= float(bounds.min_y) - 0.01 and point.y <= float(bounds.max_y) + 0.01, "route y stays inside work area")
+
+func _test_life_model() -> void:
+	var profile := _load_json("res://data/behavior_profile.json")
+	var needs := PetNeedsModel.new(profile)
+	_expect(is_equal_approx(needs.get_need("energy"), 72.0), "life model starts with configured energy")
+	needs.tick(3600.0, {"sleeping": false})
+	_expect(is_equal_approx(needs.get_need("energy"), 0.0), "awake energy clamps at zero")
+	_expect(needs.get_need("boredom") > 20.0, "awake boredom rises")
+	needs.reset_session(40.0)
+	needs.apply_event("rapid_poke")
+	_expect(needs.get_need("irritation") >= 12.0, "rapid poke raises irritation")
+	_expect(needs.get_need("affection") < 40.0, "rapid poke lowers affection")
+	needs.set_need("affection", 150.0)
+	_expect(is_equal_approx(needs.get_need("affection"), 100.0), "affection clamps at one hundred")
+	_expect(needs.relationship_tier() == "close", "relationship tier follows affection")
+	needs.set_need("energy", 20.0)
+	needs.tick(300.0, {"sleeping": true})
+	_expect(needs.get_need("energy") > 20.0, "sleep restores energy")
+
+func _test_behavior_director() -> void:
+	var profile := _load_json("res://data/behavior_profile.json")
+	var needs := PetNeedsModel.new(profile)
+	var director := PetBehaviorDirector.load_from_file("res://data/behavior_profile.json", 4242)
+	_expect(director.is_valid(), "behavior profile is valid")
+	var context := {
+		"autonomy_allowed": true,
+		"available_clips": PetManifestData.load_from_file("res://skins/little-chihiro/pet.json").animation_names(),
+		"has_platform": false,
+		"on_platform": false,
+		"relationship_tier": needs.relationship_tier(),
+		"time_period": "afternoon",
+	}
+	var selected_ids: Array[String] = []
+	for index in range(8):
+		var intent := director.select_intent(needs, context, 100000 + index * 200000)
+		_expect(not intent.is_empty(), "behavior director produces an eligible intent")
+		var intent_id := str(intent.get("id", ""))
+		if selected_ids.size() >= 3:
+			_expect(intent_id not in selected_ids.slice(selected_ids.size() - 3), "behavior director avoids the latest three intents")
+		selected_ids.append(intent_id)
+		needs.apply_event("behavior_completed", {"effects": intent.get("effects", {})})
+	for minute in range(240):
+		needs.tick(60.0, {"sleeping": needs.get_need("energy") < 25.0})
+		if minute % 5 == 0:
+			var intent := director.select_intent(needs, context, 2000000 + minute * 60000)
+			if not intent.is_empty(): needs.apply_event("behavior_completed", {"effects": intent.get("effects", {})})
+	for key in PetNeedsModel.NEED_NAMES:
+		_expect(needs.get_need(key) >= 0.0 and needs.get_need(key) <= 100.0, "four-hour simulation keeps %s in range" % key)
+
+func _test_action_session() -> void:
+	var session := PetActionSession.new()
+	var timeout_intent := {
+		"id": "breathe", "clip": "idle", "priority": "autonomous",
+		"session": {"type": "one_shot", "clip": "idle", "max_duration_ms": 100},
+	}
+	_expect(session.begin(timeout_intent, 1000), "action session begins")
+	session.tick(1200)
+	_expect(not session.is_active() and str(session.snapshot().outcome) == "timeout", "loop fallback ends at maximum duration")
+	var interrupt_intent := {
+		"id": "platform", "clip": "idle", "priority": "autonomous",
+		"resume_policy": "platform_valid",
+		"session": {"type": "one_shot", "clip": "idle", "interrupt_mode": "resume_if_platform_valid"},
+	}
+	_expect(session.begin(interrupt_intent, 2000), "platform session begins")
+	var decision := session.request_interrupt("dragging", {"platform_valid": true}, 2100)
+	_expect(bool(decision.accepted), "dragging preempts autonomous action")
+	_expect(bool(decision.resume_allowed), "valid platform action records resumability")
+	_expect(session.has_resumable_session(), "interrupted platform session remains resumable")
+	_expect(session.resume({"platform_valid": true}, 2200), "platform session resumes while its source remains valid")
+	session.request_finish(2300)
+	var sequence_intent := {
+		"id": "rest", "clip": "rest_enter", "priority": "autonomous",
+		"session": {"type": "sequence", "enter": "rest_enter", "loop": "rest_loop", "exit": "rest_exit", "max_duration_ms": 100},
+	}
+	_expect(session.begin(sequence_intent, 3000), "bounded sequence session begins")
+	session.on_clip_finished(3010)
+	_expect(session.current_phase() == "loop", "sequence advances from enter to loop")
+	session.tick(3110)
+	_expect(session.current_phase() == "exit", "bounded loop requests its exit at maximum duration")
+	session.on_clip_finished(3120)
+	_expect(not session.is_active(), "sequence completes after its exit clip")
+	var sleep_intent := {
+		"id": "nap", "clip": "nap_enter", "priority": "autonomous",
+		"session": {"type": "sequence", "enter": "nap_enter", "loop": "nap_loop", "exit": "nap_wake", "interrupt_mode": "wake_then_idle"},
+	}
+	_expect(session.begin(sleep_intent, 4000), "sleep session begins")
+	session.on_clip_finished(4010)
+	session.request_interrupt("direct_interaction", {}, 4020)
+	_expect(session.is_active() and session.current_clip() == "nap_wake", "sleep interruption plays wake before returning idle")
+	session.on_clip_finished(4030)
+	_expect(not session.is_active(), "wake exit releases the action session")
+
+func _test_state_store_and_dialogue() -> void:
+	var test_path := "user://little_chihiro_state_test.json"
+	var absolute := ProjectSettings.globalize_path(test_path)
+	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
+	var store := PetStateStore.new(test_path)
+	var state := store.create_default_state()
+	state.affection = 73.5
+	state.interaction_stats.head_pats = 4
+	state["untrusted_title"] = "must not persist"
+	_expect(store.save_state(state), "state store writes atomically")
+	var loaded := store.load_state()
+	_expect(is_equal_approx(float(loaded.affection), 73.5), "state store restores affection")
+	_expect(int(loaded.interaction_stats.head_pats) == 4, "state store restores interaction counters")
+	_expect(not loaded.has("untrusted_title"), "state store drops fields outside the whitelist")
+	var previous_path := absolute + ".previous"
+	_expect(DirAccess.rename_absolute(absolute, previous_path) == OK, "test can simulate an interrupted state replacement")
+	var recovered := store.load_state()
+	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
+	var dialogue := PetDialogueDirector.new(99)
+	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
+	_expect(dialogue.line_count() == 140, "dialogue catalog contains 140 lines")
+	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
+	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
+	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
+	_expect(dialogue.sanitize_window_title("这是一个非常非常非常非常非常非常长的窗口标题").length() <= 24, "window titles are truncated")
+	var line := dialogue.select_line({
+		"event": "head_pat_accept", "relationship_tier": "trusted", "irritation": 0,
+		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+	}, 100000)
+	_expect(not line.is_empty(), "dialogue director selects a matching event line")
+	var direct_intent := PetBehaviorDirector.load_from_file("res://data/behavior_profile.json", 7).create_intent(
+		"window_land_recover", PetNeedsModel.new(_load_json("res://data/behavior_profile.json")),
+		{"available_clips": ["land"], "relationship_tier": "familiar"}, 1000,
+	)
+	_expect(str(direct_intent.get("id", "")) == "window_land_recover", "non-selectable event behavior can be created directly")
+	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
+	if FileAccess.file_exists(previous_path): DirAccess.remove_absolute(previous_path)
+
+func _test_window_platforms() -> void:
+	var snapshots := [
+		{"handle": 1, "process_id": 10, "rect": Rect2i(100, 100, 500, 400), "z_order": 0, "visible": true},
+		{"handle": 2, "process_id": 20, "rect": Rect2i(0, 100, 800, 500), "z_order": 1, "visible": true},
+		{"handle": 3, "process_id": 999, "rect": Rect2i(0, 300, 500, 400), "z_order": 2, "visible": true},
+		{"handle": 4, "process_id": 30, "rect": Rect2i(0, 500, 400, 300), "z_order": 3, "visible": true, "minimized": true},
+	]
+	var platforms := WindowPlatformService.build_platforms(snapshots, 999, 160, 12)
+	_expect(platforms.size() == 2, "window occlusion leaves two standable segments")
+	_expect(platforms[0].handle == 1 and platforms[0].top_edge.size.x == 500, "front window keeps its complete top edge")
+	_expect(platforms[1].handle == 2 and platforms[1].top_edge.position.x == 600, "covered lower edge is subtracted by z order")
+	_expect(not WindowPlatformService.is_snapshot_eligible(snapshots[2], 999), "own-process windows are excluded")
+	var nearby: Variant = WindowPlatformService.choose_nearby_platform(platforms[0], platforms, 1000.0, 500.0)
+	_expect(nearby == platforms[1], "nearest different platform is selected")
+	var tool_occlusion := [
+		{"handle": 10, "process_id": 20, "rect": Rect2i(0, 50, 320, 100), "z_order": 0, "visible": true, "tool_window": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	var tool_platforms := WindowPlatformService.build_platforms(tool_occlusion, -1, 160, 12)
+	_expect(tool_platforms.size() == 1 and tool_platforms[0].segment_left() == 320, "tool windows occlude lower ledges without becoming platforms")
+	var tracker := WindowPlatformService.new()
+	tracker.set_native_bridge(null)
+	var ridden := WindowPlatform.from_snapshot(tool_occlusion[1], 0, 700)
+	var occluded_track := tracker.track_platform(ridden, tool_occlusion, 200.0)
+	_expect(bool(occluded_track.get("lost", false)) and str(occluded_track.get("reason", "")) == "standing_point_occluded", "rider falls when its exact standing point becomes occluded")
+	var reused_track := tracker.track_platform(ridden, [
+		{"handle": 11, "process_id": 999, "rect": Rect2i(0, 100, 700, 500), "z_order": 0, "visible": true},
+	], 400.0)
+	_expect(bool(reused_track.get("lost", false)), "reused HWND with another process id is rejected")
+	var native_service := WindowPlatformService.new()
+	_expect(native_service.native_available(), "Windows test baseline loads the native GDExtension")
+	native_service.capture_titles = false
+	var native_snapshots := native_service.enumerate_snapshots(12)
+	_expect(native_snapshots.size() <= 12, "native enumeration is capped at twelve relevant HWNDs")
+	var titles_suppressed := true
+	for snapshot in native_snapshots:
+		if snapshot is Dictionary and not str(snapshot.get("title", "")).is_empty():
+			titles_suppressed = false
+	_expect(titles_suppressed, "disabling title awareness prevents native title collection")
+
+func _load_json(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null: return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	return parsed if parsed is Dictionary else {}
 
 func _expect(condition: bool, message: String) -> void:
 	assertions += 1
