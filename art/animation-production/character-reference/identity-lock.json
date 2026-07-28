@@ -1,0 +1,32 @@
+{
+  "character": "Little Chihiro independent fan setting",
+  "canonical_reference": "model-sheet.png",
+  "silhouette": "Small full-body girl with a large rounded navy beret, ash-blonde chin-length bob with outward side tufts, long navy A-line dress, slim legs, cross-body bag and dangling rabbit creating a fixed right-side silhouette.",
+  "proportions": "Approximately four heads tall, large head, narrow shoulders, short torso and limbs, small hands and feet; no age or body-shape changes between frames.",
+  "face_and_markings": "Soft rounded face, pale skin, muted blue-gray eyes, short straight fringe split into fine locks, subtle cheek color; facial identity and hair part must remain fixed.",
+  "costume": "Deep navy beret with dark green rear ribbon; deep navy long-sleeve dress with cream Peter Pan collar, orange neck ribbon, three brass front buttons, puffed cuffs and cream lace hem; tan cross-body strap and satchel; white rabbit charm with orange bow; cream knee socks; black Mary Jane shoes.",
+  "palette": [
+    "#202330",
+    "#d8c9b9",
+    "#eee9dc",
+    "#c87539",
+    "#b78a55",
+    "#747f83",
+    "#292326"
+  ],
+  "rendering": "Soft polished anime game illustration, clean dark fine outlines, restrained warm cel shading with soft blended highlights, transparent sprite framing, orthographic camera, neutral lighting, no cast shadow.",
+  "canvas": {
+    "generation": [1024, 1024],
+    "final": [512, 512],
+    "pivot": [256, 492],
+    "baseline_lock": true
+  },
+  "forbidden_changes": [
+    "no costume redesign or missing buttons",
+    "no mirrored or detached bag and rabbit",
+    "no hairstyle, eye-color or proportion drift",
+    "no extra props unless the action contract explicitly requests one",
+    "no scenery, floor, shadow, text or watermark",
+    "no crop and no per-frame trimming"
+  ]
+}

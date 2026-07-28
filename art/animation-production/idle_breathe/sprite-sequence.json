@@ -1,0 +1,57 @@
+{
+  "name": "idle_breathe",
+  "frame_count": 8,
+  "fps": 4,
+  "loop": true,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, ash-blonde bob, navy A-line dress, tan satchel and rabbit charm remain identical to the canonical model sheet.",
+    "proportions": "Approximately four heads tall with fixed head, torso, limb and shoe scale.",
+    "face_and_markings": "Muted blue-gray eyes, pale rounded face and fixed fringe; neutral observant expression.",
+    "costume": "Cream collar, orange ribbon, three brass buttons, lace hem, tan strap and rabbit charm stay structurally unchanged.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished anime sprite with fine dark outlines and restrained warm cel shading; fixed orthographic camera and neutral light."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.18,
+    "max_alpha_coverage": 0.5,
+    "max_color_jsd": 0.12,
+    "max_area_drift": 0.12,
+    "max_bbox_aspect_drift": 0.1,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 8.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.18,
+    "max_motion_energy_delta": 0.08,
+    "max_centroid_acceleration_px": 5.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "neutral exhale; feet planted and shoulders relaxed"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.125, "role": "in-between", "pose": "chest begins to rise; rabbit lags slightly"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.25, "role": "breakdown", "pose": "gentle inhale; shoulders lift by only a few pixels"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.375, "role": "in-between", "pose": "approach inhale peak with minimal dress expansion"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.5, "role": "key", "pose": "inhale peak; chin and torso subtly higher, feet unchanged"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.625, "role": "in-between", "pose": "begin exhale; hair and rabbit settle after torso"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.75, "role": "breakdown", "pose": "shoulders lower and skirt returns without root movement"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.875, "role": "in-between", "pose": "near neutral exhale and seamless return to frame zero"}
+  ]
+}
