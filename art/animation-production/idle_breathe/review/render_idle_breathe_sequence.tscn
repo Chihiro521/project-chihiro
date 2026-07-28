@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://art/animation-production/idle_breathe/review/render_idle_breathe_sequence.gd" id="1_render"]
+[ext_resource type="Texture2D" path="res://skins/little-chihiro/animations/idle/frame_00.png" id="2_anchor"]
+[ext_resource type="Shader" path="res://art/animation-production/idle_breathe/review/idle_breathe_key_pose.gdshader" id="3_motion"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_motion"]
+shader = ExtResource("3_motion")
+shader_parameter/pose_amount = 0.0
+shader_parameter/foot_anchor_y = 0.96
+
+[node name="IdleBreatheSequenceRenderer" type="Node2D"]
+script = ExtResource("1_render")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_motion")
+position = Vector2(256, 256)
+texture = ExtResource("2_anchor")

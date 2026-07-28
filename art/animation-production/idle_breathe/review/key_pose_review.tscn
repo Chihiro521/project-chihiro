@@ -1,0 +1,106 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://art/animation-production/idle_breathe/review/capture_key_pose_review.gd" id="1_capture"]
+[ext_resource type="Texture2D" path="res://skins/little-chihiro/animations/idle/frame_00.png" id="2_anchor"]
+[ext_resource type="Shader" path="res://art/animation-production/idle_breathe/review/idle_breathe_key_pose.gdshader" id="3_motion"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_neutral"]
+shader = ExtResource("3_motion")
+shader_parameter/pose_amount = 0.0
+shader_parameter/foot_anchor_y = 0.96
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_inhale"]
+shader = ExtResource("3_motion")
+shader_parameter/pose_amount = 1.0
+shader_parameter/foot_anchor_y = 0.96
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.078, 0.086, 0.105, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.29, 0.32, 0.39, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="IdleBreatheKeyPoseReview" type="Control"]
+custom_minimum_size = Vector2(1100, 640)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_capture")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.031, 0.035, 0.047, 1)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 14.0
+offset_right = 1076.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(0.91, 0.92, 0.95, 1)
+theme_override_font_sizes/font_size = 24
+text = "idle_breathe · key pose review"
+horizontal_alignment = 1
+
+[node name="NeutralPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 62.0
+offset_right = 542.0
+offset_bottom = 628.0
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="NeutralLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 76.0
+offset_right = 526.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(0.79, 0.82, 0.88, 1)
+theme_override_font_sizes/font_size = 18
+text = "K0 · neutral / exhale · approved anchor"
+horizontal_alignment = 1
+
+[node name="Neutral" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_neutral")
+position = Vector2(277, 365)
+texture = ExtResource("2_anchor")
+
+[node name="InhalePanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 558.0
+offset_top = 62.0
+offset_right = 1088.0
+offset_bottom = 628.0
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="InhaleLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 574.0
+offset_top = 76.0
+offset_right = 1072.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(0.98, 0.67, 0.38, 1)
+theme_override_font_sizes/font_size = 18
+text = "K4 · inhale peak / subtle weight shift"
+horizontal_alignment = 1
+
+[node name="Inhale" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_inhale")
+position = Vector2(823, 365)
+texture = ExtResource("2_anchor")

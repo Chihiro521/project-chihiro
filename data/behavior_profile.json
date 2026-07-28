@@ -32,11 +32,11 @@
     "global_blockers": ["fullscreen", "dragging", "menu_open", "direct_interaction"],
     "behaviors": [
       {
-        "id": "breathe_shift", "clip": "idle", "fallback_clip": "idle", "state": "micro_idle",
+        "id": "breathe_shift", "clip": "idle_breathe", "fallback_clip": "idle", "state": "micro_idle",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 18000,
-        "preconditions": {"requires_clips": ["idle"], "forbids_any": ["on_platform"]},
+        "preconditions": {"requires_clips": ["idle_breathe"], "forbids_any": ["on_platform"]},
         "score_weights": {"base": 18, "needs": {"boredom": 0.05, "irritation": -0.03}},
-        "effects": {"boredom": -0.5}, "session": {"type": "one_shot", "max_duration_ms": 2400}
+        "effects": {"boredom": -0.5}, "session": {"type": "one_shot", "max_duration_ms": 2000}
       },
       {
         "id": "look_around", "clip": "idle_blink", "fallback_clip": "react", "state": "micro_idle",

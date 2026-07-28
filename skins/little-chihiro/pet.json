@@ -267,6 +267,73 @@
         "height": 454
       }
     },
+    "idle_breathe": {
+      "frames": [
+        "animations/idle_breathe/frame_000.png",
+        "animations/idle_breathe/frame_001.png",
+        "animations/idle_breathe/frame_002.png",
+        "animations/idle_breathe/frame_003.png",
+        "animations/idle_breathe/frame_004.png",
+        "animations/idle_breathe/frame_005.png",
+        "animations/idle_breathe/frame_006.png",
+        "animations/idle_breathe/frame_007.png"
+      ],
+      "frameDurationsMs": [
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": true,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96
+      },
+      "hitArea": [
+        {
+          "x": 142,
+          "y": 68
+        },
+        {
+          "x": 370,
+          "y": 68
+        },
+        {
+          "x": 391,
+          "y": 275
+        },
+        {
+          "x": 354,
+          "y": 421
+        },
+        {
+          "x": 306,
+          "y": 478
+        },
+        {
+          "x": 205,
+          "y": 478
+        },
+        {
+          "x": 154,
+          "y": 421
+        },
+        {
+          "x": 119,
+          "y": 275
+        }
+      ],
+      "visualBounds": {
+        "x": 168,
+        "y": 14,
+        "width": 170,
+        "height": 458
+      }
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",
