@@ -1,0 +1,776 @@
+{
+  "status": "PASS",
+  "canonical_skin_rgb": [
+    233.48,
+    211.7,
+    183.28
+  ],
+  "thresholds": {
+    "head_width_px": [
+      0.975,
+      1.025
+    ],
+    "face_skin_width_px": [
+      0.97,
+      1.03
+    ],
+    "face_skin_height_px": [
+      0.98,
+      1.02
+    ],
+    "eye_ink_area_px": [
+      0.9,
+      1.1
+    ],
+    "skirt_width_px": [
+      0.97,
+      1.03
+    ],
+    "dress_bottom_y": [
+      0.995,
+      1.005
+    ],
+    "leg_row_widths_px": [
+      0.95,
+      1.05
+    ]
+  },
+  "failures": [],
+  "frames": [
+    {
+      "frame": 0,
+      "overall_bbox": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_width_px": 107,
+      "head_area_px": 11060,
+      "face_skin_bbox": [
+        213,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 88,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 272,
+      "skirt_width_px": 144,
+      "dress_bbox": [
+        185,
+        190,
+        332,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 66,
+        "410": 58,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 1.0,
+        "head_area_px": 1.0,
+        "face_skin_width_px": 1.0,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 1.0,
+        "skirt_width_px": 1.0,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "overall_bbox": [
+        185,
+        19,
+        331,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 10997,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 273,
+      "skirt_width_px": 143,
+      "dress_bbox": [
+        185,
+        190,
+        331,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 65,
+        "410": 58,
+        "445": 64
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9943,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 1.0037,
+        "skirt_width_px": 0.9931,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 0.9848,
+          "410": 1.0,
+          "445": 0.9846
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "overall_bbox": [
+        183,
+        19,
+        330,
+        472
+      ],
+      "head_width_px": 105,
+      "head_area_px": 11062,
+      "face_skin_bbox": [
+        213,
+        65,
+        299,
+        132
+      ],
+      "face_skin_width_px": 86,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 267,
+      "skirt_width_px": 146,
+      "dress_bbox": [
+        183,
+        190,
+        330,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 65,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9813,
+        "head_area_px": 1.0002,
+        "face_skin_width_px": 0.9773,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9816,
+        "skirt_width_px": 1.0139,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 0.9848,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "overall_bbox": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11013,
+      "face_skin_bbox": [
+        214,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 255,
+      "skirt_width_px": 145,
+      "dress_bbox": [
+        185,
+        190,
+        332,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 66,
+        "410": 58,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9958,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9375,
+        "skirt_width_px": 1.0069,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "overall_bbox": [
+        184,
+        19,
+        333,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11038,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 264,
+      "skirt_width_px": 148,
+      "dress_bbox": [
+        184,
+        190,
+        333,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 66,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.998,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9706,
+        "skirt_width_px": 1.0278,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 1.0,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 5,
+      "overall_bbox": [
+        184,
+        19,
+        334,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11083,
+      "face_skin_bbox": [
+        213,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 88,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 254,
+      "skirt_width_px": 148,
+      "dress_bbox": [
+        184,
+        190,
+        334,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 64,
+        "380": 66,
+        "410": 58,
+        "445": 64
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 1.0021,
+        "face_skin_width_px": 1.0,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9338,
+        "skirt_width_px": 1.0278,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0323,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 0.9846
+        }
+      }
+    },
+    {
+      "frame": 6,
+      "overall_bbox": [
+        184,
+        19,
+        333,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 10992,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 258,
+      "skirt_width_px": 146,
+      "dress_bbox": [
+        184,
+        190,
+        333,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 67,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9939,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9485,
+        "skirt_width_px": 1.0139,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 1.0152,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 7,
+      "overall_bbox": [
+        185,
+        19,
+        334,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11016,
+      "face_skin_bbox": [
+        214,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 271,
+      "skirt_width_px": 147,
+      "dress_bbox": [
+        185,
+        190,
+        334,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 67,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.996,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9963,
+        "skirt_width_px": 1.0208,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 1.0152,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 8,
+      "overall_bbox": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11013,
+      "face_skin_bbox": [
+        214,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 272,
+      "skirt_width_px": 145,
+      "dress_bbox": [
+        185,
+        190,
+        332,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 66,
+        "410": 58,
+        "445": 64
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9958,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 1.0,
+        "skirt_width_px": 1.0069,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 0.9846
+        }
+      }
+    },
+    {
+      "frame": 9,
+      "overall_bbox": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11024,
+      "face_skin_bbox": [
+        214,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 86,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 282,
+      "skirt_width_px": 145,
+      "dress_bbox": [
+        185,
+        190,
+        332,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 66,
+        "410": 58,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9967,
+        "face_skin_width_px": 0.9773,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 1.0368,
+        "skirt_width_px": 1.0069,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 10,
+      "overall_bbox": [
+        184,
+        19,
+        331,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11042,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 265,
+      "skirt_width_px": 145,
+      "dress_bbox": [
+        184,
+        190,
+        331,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 65,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9984,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9743,
+        "skirt_width_px": 1.0069,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 0.9848,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 11,
+      "overall_bbox": [
+        184,
+        19,
+        334,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11038,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 285,
+      "skirt_width_px": 147,
+      "dress_bbox": [
+        184,
+        190,
+        334,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 63,
+        "380": 65,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.998,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 1.0478,
+        "skirt_width_px": 1.0208,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0161,
+          "380": 0.9848,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 12,
+      "overall_bbox": [
+        185,
+        19,
+        331,
+        472
+      ],
+      "head_width_px": 107,
+      "head_area_px": 10984,
+      "face_skin_bbox": [
+        213,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 88,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 262,
+      "skirt_width_px": 144,
+      "dress_bbox": [
+        185,
+        190,
+        331,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 65,
+        "410": 58,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 1.0,
+        "head_area_px": 0.9931,
+        "face_skin_width_px": 1.0,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9632,
+        "skirt_width_px": 1.0,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 0.9848,
+          "410": 1.0,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 13,
+      "overall_bbox": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 11058,
+      "face_skin_bbox": [
+        213,
+        65,
+        301,
+        132
+      ],
+      "face_skin_width_px": 88,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 262,
+      "skirt_width_px": 145,
+      "dress_bbox": [
+        185,
+        190,
+        332,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 66,
+        "410": 58,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9998,
+        "face_skin_width_px": 1.0,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9632,
+        "skirt_width_px": 1.0069,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 1.0,
+          "410": 1.0,
+          "445": 1.0
+        }
+      }
+    },
+    {
+      "frame": 14,
+      "overall_bbox": [
+        185,
+        19,
+        331,
+        472
+      ],
+      "head_width_px": 106,
+      "head_area_px": 10995,
+      "face_skin_bbox": [
+        213,
+        65,
+        300,
+        132
+      ],
+      "face_skin_width_px": 87,
+      "face_skin_height_px": 67,
+      "eye_ink_area_px": 255,
+      "skirt_width_px": 144,
+      "dress_bbox": [
+        185,
+        190,
+        331,
+        356
+      ],
+      "dress_bottom_y": 356,
+      "leg_row_widths_px": {
+        "350": 62,
+        "380": 65,
+        "410": 59,
+        "445": 65
+      },
+      "ratio_vs_f00": {
+        "head_width_px": 0.9907,
+        "head_area_px": 0.9941,
+        "face_skin_width_px": 0.9886,
+        "face_skin_height_px": 1.0,
+        "eye_ink_area_px": 0.9375,
+        "skirt_width_px": 1.0,
+        "dress_bottom_y": 1.0,
+        "leg_row_widths_px": {
+          "350": 1.0,
+          "380": 0.9848,
+          "410": 1.0172,
+          "445": 1.0
+        }
+      }
+    }
+  ]
+}

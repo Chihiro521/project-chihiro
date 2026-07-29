@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 68, "manifest should contain 68 animations")
+	_expect(manifest.animation_names().size() == 69, "manifest should contain 69 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -95,6 +95,19 @@ func _test_manifest() -> void:
 		var resource_path := manifest.frame_resource_path(str(frame))
 		stretch_textures_load = stretch_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(stretch_textures_load, "stretch runtime frames should import as Texture2D resources")
+	var reason_pose := manifest.clip("reason_pose")
+	_expect((reason_pose.get("frames", []) as Array).size() == 15, "reason-pose should contain fifteen directly drawn poses")
+	_expect(not bool(reason_pose.get("loop", true)), "reason-pose should return to idle after reaching a conclusion")
+	var reason_durations: Array = reason_pose.get("frameDurationsMs", [])
+	var reason_at_six_fps := reason_durations.size() == 15
+	for duration in reason_durations:
+		reason_at_six_fps = reason_at_six_fps and is_equal_approx(float(duration), 167.0)
+	_expect(reason_at_six_fps, "reason-pose should play at approximately six FPS")
+	var reason_textures_load := true
+	for frame in reason_pose.get("frames", []):
+		var resource_path := manifest.frame_resource_path(str(frame))
+		reason_textures_load = reason_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(reason_textures_load, "reason-pose runtime frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -103,7 +116,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1385, "manifest should expose 1385 runtime frames")
+	_expect(frame_count == 1400, "manifest should expose 1400 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -232,6 +245,8 @@ func _test_behavior_director() -> void:
 	_expect(str(tidy_intent.get("clip", "")) == "tidy_clothes", "tidy-clothes behavior uses the approved direct animation")
 	var stretch_intent := director.create_intent("stretch", needs, context, 99000)
 	_expect(str(stretch_intent.get("clip", "")) == "stretch", "stretch behavior uses the approved direct animation")
+	var reason_intent := director.create_intent("reason_pose", needs, context, 99500)
+	_expect(str(reason_intent.get("clip", "")) == "reason_pose", "reason-pose behavior uses the approved direct animation")
 	var selected_ids: Array[String] = []
 	for index in range(8):
 		var intent := director.select_intent(needs, context, 100000 + index * 200000)
