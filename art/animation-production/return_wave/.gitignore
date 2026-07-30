@@ -1,0 +1,6 @@
+frames-before-clarity/
+key-qa/
+tools/
+package/*.import
+**/__pycache__/
+*.pyc

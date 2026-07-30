@@ -1,0 +1,128 @@
+{
+  "name": "return_wave",
+  "frame_count": 17,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Rounded navy beret, subdued ash-beige bob, compact navy A-line dress, thin tan strap, compact satchel and its single small rabbit remain unmistakable in every frame.",
+    "proportions": "Frame 0 and the approved front anchor are authoritative: preserve the broad rounded head and face width, approximately four-head-tall compact body, short sturdy thighs and calves, sock cylinders, shoe size, fixed body height and planted-foot spacing.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and matte cool ash-beige hair; only a small attentive gaze shift, a restrained blink and a tiny closed-mouth welcome may change.",
+    "costume": "Cream Peter Pan collar, orange ribbon, approved brass-button layout, loose long sleeves, lace hem, cream socks, black Mary Jane shoes, tan strap, compact satchel and small rabbit keep their exact topology, scale and side.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished miniature anime sprite with fine dark outlines, restrained warm cel shading, subdued original hair highlights, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She notices the returning user, keeps her right hand naturally holding the cross-body strap, raises only her free left hand to the side of her face, gives two small restrained wave beats, lowers the hand and returns to the same neutral standing pose.",
+    "notice_key": "Eyes refocus toward the user and the chin lifts only a fraction; posture, feet and both hands remain nearly neutral.",
+    "raise_key": "The free left elbow bends close to the torso and the left hand rises beside the cheek with a relaxed open palm; the right hand continues holding the strap.",
+    "wave_out_key": "The left palm stays beside the face and tilts a few degrees outward at the wrist; fingers remain softly separated and the elbow does not flare.",
+    "wave_in_key": "The same left palm tilts a few degrees inward toward the temple without touching the hat or hair; the motion reads as one quiet endpoint of the two-beat wave.",
+    "lower_key": "The left forearm descends past chest height with relaxed fingers while the expression settles and the right hand, strap, satchel and rabbit stay natural.",
+    "micro_expression_arc": "K01 recognizes the user with a tiny brow lift and attentive eyes; K04 begins a very small closed-mouth smile; K06 softens the eyes while maintaining that smile; K08 gives one quiet bilateral blink at the inward wave endpoint; K13 reopens the eyes as the smile fades toward warm neutral.",
+    "locked_elements": "Shoes, feet spacing, root, body scale, hat, hair identity, collar, ribbon, buttons, right-hand strap grip, strap route, satchel identity, rabbit identity and camera remain fixed.",
+    "allowed_motion": "Left shoulder, elbow, wrist and fingers; gaze and eyelids; a head inclination no greater than three degrees; a tiny closed-mouth welcome; minimal sleeve, hem, satchel and rabbit secondary response.",
+    "forbidden_changes": "No large arm swing, overhead waving, both-hands wave, bouncing, stepping, knee bend, childish grin, open-mouth cheer, exaggerated blush, hat touch, rabbit interaction, released right-hand strap, body slimming, brighter hair, enlarged head or face, enlarged rabbit, extra anatomy, scenery, shadow, text, effects or watermark."
+  },
+  "key_pose_sources": {
+    "canonical_model_sheet": "../character-reference/model-sheet.png",
+    "canonical_front": "anchors/character_front.png",
+    "approved_redrawn_idle": "anchors/approved_redrawn_idle_chroma.png",
+    "proportion_authority": "anchors/reason_pose_frame_000_chroma.png",
+    "k01_notice": "key-poses/k01_notice_chroma.png",
+    "k04_raise": "key-poses/k04_raise_chroma.png",
+    "k06_wave_out": "key-poses/k06_wave_out_chroma.png",
+    "k08_wave_in": "key-poses/k08_wave_in_chroma.png",
+    "k13_lower": "key-poses/k13_lower_chroma.png",
+    "review_contact_sheet": "key-poses/return_wave-key-contact-sheet-v2.png",
+    "status": "sequence_user_accepted_2026-07-30",
+    "strategy": "Generate every key and later every transition as a separate complete full-character drawing from the canonical identity anchor and nearest temporal references. Never construct motion by moving, blending, warping or interpolating image parts."
+  },
+  "key_pose_review": {
+    "automated_status": "PASS",
+    "semantic_status": "user_approved_for_in_betweens",
+    "qa_report": "key-qa/qa/qa-report.json",
+    "qa_contact_sheet": "key-qa/qa/contact-sheet.png",
+    "qa_preview": "key-qa/qa/preview.gif",
+    "review_contact_sheet": "key-poses/return_wave-key-contact-sheet-v2.png",
+    "review_scope": "F00 proportion authority plus K01 notice, K04 raise, K06 wave-out, K08 wave-in and K13 lowering transition. No in-betweens or Godot integration have been produced.",
+    "revision_notes": "User feedback corrected perceived elongation in K08 and K13. All five review keys now share visible bbox top y=19, bottom y=472 and height 453. The expression arc adds a brow lift, tiny smile onset, softened eyes, one quiet bilateral blink and a warm settling gaze."
+  },
+  "sequence_review": {
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-07-30",
+    "qa_report": "qa/qa-report.json",
+    "contact_sheet": "qa/contact-sheet.png",
+    "target_fps_preview": "qa/preview.gif",
+    "slow_preview": "qa/preview-slow.gif",
+    "lossless_preview": "qa/preview-hq-v2.png",
+    "lossless_slow_preview": "qa/preview-hq-slow-v2.png",
+    "preview_notes": "The lossless APNG uses full-frame source blending with disposal 0. Its 17 decoded frames match the composited source PNGs exactly; review-only start and end holds separate repeats of this non-looping one-shot.",
+    "summary": "All 17 frames are complete independent full-character drawings. The two restrained wave beats are driven mainly by small wrist rotations while the elbow remains close to the torso; the blink and reopening eyes form the central micro-expression beat. A uniform full-frame clarity grade removes the washed-out preview impression without changing pose geometry, alpha geometry or identity. All normalized frames share visible top y=19, bottom y=472 and height 453.",
+    "revision_notes": "After user review, all frames received the same restrained full-frame grade: brightness 0.985, contrast 1.025, saturation 1.045 and a small unsharp mask (radius 0.65, percent 55, threshold 2). Alpha was preserved exactly. The prior accepted frames remain recoverable in frames-before-clarity/."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.145,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.6,
+    "max_bbox_aspect_drift": 0.6,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 22.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.26,
+    "max_motion_energy_delta": 0.14,
+    "max_centroid_acceleration_px": 18.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "The raised free sleeve widens the upper-body silhouette while feet, torso height and root scale remain locked.",
+    "max_bbox_aspect_drift": "The face-side hand adds modest width without changing body proportions.",
+    "max_center_range_px": "The asymmetric one-hand gesture permits a small centroid shift while both feet remain fixed."
+  },
+  "post_process": {
+    "generation": "Every motion frame is a separate complete-character built-in image-generation call using the canonical anchor and temporal neighbors.",
+    "forbidden": "No cut-and-paste parts, local compositing, translated layers, optical flow, cross-fade, morphing or algorithmic interpolation.",
+    "background_removal": "Use a perfectly flat #FF00FF source background, fixed two-channel #FF00FF chroma removal, a 90-to-150 soft alpha ramp and despill.",
+    "final_downsample": "Uniformly normalize complete 1024x1024 drawings into a fixed 512x512 cell, preserving body scale, shoe center and the y=472 visible baseline.",
+    "color_clarity_grade": "Apply one identical whole-frame color and clarity correction to every complete RGBA frame; preserve alpha exactly and do not move, warp, blend, composite or reconstruct any character part.",
+    "pre_grade_backup": "frames-before-clarity/"
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "neutral idle endpoint"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.0625, "role": "key", "pose": "notices the returning user with a restrained attentive gaze"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.125, "role": "direct", "pose": "free left hand separates slightly from the satchel side"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.1875, "role": "direct", "pose": "left elbow bends and forearm rises close to the torso"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.25, "role": "key", "pose": "left hand reaches face-side wave height with relaxed open palm"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.3125, "role": "direct", "pose": "wrist turns toward the first wave endpoint"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.375, "role": "key", "pose": "small outward wave endpoint beside the face"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.4375, "role": "direct", "pose": "palm passes through the restrained center angle as the eyelids begin a quiet blink"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.5, "role": "key", "pose": "small inward wave endpoint beside the temple"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.5625, "role": "direct", "pose": "eyes reopen while the palm returns through center for the second beat"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.625, "role": "direct", "pose": "second small outward wrist endpoint with the elbow still restrained"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.6875, "role": "direct", "pose": "second small inward wrist endpoint completes with a faint smile"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.75, "role": "direct", "pose": "left elbow begins to lower from the face and the smile softens"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.8125, "role": "key", "pose": "lowering transition with forearm descending past chest height"},
+    {"index": 14, "file": "frame_014.png", "phase": 0.875, "role": "direct", "pose": "left hand settles beside the satchel and rabbit"},
+    {"index": 15, "file": "frame_015.png", "phase": 0.9375, "role": "direct", "pose": "gaze and shoulders return fully to neutral"},
+    {"index": 16, "file": "frame_016.png", "phase": 1.0, "role": "key", "pose": "independently rendered exact neutral-pose return matching frame 0"}
+  ]
+}

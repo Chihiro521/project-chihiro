@@ -528,7 +528,7 @@ func _start_direct_behavior(intent_id: String) -> bool:
 func _play_intent_sfx(intent_id: String) -> void:
 	match intent_id:
 		"straighten_bag", "inspect_rabbit": sfx_player.play("bag")
-		"tidy_clothes", "stretch", "reason_pose": sfx_player.play("cloth")
+		"tidy_clothes", "stretch", "reason_pose", "return_wave": sfx_player.play("cloth")
 		"sit_rest", "window_sit": sfx_player.play("sit")
 		"window_walk": sfx_player.play("step")
 		"window_land_recover": sfx_player.play("land")
@@ -583,6 +583,7 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		"tidy_clothes": return "tidy_clothes"
 		"stretch": return "stretch"
 		"reason_pose": return "think"
+		"return_wave": return "return"
 		"nap": return "wake"
 		"window_walk": return "window_walk"
 		"window_sit": return "window_sit"
