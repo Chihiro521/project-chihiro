@@ -1,0 +1,44 @@
+{
+  "name": "sit_rest_stand_up_prep_v4_right_hand_release",
+  "purpose": "Replace the frozen viewer-left right-hand strap grip with release, palm support and a visible balance swing.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "keys": [
+    {"frame": 19, "pose": "right fingers open and leave strap", "chroma": "chroma/frame_019.png", "alpha": "alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
+    {"frame": 20, "pose": "right palm presses implied ground on viewer-left", "chroma": "chroma/frame_020.png", "alpha": "alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
+    {"frame": 21, "pose": "right hand releases ground and swings forward/up", "chroma": "chroma/frame_021.png", "alpha": "alpha/frame_021.png", "normalized": "normalized/frame_021.png"},
+    {"frame": 22, "pose": "right arm continues outward counterbalance away from strap", "chroma": "chroma/frame_022.png", "alpha": "alpha/frame_022.png", "normalized": "normalized/frame_022.png"}
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_heights": {"frame_019": 330, "frame_020": 310, "frame_021": 380, "frame_022": 435},
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "qa": {
+    "sequence_status": "PASS",
+    "normalization_status": "PASS",
+    "local_identity_status": "PASS",
+    "head_center_range_px": 0.79,
+    "baseline_range_px": 0,
+    "head_width_proxy_range_px": 16,
+    "face_width_proxy_range_px": 12,
+    "hair_luma_proxy_range": 6.263,
+    "sequence_report": "qa/automated/qa-report.json",
+    "normalization_report": "qa/normalization-report.json",
+    "local_identity_report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/stand-up-v4-contact-sheet.png",
+    "right_hand_closeup": "qa/right-hand-contact-closeup.png",
+    "target_preview": "qa/automated/preview.gif",
+    "slow_preview": "qa/preview-slow.gif"
+  },
+  "user_review": {
+    "date": "2026-07-30",
+    "verdict": "这个版本观感不太好，使用上个版本",
+    "replacement": "../stand-up-prep-v1/reference-manifest.json"
+  },
+  "production_state": "rejected",
+  "status": "USER_REJECTED_REVERTED_TO_V1_2026-07-30"
+}

@@ -1,0 +1,12 @@
+{
+  "date": "2026-07-30",
+  "verdict": "就是这个版本",
+  "selected_version": "stand-up-prep-v1",
+  "selected_contact_sheet": "qa/stand-up-prep-contact-sheet.png",
+  "selected_frames": [17, 19, 20, 21, 22],
+  "supersedes": [
+    "../stand-up-prep-v2-left-hand-support/",
+    "../stand-up-prep-v3-left-hand-arc/",
+    "../stand-up-prep-v4-right-hand-release/"
+  ]
+}

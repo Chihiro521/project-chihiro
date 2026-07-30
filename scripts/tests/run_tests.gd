@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 71, "manifest should contain 71 animations")
+	_expect(manifest.animation_names().size() == 74, "manifest should contain 74 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -134,6 +134,25 @@ func _test_manifest() -> void:
 		var resource_path := manifest.frame_resource_path(str(frame))
 		guard_textures_load = guard_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(guard_textures_load, "guard-bag-annoyed runtime frames should import as Texture2D resources")
+	var sit_specs := [
+		{"name": "sit_enter", "frames": 8, "loop": false},
+		{"name": "sit_loop", "frames": 10, "loop": true},
+		{"name": "sit_exit", "frames": 8, "loop": false},
+	]
+	var sit_textures_load := true
+	for spec in sit_specs:
+		var sit_clip := manifest.clip(str(spec["name"]))
+		_expect((sit_clip.get("frames", []) as Array).size() == int(spec["frames"]), "%s should contain its approved frame range" % spec["name"])
+		_expect(bool(sit_clip.get("loop", false)) == bool(spec["loop"]), "%s should preserve its segment loop policy" % spec["name"])
+		var sit_durations: Array = sit_clip.get("frameDurationsMs", [])
+		var sit_at_six_fps := sit_durations.size() == int(spec["frames"])
+		for duration in sit_durations:
+			sit_at_six_fps = sit_at_six_fps and is_equal_approx(float(duration), 167.0)
+		_expect(sit_at_six_fps, "%s should play at approximately six FPS" % spec["name"])
+		for frame in sit_clip.get("frames", []):
+			var resource_path := manifest.frame_resource_path(str(frame))
+			sit_textures_load = sit_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(sit_textures_load, "all sit-rest runtime frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -142,7 +161,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1432, "manifest should expose 1432 runtime frames")
+	_expect(frame_count == 1458, "manifest should expose 1458 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -278,6 +297,12 @@ func _test_behavior_director() -> void:
 	_expect(str(return_intent.get("clip", "")) == "return_wave", "return-wave behavior uses the approved direct animation")
 	var guard_intent := director.create_intent("guard_bag_annoyed", needs, context, 99800)
 	_expect(str(guard_intent.get("clip", "")) == "guard_bag_annoyed", "guard-bag behavior uses the approved direct animation")
+	needs.set_need("energy", 50.0)
+	var sit_intent := director.create_intent("sit_rest", needs, context, 99900)
+	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")
+	var sit_session: Dictionary = sit_intent.get("session", {})
+	_expect(str(sit_session.get("loop", "")) == "sit_loop" and str(sit_session.get("exit", "")) == "sit_exit", "sit-rest behavior preserves enter-loop-exit routing")
+	needs.set_need("energy", 72.0)
 	var selected_ids: Array[String] = []
 	for index in range(8):
 		var intent := director.select_intent(needs, context, 100000 + index * 200000)

@@ -1,0 +1,17 @@
+{
+  "action_id": "sit_rest",
+  "key_pose": "K06",
+  "version": 3,
+  "status": "user_approved_and_promoted",
+  "selected_source_sha256": "E0B52F8A15500AE73B339F9BD04120DBB0B61FEDE0C56EF4571398AECC0DCCC9",
+  "selected_source_dimensions": [1254, 1254],
+  "production_chroma": "k06_seated_contact_chroma.png",
+  "production_alpha": "k06_seated_contact_alpha.png",
+  "production_normalized": "normalized/k06_seated_contact.png",
+  "final_dimensions": [512, 512],
+  "planned_sequence_frame_index": 8,
+  "planned_loop_segment": [8, 17],
+  "visible_baseline_y": 472,
+  "pivot": [256, 492],
+  "notes": "The user's clipboard attachment exactly matched the selected built-in image-generation output by SHA-256. The promoted production source is its uniform 1024x1024 downsample, followed by chroma removal and fixed-cell normalization."
+}

@@ -1,0 +1,56 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "generation_mode": "Four separate complete-character image editing calls selected from targeted candidates. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "perspective_master": "../k06_seated_contact_chroma.png",
+  "motion": "The seated body stays fixed while the free forearm approaches, pats and withdraws from one rabbit ear; one slow blink occurs during contact.",
+  "frames": [
+    {
+      "frame": 10,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-805ae043-1ca9-43f6-b8bb-632dbe0fe0b9.png",
+      "standardized_sha256": "F731F1772FD9C2D34478618B6B25B38641AB18A212E6EC0024D5F92D658C44BE"
+    },
+    {
+      "frame": 12,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-b199b018-fccc-4cf4-9ea5-6394c015a886.png",
+      "standardized_sha256": "2EB275D0E5BF82E300E95DCF682F1FE69ABC11BDCDFDECF6C9DA4CB685380160"
+    },
+    {
+      "frame": 14,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-37277622-a2e4-4ffc-895e-58dcf070982f.png",
+      "standardized_sha256": "B1D4698D60EA6F87ABB3CC3A1D43D6AE8561E7580007A164B00FDAEB59797B72"
+    },
+    {
+      "frame": 16,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-e4460ed3-1555-40c2-baf9-892189893557.png",
+      "standardized_sha256": "2938CE0108E7C3685C80297092BAC442609135775891CBBBE139FC251D14754D"
+    }
+  ],
+  "rejected_candidates": [
+    {"file": "rejected-candidates/frame_010_candidate_a_hand_and_body_drift.png", "reason": "oversized high hand and changed body silhouette"},
+    {"file": "rejected-candidates/frame_016_candidate_a_hand_too_far.png", "reason": "withdrawal hand extended too far from the body"}
+  ],
+  "chroma_removal": {
+    "key_color": "#FF00FF",
+    "soft_matte": true,
+    "transparent_threshold": 85,
+    "opaque_threshold": 170,
+    "edge_contract": 1,
+    "despill": true
+  },
+  "normalization": {
+    "method": "uniform whole-character scale plus whole-character translation only",
+    "target_visible_height_px": 311,
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "stabilization_qa": {
+    "status": "PASS",
+    "head_center_range_px": 0.461,
+    "shoe_midpoint_range_px": 0.5,
+    "visible_height_range_px": 1,
+    "baseline_range_px": 0
+  },
+  "automated_qa": "PASS",
+  "semantic_review": "USER_APPROVED_2026-07-30"
+}

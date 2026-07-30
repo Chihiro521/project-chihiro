@@ -1,0 +1,52 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "generation_mode": "Four separate complete-character editing calls, plus targeted alternative calls for F14 and F16. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "perspective_master": "../k06_seated_contact_chroma.png",
+  "background": "solid #FF00FF",
+  "frames": [
+    {
+      "frame": 10,
+      "motion": "free hand lowers and rotates toward a support contact",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-5a1dd23f-5221-4770-a93c-5054cffe97c4.png",
+      "standardized_sha256": "06707B3495C29F641E137BF07AB43F07AE5E3445701C19C486093AB9E8C8DA65"
+    },
+    {
+      "frame": 12,
+      "motion": "palm supports a restrained but readable relaxed side-back lean",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-f48dc18a-1f4e-43f8-b4ae-12cd820c20c0.png",
+      "standardized_sha256": "45BC01439623292E245A80024955805B7AE643359F111BD3B44C43EF84D2E01B"
+    },
+    {
+      "frame": 14,
+      "motion": "slow blink held on the supported pose",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-37aa95f6-447f-441a-804f-8f54152eafa1.png",
+      "standardized_sha256": "00DECCF1337B5152F269F35B4CCD4798FF6D869F762D19AE22A490E807343B2E"
+    },
+    {
+      "frame": 16,
+      "motion": "eyes reopen as the low free hand releases support and torso begins returning",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-3a364c6c-2631-49d9-b163-32ea86141747.png",
+      "standardized_sha256": "3B8692EE59E2CC459332B5D40D8F7751E23947D5DABE366D49708AE23AE12F5F"
+    }
+  ],
+  "rejected_candidates": [
+    {"file": "rejected-candidates/frame_014_candidate_a_lower_body_drift.png", "reason": "blink edit changed lower-body geometry more than the selected precision edit"},
+    {"file": "rejected-candidates/frame_016_candidate_a_hand_too_high.png", "reason": "release hand lifted too high and read as a claw"}
+  ],
+  "chroma_removal": {
+    "key_color": "#FF00FF",
+    "soft_matte": true,
+    "transparent_threshold": 85,
+    "opaque_threshold": 170,
+    "edge_contract": 1,
+    "despill": true
+  },
+  "final_normalization": {
+    "cell": [512, 512],
+    "whole_drawing_scale": 0.89,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "automated_qa": "PASS",
+  "semantic_review": "pending user approval"
+}

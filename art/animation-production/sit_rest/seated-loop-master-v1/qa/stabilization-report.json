@@ -1,0 +1,351 @@
+{
+  "status": "PASS",
+  "summary": {
+    "head_center_range_px": 0.879,
+    "shoe_midpoint_range_px": 1.0,
+    "visible_height_range_px": 1,
+    "baseline_range_px": 0
+  },
+  "frames": [
+    {
+      "frame": 8,
+      "uniform_whole_character_scale": 0.44619799,
+      "whole_character_translation": [
+        25,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.64,
+      "shoe_spans": [
+        [
+          170,
+          204,
+          188
+        ],
+        [
+          231,
+          272,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 220.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 9,
+      "uniform_whole_character_scale": 0.44555874,
+      "whole_character_translation": [
+        26,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.996,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          188
+        ],
+        [
+          232,
+          273,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 220.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 10,
+      "uniform_whole_character_scale": 0.43802817,
+      "whole_character_translation": [
+        29,
+        79
+      ],
+      "alpha_bbox": [
+        162,
+        160,
+        356,
+        473
+      ],
+      "visible_height_px": 313,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.577,
+      "shoe_spans": [
+        [
+          170,
+          210,
+          189
+        ],
+        [
+          231,
+          273,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 221.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 11,
+      "uniform_whole_character_scale": 0.44428571,
+      "whole_character_translation": [
+        27,
+        81
+      ],
+      "alpha_bbox": [
+        163,
+        161,
+        357,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.456,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          189
+        ],
+        [
+          232,
+          273,
+          254
+        ]
+      ],
+      "shoe_midpoint_x": 221.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 12,
+      "uniform_whole_character_scale": 0.44555874,
+      "whole_character_translation": [
+        26,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.038,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          188
+        ],
+        [
+          232,
+          273,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 220.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 13,
+      "uniform_whole_character_scale": 0.44619799,
+      "whole_character_translation": [
+        26,
+        83
+      ],
+      "alpha_bbox": [
+        163,
+        161,
+        357,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.413,
+      "shoe_spans": [
+        [
+          171,
+          210,
+          189
+        ],
+        [
+          232,
+          273,
+          254
+        ]
+      ],
+      "shoe_midpoint_x": 221.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 14,
+      "uniform_whole_character_scale": 0.44555874,
+      "whole_character_translation": [
+        26,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.924,
+      "shoe_spans": [
+        [
+          171,
+          210,
+          189
+        ],
+        [
+          232,
+          273,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 221.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 15,
+      "uniform_whole_character_scale": 0.44555874,
+      "whole_character_translation": [
+        26,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.867,
+      "shoe_spans": [
+        [
+          171,
+          210,
+          189
+        ],
+        [
+          232,
+          274,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 221.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 16,
+      "uniform_whole_character_scale": 0.44555874,
+      "whole_character_translation": [
+        26,
+        84
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.967,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          188
+        ],
+        [
+          232,
+          273,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 220.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 17,
+      "uniform_whole_character_scale": 0.44619799,
+      "whole_character_translation": [
+        26,
+        83
+      ],
+      "alpha_bbox": [
+        163,
+        161,
+        357,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.438,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          189
+        ],
+        [
+          232,
+          273,
+          254
+        ]
+      ],
+      "shoe_midpoint_x": 221.5,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "sit_rest-seated-loop-v3-root-locked",
+  "purpose": "Root-locked re-normalization of the readable v2 seated gesture, eliminating whole-character drift before any further art regeneration.",
+  "source_art": "../seated-loop-v2/",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "target_visible_height_px": 311,
+  "horizontal_anchor": "midpoint of the two visible shoe components in the bottom 12 percent of the character bounds",
+  "normalization_rule": "Only uniform whole-character scaling and whole-character translation are used. No local translation, part compositing, deformation, interpolation, optical flow, morphing or cross-fade.",
+  "frames": [
+    {"frame": 8, "id": "contact", "file": "normalized/frame_008.png", "status": "approved K06 v3 art"},
+    {"frame": 10, "id": "reach_support", "file": "normalized/frame_010.png", "status": "v2 complete-character art; root-lock pending"},
+    {"frame": 12, "id": "supported_relax", "file": "normalized/frame_012.png", "status": "v2 complete-character art; root-lock pending"},
+    {"frame": 14, "id": "supported_blink", "file": "normalized/frame_014.png", "status": "v2 complete-character art; root-lock pending"},
+    {"frame": 16, "id": "release_return", "file": "normalized/frame_016.png", "status": "v2 complete-character art; root-lock pending"}
+  ],
+  "technical_status": "FAIL_internal_landmark_drift",
+  "semantic_status": "rejected",
+  "rejection_reason": "After shoe midpoint, baseline and visible height were locked, the head center still ranged by 25.761 px. The v2 support pose changed internal head-to-feet geometry and cannot be repaired by whole-character placement alone."
+}

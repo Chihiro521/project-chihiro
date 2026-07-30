@@ -1,0 +1,24 @@
+{
+  "name": "sit_rest-seated-loop-v2",
+  "purpose": "Readable seated micro-action reference poses replacing the near-duplicate v1 breathing pair.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "perspective_authority": "../k06_seated_contact_chroma.png",
+  "generation_rule": "Every entry is a separately generated complete character frame. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "locked_geometry": "Keep the approved K06 v3 pelvis behind knees, foreshortened thighs, forward shins, larger near-layer shoes, continuous receding pooled skirt and both foot contacts. Only the upper-body support gesture and secondary bag/rabbit settle may change.",
+  "motion_arc": "F08 stable contact; F10 free hand lowers toward support; F12 palm supports a small relaxed side-back lean; F14 same supported pose with slow blink; F16 eyes reopen and hand/torso begin returning toward F08.",
+  "references": [
+    {"frame": 8, "id": "contact", "file": "normalized/frame_008.png", "status": "approved K06 v3 anchor"},
+    {"frame": 10, "id": "reach_support", "file": "normalized/frame_010.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 12, "id": "supported_relax", "file": "normalized/frame_012.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 14, "id": "supported_blink", "file": "normalized/frame_014.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 16, "id": "release_return", "file": "normalized/frame_016.png", "status": "generated; automated QA pass; user review pending"}
+  ],
+  "technical_status": "PASS",
+  "semantic_status": "rejected_global_position_drift",
+  "rejection_reason": "Whole-silhouette x-centering moved the feet and pelvis whenever the support hand or skirt changed the asymmetric bounds.",
+  "contact_sheet": "qa/sit_rest-seated-loop-reference-contact-sheet.png",
+  "preview": "qa/automated/preview.gif",
+  "qa_report": "qa/automated/qa-report.json"
+}

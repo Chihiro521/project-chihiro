@@ -1,0 +1,35 @@
+{
+  "name": "sit_rest_stand_up_prep_v1_sparse_keys",
+  "frame_count": 5,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "thresholds": {
+    "min_alpha_coverage": 0.08,
+    "max_alpha_coverage": 0.45,
+    "max_color_jsd": 0.22,
+    "max_area_drift": 1.1,
+    "max_bbox_aspect_drift": 1.2,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 110.0,
+    "min_adjacent_diff": 0.002,
+    "max_adjacent_diff": 0.4,
+    "max_motion_energy_delta": 0.25,
+    "max_centroid_acceleration_px": 60.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 17, "file": "frame_017.png", "phase": 0.68, "role": "key", "pose": "approved seated return"},
+    {"index": 19, "file": "frame_019.png", "phase": 0.76, "role": "key", "pose": "draw feet inward and plant both soles"},
+    {"index": 20, "file": "frame_020.png", "phase": 0.80, "role": "key", "pose": "load both planted feet"},
+    {"index": 21, "file": "frame_021.png", "phase": 0.84, "role": "key", "pose": "first two-leg push and slight hip lift"},
+    {"index": 22, "file": "frame_022.png", "phase": 0.88, "role": "key", "pose": "controlled rise"}
+  ]
+}

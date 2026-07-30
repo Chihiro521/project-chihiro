@@ -1,0 +1,22 @@
+{
+  "name": "sit_rest-seated-loop-v1",
+  "purpose": "Sparse seated-loop reference poses for user approval before generating the complete action.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "perspective_authority": "../k06_seated_contact_chroma.png",
+  "generation_rule": "Every entry is a separately generated complete character frame. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "locked_geometry": "Keep the approved K06 v3 pelvis behind knees, foreshortened thighs, forward shins, larger near-layer shoes, continuous receding pooled skirt, root height, foot contacts and front camera unchanged.",
+  "references": [
+    {"frame": 8, "id": "contact", "file": "normalized/frame_008.png", "status": "approved K06 v3 anchor"},
+    {"frame": 10, "id": "inhale", "file": "normalized/frame_010.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 12, "id": "relaxed", "file": "normalized/frame_012.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 14, "id": "slow_blink", "file": "normalized/frame_014.png", "status": "generated; automated QA pass; user review pending"},
+    {"frame": 16, "id": "exhale_return", "file": "normalized/frame_016.png", "status": "generated; automated QA pass; user review pending"}
+  ],
+  "technical_status": "PASS",
+  "semantic_status": "rejected_motion_not_readable",
+  "rejection_reason": "F10 and F12 are visually near-duplicates; their differences read as redraw noise rather than a seated action.",
+  "contact_sheet": "qa/sit_rest-seated-loop-reference-contact-sheet.png",
+  "qa_report": "qa/automated/qa-report.json"
+}

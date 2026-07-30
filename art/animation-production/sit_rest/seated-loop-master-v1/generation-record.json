@@ -1,0 +1,57 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "mode": "Five separate complete-character in-between editing calls using both approved bounding frames. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "generated_frames": [
+    {
+      "frame": 9,
+      "bounds": [8, 10],
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-a7b4baad-0b55-46ae-a1bb-2fef48a1b0f3.png",
+      "standardized_sha256": "07F76BB28ED8E40208E2D25E08DE6539BB2858F808F061C45ED6D663BCAFB90D"
+    },
+    {
+      "frame": 11,
+      "bounds": [10, 12],
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-a7501ad5-bd82-4e23-9f36-b4044af7b2b6.png",
+      "standardized_sha256": "47CECBBDDC123319D1898141307FA123E182B42399BFBF6CF8A058478CF1FA1D",
+      "alpha_override": "The generated magenta background contained dark texture. Background removal used transparent/opaque thresholds 130/210 instead of 85/170; the noisy first alpha result is preserved under rejected-candidates/."
+    },
+    {
+      "frame": 13,
+      "bounds": [12, 14],
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-0127dc9c-61d9-4ed8-b6e1-fdef2652bcd4.png",
+      "standardized_sha256": "EE3715AB3130C31B80C57BFE6C53288D4228559D96A8B5BEC1FA265726D964BF"
+    },
+    {
+      "frame": 15,
+      "bounds": [14, 16],
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-820ee656-22a8-44b1-8e32-338caad16854.png",
+      "standardized_sha256": "545DF2D568AC2E2F53FE11CBFBB3DBB4E34C9FE7B7CDA770DA3C15576FF1CD5E"
+    },
+    {
+      "frame": 17,
+      "bounds": [16, 8],
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-652406e3-3a44-4138-ac7a-bf35aa6001ba.png",
+      "standardized_sha256": "C38D2F78BA025F6FEDE525014642567BF2D1EBFE690BD240EEAD12DA77934F56"
+    }
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_height_px": 311,
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "stabilization_result": {
+    "status": "PASS",
+    "head_center_range_px": 0.879,
+    "shoe_midpoint_range_px": 1.0,
+    "visible_height_range_px": 1,
+    "baseline_range_px": 0
+  },
+  "loop_result": {
+    "status": "PASS",
+    "loop_seam_diff": 0.003883,
+    "loop_seam_ratio": 1.368682
+  },
+  "semantic_status": "USER_APPROVED_2026-07-30"
+}

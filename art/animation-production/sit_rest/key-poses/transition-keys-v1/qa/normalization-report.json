@@ -1,0 +1,170 @@
+{
+  "status": "PASS",
+  "summary": {
+    "head_center_range_px": 0.735,
+    "shoe_midpoint_range_px": 37.0,
+    "baseline_range_px": 0
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "label": "F00 approved stand",
+      "whole_character_scale": 1.0,
+      "whole_character_translation": [
+        -3,
+        1
+      ],
+      "alpha_bbox": [
+        182,
+        20,
+        329,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          225,
+          289,
+          257
+        ]
+      ],
+      "shoe_midpoint_x": 257.0,
+      "head_center_x": 256.005,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 4,
+      "label": "F04 deep descent v1",
+      "whole_character_scale": 0.4913678618857902,
+      "whole_character_translation": [
+        3,
+        27
+      ],
+      "alpha_bbox": [
+        146,
+        103,
+        365,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          183,
+          219,
+          202
+        ],
+        [
+          242,
+          288,
+          267
+        ]
+      ],
+      "shoe_midpoint_x": 234.5,
+      "head_center_x": 256.158,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 8,
+      "label": "F08 approved seated",
+      "whole_character_scale": 1.0,
+      "whole_character_translation": [
+        0,
+        0
+      ],
+      "alpha_bbox": [
+        162,
+        161,
+        356,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          170,
+          204,
+          188
+        ],
+        [
+          231,
+          272,
+          253
+        ]
+      ],
+      "shoe_midpoint_x": 220.5,
+      "head_center_x": 255.64,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 22,
+      "label": "F22 controlled rise v1",
+      "whole_character_scale": 0.5796460176991151,
+      "whole_character_translation": [
+        -24,
+        -12
+      ],
+      "alpha_bbox": [
+        202,
+        79,
+        362,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          210,
+          249,
+          231
+        ],
+        [
+          262,
+          304,
+          284
+        ]
+      ],
+      "shoe_midpoint_x": 257.5,
+      "head_center_x": 256.375,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 25,
+      "label": "F25 exact F00 return",
+      "whole_character_scale": 1.0,
+      "whole_character_translation": [
+        -3,
+        1
+      ],
+      "alpha_bbox": [
+        182,
+        20,
+        329,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          225,
+          289,
+          257
+        ]
+      ],
+      "shoe_midpoint_x": 257.0,
+      "head_center_x": 256.005,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

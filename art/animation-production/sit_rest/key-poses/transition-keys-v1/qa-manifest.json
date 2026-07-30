@@ -1,0 +1,46 @@
+{
+  "name": "sit_rest_transition_keys_v1",
+  "frame_count": 5,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Approved Little Chihiro standing and K06 seated anchors bound the descent/rise keys.",
+    "proportions": "Fixed whole-character scale 0.89 preserves head, face, body and shoe scale while root height changes through articulation.",
+    "costume": "One continuous navy dress and lace hem; fixed collar, bow, buttons, strap, satchel, rabbit, socks and shoes.",
+    "rendering": "Fine dark outlines, low-luminance ash-beige hair, restrained warm shading and fixed front camera."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.09,
+    "max_alpha_coverage": 0.52,
+    "max_color_jsd": 0.22,
+    "max_area_drift": 1.20,
+    "max_bbox_aspect_drift": 1.20,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 130.0,
+    "min_adjacent_diff": 0.003,
+    "max_adjacent_diff": 0.50,
+    "max_motion_energy_delta": 0.40,
+    "max_centroid_acceleration_px": 75.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "Sparse keys intentionally change the body from standing to deep squat to seated and back.",
+    "max_bbox_aspect_drift": "Leg articulation and skirt pooling change overall aspect while head/costume scale remain fixed.",
+    "max_center_range_px": "Root height changes intentionally; baseline and head horizontal center remain locked."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "planned_frame_index": 0, "role": "key", "pose": "approved standing start"},
+    {"index": 1, "file": "frame_004.png", "phase": 0.16, "planned_frame_index": 4, "role": "key", "pose": "deep controlled descent candidate"},
+    {"index": 2, "file": "frame_008.png", "phase": 0.32, "planned_frame_index": 8, "role": "key", "pose": "approved seated contact"},
+    {"index": 3, "file": "frame_022.png", "phase": 0.88, "planned_frame_index": 22, "role": "key", "pose": "controlled rising candidate"},
+    {"index": 4, "file": "frame_025.png", "phase": 1.0, "planned_frame_index": 25, "role": "key", "pose": "exact approved standing return"}
+  ]
+}

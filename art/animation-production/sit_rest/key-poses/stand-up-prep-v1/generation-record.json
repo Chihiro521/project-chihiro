@@ -1,0 +1,39 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "mode": "Three separate complete-character key-frame calls with targeted full-frame skirt corrections where required. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "generated_frames": [
+    {
+      "frame": 19,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-2f0107b6-f606-4c6f-8d25-5e22cab3b2cb.png",
+      "standardized_sha256": "F2F2B97192B28241BFD98F4889E245F584B41704FA66C81224688061A1BEE87A",
+      "rejected_candidate": "rejected-candidates/frame_019_candidate_a_knee_cutouts.png"
+    },
+    {
+      "frame": 20,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-d6b92be6-21b7-4a16-ac98-fc435f1ad66f.png",
+      "standardized_sha256": "85F4823C4A9AA6658CBDD5FB1E848B0740F0B72427B5A32EBA9186A253CE5488",
+      "rejected_candidate": "rejected-candidates/frame_020_candidate_a_knee_cutouts.png"
+    },
+    {
+      "frame": 21,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-fad6c553-551c-4b14-8900-75e11ccea68a.png",
+      "standardized_sha256": "3A01E0563C807E2A92F78374E6E0EA0EB7E1EF7A5FF3DD32C409A3E2B89B1935",
+      "rejected_candidate": "rejected-candidates/frame_021_candidate_a_knee_cutouts.png"
+    }
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_heights": {"frame_019": 324, "frame_020": 340, "frame_021": 366},
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "automated_result": {
+    "status": "PASS",
+    "head_center_range_px": 0.46,
+    "baseline_range_px": 0,
+    "max_motion_energy_delta": 0.026722,
+    "max_centroid_acceleration_px": 37.013511
+  },
+  "semantic_status": "USER_APPROVED_2026-07-30"
+}

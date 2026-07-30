@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "frames": [
+    {
+      "frame": 8,
+      "label": "K06 v3 / F08 contact",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -5,
+        57
+      ],
+      "alpha_bbox": [
+        160,
+        162,
+        353,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 10,
+      "label": "F10 quiet inhale",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -4,
+        68
+      ],
+      "alpha_bbox": [
+        159,
+        160,
+        355,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 12,
+      "label": "F12 relaxed sit",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -5,
+        56
+      ],
+      "alpha_bbox": [
+        159,
+        157,
+        354,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 14,
+      "label": "F14 slow blink",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -4,
+        61
+      ],
+      "alpha_bbox": [
+        160,
+        157,
+        353,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 16,
+      "label": "F16 exhale return",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -4,
+        48
+      ],
+      "alpha_bbox": [
+        160,
+        153,
+        354,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

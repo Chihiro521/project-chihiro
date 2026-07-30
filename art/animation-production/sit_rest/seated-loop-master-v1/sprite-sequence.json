@@ -1,0 +1,73 @@
+{
+  "name": "sit_rest_seated_loop_master_v1",
+  "frame_count": 10,
+  "fps": 6,
+  "loop": true,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "approved_key_source": "../key-poses/seated-loop-v4-rabbit-pat/reference-manifest.json",
+  "identity_lock": {
+    "silhouette": "User-approved K06 v3 seated Little Chihiro with fixed navy beret, ash-beige bob, navy dress, satchel and rabbit.",
+    "proportions": "The approved F08/F10/F12/F14/F16 drawings control head, torso, skirt, legs, shoes and accessory scale.",
+    "placement": "Normalize complete drawings to K06 visible height, head center x=256, visible baseline y=472 and pivot (256,492); independently verify shoe midpoint stability.",
+    "motion": "Only the image-right free forearm/hand, gaze, eyelids and tiny touched-rabbit-ear response progress through the pat cycle.",
+    "costume": "Collar, orange bow, brass buttons, lace hem, strap, satchel, rabbit, socks and shoes remain complete and topologically fixed.",
+    "rendering": "Fine dark outlines, low-luminance ash-beige hair, restrained warm cel shading, fixed front camera and uniform lighting."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.10,
+    "max_alpha_coverage": 0.46,
+    "max_color_jsd": 0.16,
+    "max_area_drift": 0.22,
+    "max_bbox_aspect_drift": 0.22,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 20.0,
+    "min_adjacent_diff": 0.00035,
+    "max_adjacent_diff": 0.10,
+    "max_motion_energy_delta": 0.06,
+    "max_centroid_acceleration_px": 8.0,
+    "min_loop_seam_ratio": 0.20,
+    "max_loop_seam_ratio": 2.20
+  },
+  "threshold_notes": {
+    "min_adjacent_diff": "The ten-frame loop contains deliberate half-step hand motion and a slow blink; individual direct transitions are expected to be subtler than the approved sparse references.",
+    "center_lock": "Outer silhouette changes with the free forearm. qa/stabilization-report.json enforces head center, shoe midpoint, visible height and baseline instead."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_008.png", "phase": 0.0, "planned_frame_index": 8, "role": "key", "pose": "approved stable seated contact"},
+    {"index": 1, "file": "frame_009.png", "phase": 0.1, "planned_frame_index": 9, "role": "in-between", "pose": "free elbow begins bending and gaze starts lowering"},
+    {"index": 2, "file": "frame_010.png", "phase": 0.2, "planned_frame_index": 10, "role": "breakdown", "pose": "approved hand approach"},
+    {"index": 3, "file": "frame_011.png", "phase": 0.3, "planned_frame_index": 11, "role": "in-between", "pose": "fingertips near the ear without contact"},
+    {"index": 4, "file": "frame_012.png", "phase": 0.4, "planned_frame_index": 12, "role": "key", "pose": "approved gentle rabbit-ear pat"},
+    {"index": 5, "file": "frame_013.png", "phase": 0.5, "planned_frame_index": 13, "role": "in-between", "pose": "pat holds as eyelids close halfway"},
+    {"index": 6, "file": "frame_014.png", "phase": 0.6, "planned_frame_index": 14, "role": "reference", "pose": "approved closed point of slow blink"},
+    {"index": 7, "file": "frame_015.png", "phase": 0.7, "planned_frame_index": 15, "role": "in-between", "pose": "eyes reopen halfway while pat contact holds"},
+    {"index": 8, "file": "frame_016.png", "phase": 0.8, "planned_frame_index": 16, "role": "breakdown", "pose": "approved low hand withdrawal"},
+    {"index": 9, "file": "frame_017.png", "phase": 0.9, "planned_frame_index": 17, "role": "in-between", "pose": "hand and gaze nearly return to F08 without duplicating it"}
+  ],
+  "generation": {
+    "source_canvas": [1024, 1024],
+    "background": "#FF00FF",
+    "method": "Each missing frame is a separate complete-character built-in imagegen call using both bounding approved frames and the canonical model reference.",
+    "forbidden": "No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade."
+  },
+  "qa": {
+    "automated_status": "PASS",
+    "semantic_status": "USER_APPROVED",
+    "user_approval": {
+      "date": "2026-07-30",
+      "verdict": "允许通过现在可以前往下一步了"
+    },
+    "stabilization_report": "qa/stabilization-report.json",
+    "qa_report": "qa/automated/qa-report.json",
+    "contact_sheet": "qa/seated-loop-master-contact-sheet.png",
+    "preview_6fps": "qa/automated/preview.gif",
+    "preview_slow_3fps": "qa/preview-slow.gif"
+  },
+  "status": "USER_APPROVED"
+}

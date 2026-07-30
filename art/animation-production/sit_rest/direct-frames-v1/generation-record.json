@@ -1,0 +1,62 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "date": "2026-07-30",
+  "mode": "Nine separate complete-character direct-frame calls. No interpolation, optical flow, morphing, warping, deformation, cross-fade, local translation or part compositing.",
+  "selected_frames": [
+    {"frame": 1, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-de970ace-8529-4d23-ada0-f1530548f976.png", "chroma_sha256": "591382A3644F9B11A594F9E928E58807FB28EF44E869D62484FBA06E27B03182", "alpha_sha256": "D49A1D2A4E267943397D7330DB9283231F8415E22E0E4FDA8AA257B395359478", "final_sha256": "5CCF61C2330FCC7BE2EACEA695B30BAD17B750FF4D270F9925C847876D978C34"},
+    {"frame": 2, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-194dcdb6-7d70-4559-80a4-f09ec5fbc317.png", "chroma_sha256": "87DC8B040F78235A9CC25EF8852BB757F2BDA6026172B078CFEBF30D5D7231D5", "alpha_sha256": "F205F9DE50F0A7B367B8D46B9AAA4EE718CFF6B8341D437A834F3FAB8EC103A9", "final_sha256": "F6A64B4C3DDC53A8E2984C8E0098A61C6F3783D36BE3E3A3819BD177D02BFF9A"},
+    {"frame": 3, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-994b6dcf-3b57-49a9-aa38-99d84c865aba.png", "chroma_sha256": "AAF87F990CA4818AE52B7AF31ADC8A0412B60261921AB5890E11CD106370E853", "alpha_sha256": "4E8603E7B3F98BFB67811AE124FDC7F5BF49C8AA78E1E0F3B34C47E475AA50C0", "final_sha256": "8356CDEB15D89B8BD4D0F709CFB9117EC63A665C048592F44F8E3ECFECC26BD4"},
+    {"frame": 5, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-973c8da1-3eb1-4f29-8a02-5383439c04bf.png", "chroma_sha256": "FF440D5AA5ADD89897358E5A49B05F3E019C960D031C6A9F83C3632F982AA98A", "alpha_sha256": "E214CC3FCBCEA78DC606AC76733A26F1BA7790F41E23C2B31F436D4F939808D6", "final_sha256": "085FD5B84C2C265D641B3294DBC60203D2E09E15C73DA9556E02C0EBA41EDA31"},
+    {"frame": 6, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-25e02cba-67a8-42bd-b70a-7663e824af47.png", "chroma_sha256": "4D97D29446909B5DCAE9892FF50F43A1FB1F30980328766ADBB188D405D66175", "alpha_sha256": "0516BDB10955A4821DB2A1D0CC8A606E93FD1BAA66C11A57D591A6340A2538C9", "final_sha256": "5CD49C749C4386AA3FCBAC452EE1A66E331F08B9174ADDF879FD41E54DD09A49"},
+    {"frame": 7, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-f7536c1a-f2aa-47bb-89cf-1b513022cafe.png", "chroma_sha256": "6569706AC9359F65715176C4E028F4659BED5430B45CF824471934542234315D", "alpha_sha256": "FFBC5B1503121AB4DFAB0878B6BB4220695EF491B9E855DABD69460F6FF9A757", "final_sha256": "A9F3E90730C3AAB0D1722B5BC80537A6DBF87E0CD5B96E70EB2E9D9E3A69FC30"},
+    {"frame": 18, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-917c0298-4dc6-4dd6-b09d-a41fb33f7a19.png", "chroma_sha256": "75E9117B57065BF505FCEE895F0D890163845A2BD3807122BBFFB98023033F18", "alpha_sha256": "EB4F06541850469D8FA6F2BC77B10E6BDDCCF16149904479DCE109EDF559A493", "final_sha256": "EB95DACB208C8F45A518CD04632DE473A6D504C58C395DB25F3D082A5987C6FC"},
+    {"frame": 23, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-29b2828a-d13e-48a1-9a4c-ebf3f9ca157f.png", "chroma_sha256": "8E896EE31F2BC43B0AD4C7F80785C7AF4E372C1D5727FA89103BAF80B8CE36EB", "alpha_sha256": "5DA2A589B5D841AE55ADBB48C2604F20D471DA8EC2E7DADA8A0CAAD641DAEB35", "final_sha256": "4901650DD67E4444F0E5E248D570E24E3673B93F7C177F670CC9E926A8F10898"},
+    {"frame": 24, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-6bc93156-bace-4cdc-8877-53d7f020f803.png", "chroma_sha256": "6504760F97479C16AAD7F0091D9D41959B7DA2897828C0675E1C3E9957017677", "alpha_sha256": "DFD9A0FF6CC298A4A6CD4313EADB4FFB2EC355E411B8D702486AD22D0600FD13", "final_sha256": "781FFEFBCAD759451C180D1C19DDD9AB0CFB9F4CAFA8532826F535664B6220AE"}
+  ],
+  "rejected_candidates": [
+    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_a_knee_holes.png", "reason": "separate lace openings around both knees"},
+    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_b_invisible_chair.png", "reason": "vertical shins and invisible-chair silhouette"},
+    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_c_oversized_shoes.png", "reason": "exaggerated foreground shoe scale"},
+    {"frame": 18, "file": "rejected-candidates/frame_018_candidate_a_gradient_background.png", "reason": "nonuniform magenta background caused despill color contamination"},
+    {"frame": 23, "file": "rejected-candidates/frame_023_candidate_a_too_upright.png", "reason": "straight-legged pose would read as global shrinking"},
+    {"frame": 23, "file": "rejected-candidates/frame_023_candidate_b_button_topology.png", "reason": "ambiguous extra garment fastener topology"},
+    {"frame": 24, "file": "rejected-candidates/frame_024_candidate_a_button_count.png", "reason": "extra brass button"}
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "visible_baseline_y": 472,
+    "target_head_center_x": 256,
+    "pivot": [256, 492],
+    "status": "PASS"
+  },
+  "automated_qa": {
+    "status": "PASS",
+    "frame_count": 26,
+    "baseline_range_px": 0.0,
+    "max_motion_energy_delta": 0.046456,
+    "max_centroid_acceleration_px": 33.136083
+  },
+  "local_identity_qa": {
+    "status": "PASS",
+    "max_head_width_delta_px": 14.0,
+    "max_face_width_delta_px": 12.0,
+    "max_hair_luma_delta": 4.318,
+    "max_dark_material_luma_delta": 6.865,
+    "max_magenta_fringe_pixels": 0
+  },
+  "scale_stabilization": {
+    "trigger": "User reported visible whole-character scale pops in the completed preview.",
+    "revision": "scale-stabilized-v2",
+    "method": "Re-normalize each unchanged complete drawing from its 1024x1024 alpha source using one uniform whole-frame scale and one whole-frame translation.",
+    "target_head_width_px": 107,
+    "head_width_range_px": 1,
+    "max_adjacent_head_width_delta_px": 1,
+    "head_center_range_px": 0.926,
+    "baseline_range_px": 0,
+    "generic_qa": "PASS",
+    "local_identity_qa": "PASS",
+    "scale_continuity_qa": "PASS"
+  },
+  "semantic_status": "SCALE_STABILIZED_V2_PENDING_USER",
+  "packaging_status": "NOT_PACKAGED_NOT_INTEGRATED"
+}

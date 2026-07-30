@@ -1,0 +1,45 @@
+{
+  "name": "sit_rest_stand_up_prep_v1",
+  "purpose": "Add readable foot-bracing preparation before the approved controlled-rise key.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "bounds": {
+    "previous": "../../../seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png",
+    "next": "../transition-keys-v1/chroma/frame_022.png",
+    "identity": "../../anchors/model-sheet.png"
+  },
+  "motion_contract": [
+    {"frame": 19, "role": "key", "pose": "pelvis remains grounded; torso leans forward; both heels draw inward and both shoe soles become fully planted", "chroma": "chroma/frame_019.png", "alpha": "alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
+    {"frame": 20, "role": "key", "pose": "chest shifts above the planted feet; knees remain deeply flexed; both shoes visibly brace and begin accepting weight", "chroma": "chroma/frame_020.png", "alpha": "alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
+    {"frame": 21, "role": "key", "pose": "both planted feet drive against the ground; hips lift slightly while knees remain bent, leading directly into F22", "chroma": "chroma/frame_021.png", "alpha": "alpha/frame_021.png", "normalized": "normalized/frame_021.png"}
+  ],
+  "generation_rule": "Each frame is a separate complete-character built-in imagegen call from the same identity anchor and the F17/F22 temporal bounds. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "contact_lock": "Both Mary Jane shoe soles remain fully visible and planted on one invisible ground baseline. Weight transfer is shown through ankle flexion, shins moving toward vertical, torso pitch and gradual hip lift; never by a floating pelvis or sliding whole character.",
+  "cloth_lock": "The navy dress remains one continuous garment over both thighs and bent knees with one uninterrupted cream lace hem; no knee holes, split crotch, shorts-like gap or sudden skirt scaling.",
+  "identity_lock": "Preserve the approved broad head and face, low-luminance ash-beige bob, four-head compact proportions, sturdy legs, socks, shoes, collar, ribbon, buttons, strap route, satchel and rabbit identity.",
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_heights": {"frame_019": 324, "frame_020": 340, "frame_021": 366},
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "qa": {
+    "automated_status": "PASS",
+    "normalization_status": "PASS",
+    "head_center_range_px": 0.46,
+    "baseline_range_px": 0,
+    "report": "qa/automated/qa-report.json",
+    "normalization_report": "qa/normalization-report.json",
+    "contact_sheet": "qa/stand-up-prep-contact-sheet.png",
+    "preview": "qa/automated/preview.gif"
+  },
+  "user_review": {
+    "date": "2026-07-30",
+    "verdict": "就是这个版本",
+    "selected_contact_sheet": "qa/stand-up-prep-contact-sheet.png"
+  },
+  "production_state": "keys_user_accepted",
+  "status": "USER_SELECTED_REVERT_2026-07-30"
+}

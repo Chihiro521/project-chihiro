@@ -1,0 +1,214 @@
+{
+  "status": "PASS",
+  "summary": {
+    "head_center_range_px": 0.652,
+    "baseline_range_px": 0
+  },
+  "frames": [
+    {
+      "frame": 17,
+      "label": "F17 seated authority",
+      "uniform_whole_character_scale": 1.0,
+      "whole_character_translation": [
+        0,
+        0
+      ],
+      "alpha_bbox": [
+        163,
+        161,
+        357,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.438,
+      "shoe_midpoint_x": 221.5,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          189
+        ],
+        [
+          232,
+          273,
+          254
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 19,
+      "label": "F19 left hand reaches",
+      "uniform_whole_character_scale": 0.48219585,
+      "whole_character_translation": [
+        18,
+        60
+      ],
+      "alpha_bbox": [
+        168,
+        146,
+        371,
+        473
+      ],
+      "visible_height_px": 327,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.359,
+      "shoe_midpoint_x": 238.5,
+      "shoe_spans": [
+        [
+          188,
+          227,
+          208
+        ],
+        [
+          247,
+          289,
+          269
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 20,
+      "label": "F20 left palm supports",
+      "uniform_whole_character_scale": 0.54098361,
+      "whole_character_translation": [
+        -3,
+        9
+      ],
+      "alpha_bbox": [
+        154,
+        142,
+        403,
+        473
+      ],
+      "visible_height_px": 331,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.866,
+      "shoe_midpoint_x": 247.0,
+      "shoe_spans": [
+        [
+          193,
+          239,
+          216
+        ],
+        [
+          251,
+          302,
+          278
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 21,
+      "label": "F21 hand releases",
+      "uniform_whole_character_scale": 0.55637982,
+      "whole_character_translation": [
+        -6,
+        9
+      ],
+      "alpha_bbox": [
+        201,
+        97,
+        407,
+        473
+      ],
+      "visible_height_px": 376,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.891,
+      "shoe_midpoint_x": 264.0,
+      "shoe_spans": [
+        [
+          213,
+          256,
+          235
+        ],
+        [
+          270,
+          314,
+          293
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 22,
+      "label": "F22 arm counterbalances",
+      "uniform_whole_character_scale": 0.5345502,
+      "whole_character_translation": [
+        -2,
+        7
+      ],
+      "alpha_bbox": [
+        198,
+        62,
+        383,
+        473
+      ],
+      "visible_height_px": 411,
+      "visible_baseline_y": 472,
+      "head_center_x": 255.786,
+      "shoe_midpoint_x": 255.5,
+      "shoe_spans": [
+        [
+          209,
+          248,
+          230
+        ],
+        [
+          259,
+          301,
+          281
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 25,
+      "label": "F25 exact stand return",
+      "uniform_whole_character_scale": 1.0,
+      "whole_character_translation": [
+        0,
+        0
+      ],
+      "alpha_bbox": [
+        182,
+        20,
+        329,
+        473
+      ],
+      "visible_height_px": 453,
+      "visible_baseline_y": 472,
+      "head_center_x": 256.005,
+      "shoe_midpoint_x": 257.0,
+      "shoe_spans": [
+        [
+          225,
+          289,
+          257
+        ]
+      ],
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

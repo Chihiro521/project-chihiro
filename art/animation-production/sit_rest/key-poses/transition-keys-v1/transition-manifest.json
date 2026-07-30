@@ -1,0 +1,37 @@
+{
+  "name": "sit_rest_transition_keys_v1",
+  "purpose": "Replace obsolete flat-perspective descent/rise placeholders using the approved standing anchor and user-approved K06 seated depth authority.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "approved_bounds": {
+    "standing": "../../anchors/approved_idle_chroma.png",
+    "seated": "../k06_seated_contact_chroma.png",
+    "model_sheet": "../../anchors/model-sheet.png"
+  },
+  "identity_lock": "Preserve the approved head/face scale, four-head compact proportions, sturdy legs, shoe scale, continuous navy dress, lace hem, strap, satchel and rabbit identity.",
+  "perspective_lock": "Standing-to-seated motion changes joint angles and root height only. K06 controls the forward thigh foreshortening and shoe depth; the skirt remains one continuous garment with no knee cutouts or shorts-like split.",
+  "generation_rule": "Each transition key is a separate complete-character built-in imagegen call. No interpolation, optical flow, part translation/compositing, deformation, morphing or cross-fade.",
+  "keys": [
+    {"frame": 0, "id": "stand_start", "status": "approved", "source": "../../anchors/approved_idle_chroma.png"},
+    {"frame": 4, "id": "deep_descent", "status": "generated_QA_PASS_pending_user_review", "source": "chroma/frame_004.png", "alpha": "alpha/frame_004.png", "normalized": "normalized/frame_004.png"},
+    {"frame": 8, "id": "seated_contact", "status": "approved", "source": "../k06_seated_contact_chroma.png"},
+    {"frame": 22, "id": "controlled_rise", "status": "generated_QA_PASS_pending_user_review", "source": "chroma/frame_022.png", "alpha": "alpha/frame_022.png", "normalized": "normalized/frame_022.png"},
+    {"frame": 25, "id": "stand_return", "status": "approved_exact_F00", "source": "../../anchors/approved_idle_chroma.png"}
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_heights": {"frame_004": 370, "frame_022": 393},
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492]
+  },
+  "qa": {
+    "automated_status": "PASS",
+    "normalization_report": "qa/normalization-report.json",
+    "automated_report": "qa/automated/qa-report.json",
+    "contact_sheet": "qa/transition-key-contact-sheet.png",
+    "preview": "qa/automated/preview.gif"
+  },
+  "status": "pending_user_review"
+}

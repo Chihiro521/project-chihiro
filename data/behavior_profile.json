@@ -83,7 +83,7 @@
       {
         "id": "sit_rest", "clip": "sit_enter", "fallback_clip": "idle", "state": "rest",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 150000,
-        "preconditions": {"requires_clips": ["sit_enter", "sit_loop", "sit_exit"], "needs": {"energy": {"max": 58}}},
+        "preconditions": {"requires_clips": ["sit_enter", "sit_loop", "sit_exit"], "needs": {"energy": {"max": 58}}, "forbids_any": ["on_platform"]},
         "score_weights": {"base": 28, "needs": {"energy": -0.35, "boredom": 0.05}},
         "effects": {"energy": 4, "boredom": -2},
         "session": {"type": "sequence", "enter": "sit_enter", "loop": "sit_loop", "exit": "sit_exit", "max_duration_ms": 22000}

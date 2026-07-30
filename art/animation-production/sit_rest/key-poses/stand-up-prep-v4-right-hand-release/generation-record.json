@@ -1,0 +1,40 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "mode": "Four separately generated complete-character keys plus targeted complete-frame F20 proportion repair and F22 stance repair. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "generated_frames": [
+    {
+      "frame": 19,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-3b45bb1e-d578-4f44-a4fa-f1ac50b6bbeb.png",
+      "standardized_sha256": "8220B547D7562F2E9055A4BA5F336431370C3D6E45F692924077B5E4EFFFEBE1"
+    },
+    {
+      "frame": 20,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-e163e952-a2e9-4855-8153-fccb83c911a3.png",
+      "standardized_sha256": "F6314A2660403BE24EA99D87D6D43861F93447184413860023542FE5B4140B89",
+      "rejected_candidate": "rejected-candidates/frame_020_candidate_a_oversized_head.png"
+    },
+    {
+      "frame": 21,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-cb8dde94-cd6c-4834-b452-60cefc99b8f3.png",
+      "standardized_sha256": "DE01741439B2D63D9DCEDB3B997068896ECC468CB9E72A598F19667302901A2D"
+    },
+    {
+      "frame": 22,
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-d2db549d-ad5e-4f6c-9b14-159639dbda30.png",
+      "standardized_sha256": "E355FDB1D37CCC08C91B40AD341B680A4D373A6CC4F1F03654725DDCB50FD728",
+      "rejected_candidate": "rejected-candidates/frame_022_candidate_a_wide_stance.png"
+    }
+  ],
+  "semantic_change": "The anatomical right hand on viewer-left releases the strap, plants on the implied ground, swings forward/up, and opens outward. The strap is not regripped until planned F24.",
+  "automated_result": {
+    "sequence": "PASS",
+    "normalization": "PASS",
+    "local_identity": "PASS",
+    "head_center_range_px": 0.79,
+    "baseline_range_px": 0,
+    "head_width_proxy_range_px": 16,
+    "face_width_proxy_range_px": 12,
+    "hair_luma_proxy_range": 6.263
+  },
+  "semantic_status": "PENDING_USER_REVIEW"
+}

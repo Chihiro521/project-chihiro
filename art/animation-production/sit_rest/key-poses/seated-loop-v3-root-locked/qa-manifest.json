@@ -1,0 +1,45 @@
+{
+  "name": "sit_rest_seated_loop_v3_root_locked",
+  "frame_count": 5,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Approved K06 v3 seated Little Chihiro; v2 support gesture retained without global drift.",
+    "proportions": "Every complete drawing is uniformly scaled to the approved K06 visible height of 311 pixels.",
+    "placement": "The midpoint of the two shoes is locked to x=256 and the visible shoe baseline to y=472.",
+    "rendering": "Fine dark outlines, restrained warm cel shading, fixed front camera and uniform lighting."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.10,
+    "max_alpha_coverage": 0.46,
+    "max_color_jsd": 0.16,
+    "max_area_drift": 0.24,
+    "max_bbox_aspect_drift": 0.24,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 24.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.18,
+    "max_motion_energy_delta": 0.10,
+    "max_centroid_acceleration_px": 12.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "min_adjacent_diff": "F12 to F14 intentionally holds the supported body pose and changes only the slow blink.",
+    "center_lock": "Whole-silhouette centroid is not a valid root proxy for an asymmetric support-arm gesture; the separate stabilization report enforces shoe midpoint, visible height and baseline locks."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_008.png", "phase": 0.0, "planned_frame_index": 8, "role": "key", "pose": "approved seated contact"},
+    {"index": 1, "file": "frame_010.png", "phase": 0.25, "planned_frame_index": 10, "role": "breakdown", "pose": "free hand reaches support"},
+    {"index": 2, "file": "frame_012.png", "phase": 0.5, "planned_frame_index": 12, "role": "key", "pose": "supported relaxed side-back lean"},
+    {"index": 3, "file": "frame_014.png", "phase": 0.75, "planned_frame_index": 14, "role": "reference", "pose": "supported slow blink"},
+    {"index": 4, "file": "frame_016.png", "phase": 1.0, "planned_frame_index": 16, "role": "breakdown", "pose": "support releases toward contact"}
+  ]
+}

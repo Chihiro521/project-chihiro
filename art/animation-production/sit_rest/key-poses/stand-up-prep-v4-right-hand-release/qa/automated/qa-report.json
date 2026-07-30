@@ -1,0 +1,173 @@
+{
+  "status": "PASS",
+  "summary": {
+    "frame_count": 6,
+    "dimensions": [
+      512,
+      512
+    ],
+    "anchor_index": 0,
+    "baseline_range_px": 0.0,
+    "center_range_x_px": 38.5,
+    "center_range_y_px": 71.0,
+    "max_motion_energy_delta": 0.0382,
+    "max_centroid_acceleration_px": 61.206617,
+    "loop_seam_diff": null,
+    "loop_seam_ratio": null
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.08,
+    "max_alpha_coverage": 0.48,
+    "max_color_jsd": 0.22,
+    "max_area_drift": 1.25,
+    "max_bbox_aspect_drift": 1.35,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 125.0,
+    "min_adjacent_diff": 0.002,
+    "max_adjacent_diff": 0.48,
+    "max_motion_energy_delta": 0.32,
+    "max_centroid_acceleration_px": 75.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "failures": [],
+  "warnings": [],
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_017.png",
+      "bbox_left": 163.0,
+      "bbox_top": 161.0,
+      "bbox_right": 357.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 194.0,
+      "bbox_height": 312.0,
+      "bbox_area": 60528.0,
+      "bbox_aspect": 0.621795,
+      "centroid_x": 260.0,
+      "centroid_y": 317.0,
+      "alpha_coverage": 0.111744,
+      "color_jsd_vs_anchor": 0.0,
+      "area_drift_vs_anchor": 0.0,
+      "bbox_aspect_drift_vs_anchor": 0.0
+    },
+    {
+      "index": 1,
+      "file": "frame_019.png",
+      "bbox_left": 153.0,
+      "bbox_top": 142.0,
+      "bbox_right": 363.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 210.0,
+      "bbox_height": 331.0,
+      "bbox_area": 69510.0,
+      "bbox_aspect": 0.634441,
+      "centroid_x": 258.0,
+      "centroid_y": 307.5,
+      "alpha_coverage": 0.125881,
+      "color_jsd_vs_anchor": 0.021128,
+      "area_drift_vs_anchor": 0.148394,
+      "bbox_aspect_drift_vs_anchor": 0.020338
+    },
+    {
+      "index": 2,
+      "file": "frame_020.png",
+      "bbox_left": 145.0,
+      "bbox_top": 162.0,
+      "bbox_right": 402.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 257.0,
+      "bbox_height": 311.0,
+      "bbox_area": 79927.0,
+      "bbox_aspect": 0.826367,
+      "centroid_x": 273.5,
+      "centroid_y": 317.5,
+      "alpha_coverage": 0.154133,
+      "color_jsd_vs_anchor": 0.02465,
+      "area_drift_vs_anchor": 0.320496,
+      "bbox_aspect_drift_vs_anchor": 0.329002
+    },
+    {
+      "index": 3,
+      "file": "frame_021.png",
+      "bbox_left": 172.0,
+      "bbox_top": 92.0,
+      "bbox_right": 374.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 202.0,
+      "bbox_height": 381.0,
+      "bbox_area": 76962.0,
+      "bbox_aspect": 0.530184,
+      "centroid_x": 273.0,
+      "centroid_y": 282.5,
+      "alpha_coverage": 0.137115,
+      "color_jsd_vs_anchor": 0.017383,
+      "area_drift_vs_anchor": 0.271511,
+      "bbox_aspect_drift_vs_anchor": 0.147333
+    },
+    {
+      "index": 4,
+      "file": "frame_022.png",
+      "bbox_left": 112.0,
+      "bbox_top": 38.0,
+      "bbox_right": 358.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 246.0,
+      "bbox_height": 435.0,
+      "bbox_area": 107010.0,
+      "bbox_aspect": 0.565517,
+      "centroid_x": 235.0,
+      "centroid_y": 255.5,
+      "alpha_coverage": 0.147957,
+      "color_jsd_vs_anchor": 0.023782,
+      "area_drift_vs_anchor": 0.767942,
+      "bbox_aspect_drift_vs_anchor": 0.090508
+    },
+    {
+      "index": 5,
+      "file": "frame_025.png",
+      "bbox_left": 182.0,
+      "bbox_top": 20.0,
+      "bbox_right": 329.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 147.0,
+      "bbox_height": 453.0,
+      "bbox_area": 66591.0,
+      "bbox_aspect": 0.324503,
+      "centroid_x": 255.5,
+      "centroid_y": 246.5,
+      "alpha_coverage": 0.155563,
+      "color_jsd_vs_anchor": 0.113837,
+      "area_drift_vs_anchor": 0.100169,
+      "bbox_aspect_drift_vs_anchor": 0.478118
+    }
+  ],
+  "transitions": [
+    {
+      "from": "frame_017.png",
+      "to": "frame_019.png",
+      "adjacent_diff": 0.048023
+    },
+    {
+      "from": "frame_019.png",
+      "to": "frame_020.png",
+      "adjacent_diff": 0.055337
+    },
+    {
+      "from": "frame_020.png",
+      "to": "frame_021.png",
+      "adjacent_diff": 0.08119
+    },
+    {
+      "from": "frame_021.png",
+      "to": "frame_022.png",
+      "adjacent_diff": 0.071482
+    },
+    {
+      "from": "frame_022.png",
+      "to": "frame_025.png",
+      "adjacent_diff": 0.033282
+    }
+  ],
+  "semantic_review_required": true
+}

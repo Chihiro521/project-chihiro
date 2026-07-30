@@ -1,0 +1,36 @@
+{
+  "action": "sit_rest",
+  "generator": "OpenAI built-in imagegen",
+  "method": "nine separate complete-character calls; no interpolation, optical flow, morphing, warping, local translation or part compositing",
+  "authorized_by_user": "剩下的几帧都直接做了吧。",
+  "generation_order": [2, 1, 3, 6, 5, 7, 18, 24, 23],
+  "fixed_canvas": {
+    "generation": [1024, 1024],
+    "final": [512, 512],
+    "pivot": [256, 492],
+    "visible_baseline_y": 472,
+    "background": "#FF00FF"
+  },
+  "target_visible_heights": {
+    "1": 446,
+    "2": 430,
+    "3": 404,
+    "5": 350,
+    "6": 332,
+    "7": 318,
+    "18": 315,
+    "23": 420,
+    "24": 441
+  },
+  "frames": [
+    {"index": 2, "previous": 0, "next": 4, "pose": "early controlled knee bend; hips begin lowering; torso broad and nearly upright"},
+    {"index": 1, "previous": 0, "next": 2, "pose": "gaze lowers; knees barely soften; free hand prepares to balance"},
+    {"index": 3, "previous": 2, "next": 4, "pose": "deeper bend approaching F04 while both shoes remain planted"},
+    {"index": 6, "previous": 4, "next": 8, "pose": "pelvis nears ground contact; thighs foreshorten; shoes extend toward viewer"},
+    {"index": 5, "previous": 4, "next": 6, "pose": "hips pass below deep crouch; connected skirt begins wrapping over thighs"},
+    {"index": 7, "previous": 6, "next": 8, "pose": "first floor contact immediately before the approved seated master"},
+    {"index": 18, "previous": 17, "next": 19, "pose": "attention returns and torso pitches forward before both feet draw fully under knees"},
+    {"index": 24, "previous": 22, "next": 25, "pose": "almost upright; knees nearly straight; shoulders and strap hand settle toward standing"},
+    {"index": 23, "previous": 22, "next": 24, "pose": "torso straightens; hips rise; skirt falls from crouched volume toward standing A-line"}
+  ]
+}

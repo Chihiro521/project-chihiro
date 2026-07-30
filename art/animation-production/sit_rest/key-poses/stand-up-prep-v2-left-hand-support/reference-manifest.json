@@ -1,0 +1,16 @@
+{
+  "name": "sit_rest_stand_up_prep_v2_left_hand_support",
+  "purpose": "Replace the stiff free-left-hand rise with a readable reach, palm support, release and counterbalance arc.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "hand_identity": "anatomical left hand is on viewer-right; anatomical right hand remains on the strap at viewer-left",
+  "keys": [
+    {"frame": 19, "pose": "left hand reaches down outside satchel toward implied ground; palm opens"},
+    {"frame": 20, "pose": "left palm planted beside hip; elbow straightens and supports the foot-loaded crouch"},
+    {"frame": 21, "pose": "left palm releases; elbow bends and forearm swings outward-forward"},
+    {"frame": 22, "pose": "left arm swings backward-outward with relaxed wrist during controlled rise"}
+  ],
+  "generation_rule": "Each frame is a separate complete-character built-in imagegen call. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "status": "rejected_user_feedback_hand_screen_position_too_static"
+}

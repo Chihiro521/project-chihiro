@@ -1,0 +1,36 @@
+{
+  "name": "sit_rest_stand_up_v4_right_hand_release_sparse_keys",
+  "frame_count": 6,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "thresholds": {
+    "min_alpha_coverage": 0.08,
+    "max_alpha_coverage": 0.48,
+    "max_color_jsd": 0.22,
+    "max_area_drift": 1.25,
+    "max_bbox_aspect_drift": 1.35,
+    "max_baseline_jitter_px": 1.0,
+    "max_center_range_px": 125.0,
+    "min_adjacent_diff": 0.002,
+    "max_adjacent_diff": 0.48,
+    "max_motion_energy_delta": 0.32,
+    "max_centroid_acceleration_px": 75.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 17, "file": "frame_017.png", "phase": 0.68, "role": "key", "pose": "approved seated authority"},
+    {"index": 19, "file": "frame_019.png", "phase": 0.76, "role": "key", "pose": "right hand releases strap"},
+    {"index": 20, "file": "frame_020.png", "phase": 0.80, "role": "key", "pose": "right palm supports on implied ground"},
+    {"index": 21, "file": "frame_021.png", "phase": 0.84, "role": "key", "pose": "right hand swings forward and up"},
+    {"index": 22, "file": "frame_022.png", "phase": 0.88, "role": "key", "pose": "right arm opens outward away from strap"},
+    {"index": 25, "file": "frame_025.png", "phase": 1.0, "role": "key", "pose": "exact standing return"}
+  ]
+}

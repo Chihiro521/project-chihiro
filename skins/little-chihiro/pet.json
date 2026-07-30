@@ -920,6 +920,86 @@
         "height": 453
       }
     },
+    "sit_enter": {
+      "frames": [
+        "animations/sit_enter/frame_000.png",
+        "animations/sit_enter/frame_001.png",
+        "animations/sit_enter/frame_002.png",
+        "animations/sit_enter/frame_003.png",
+        "animations/sit_enter/frame_004.png",
+        "animations/sit_enter/frame_005.png",
+        "animations/sit_enter/frame_006.png",
+        "animations/sit_enter/frame_007.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20},
+        {"x": 370, "y": 20},
+        {"x": 391, "y": 275},
+        {"x": 354, "y": 421},
+        {"x": 306, "y": 478},
+        {"x": 205, "y": 478},
+        {"x": 154, "y": 421},
+        {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 139, "y": 20, "width": 232, "height": 453}
+    },
+    "sit_loop": {
+      "frames": [
+        "animations/sit_loop/frame_008.png",
+        "animations/sit_loop/frame_009.png",
+        "animations/sit_loop/frame_010.png",
+        "animations/sit_loop/frame_011.png",
+        "animations/sit_loop/frame_012.png",
+        "animations/sit_loop/frame_013.png",
+        "animations/sit_loop/frame_014.png",
+        "animations/sit_loop/frame_015.png",
+        "animations/sit_loop/frame_016.png",
+        "animations/sit_loop/frame_017.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": true,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20},
+        {"x": 370, "y": 20},
+        {"x": 391, "y": 275},
+        {"x": 354, "y": 421},
+        {"x": 306, "y": 478},
+        {"x": 205, "y": 478},
+        {"x": 154, "y": 421},
+        {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 144, "y": 99, "width": 233, "height": 374}
+    },
+    "sit_exit": {
+      "frames": [
+        "animations/sit_exit/frame_018.png",
+        "animations/sit_exit/frame_019.png",
+        "animations/sit_exit/frame_020.png",
+        "animations/sit_exit/frame_021.png",
+        "animations/sit_exit/frame_022.png",
+        "animations/sit_exit/frame_023.png",
+        "animations/sit_exit/frame_024.png",
+        "animations/sit_exit/frame_025.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20},
+        {"x": 370, "y": 20},
+        {"x": 391, "y": 275},
+        {"x": 354, "y": 421},
+        {"x": 306, "y": 478},
+        {"x": 205, "y": 478},
+        {"x": 154, "y": 421},
+        {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 154, "y": 3, "width": 236, "height": 470}
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",

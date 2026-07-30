@@ -1,0 +1,184 @@
+{
+  "status": "PASS",
+  "summary": {
+    "head_center_range_px": 0.46,
+    "baseline_range_px": 0
+  },
+  "frames": [
+    {
+      "frame": 17,
+      "label": "F17 approved seated return",
+      "uniform_whole_character_scale": 1.0,
+      "whole_character_translation": [
+        0,
+        0
+      ],
+      "alpha_bbox": [
+        163,
+        161,
+        357,
+        473
+      ],
+      "visible_height_px": 312,
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          171,
+          205,
+          189
+        ],
+        [
+          232,
+          273,
+          254
+        ]
+      ],
+      "shoe_midpoint_x": 221.5,
+      "head_center_x": 256.438,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 19,
+      "label": "F19 draw feet and plant soles",
+      "uniform_whole_character_scale": 0.46219686,
+      "whole_character_translation": [
+        18,
+        68
+      ],
+      "alpha_bbox": [
+        167,
+        148,
+        343,
+        473
+      ],
+      "visible_height_px": 325,
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          172,
+          208,
+          191
+        ],
+        [
+          226,
+          265,
+          247
+        ]
+      ],
+      "shoe_midpoint_x": 219.0,
+      "head_center_x": 256.432,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 20,
+      "label": "F20 load both planted feet",
+      "uniform_whole_character_scale": 0.56856187,
+      "whole_character_translation": [
+        -18,
+        -6
+      ],
+      "alpha_bbox": [
+        181,
+        133,
+        393,
+        473
+      ],
+      "visible_height_px": 340,
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          216,
+          260,
+          237
+        ],
+        [
+          266,
+          312,
+          290
+        ]
+      ],
+      "shoe_midpoint_x": 263.5,
+      "head_center_x": 255.978,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 21,
+      "label": "F21 first two-leg push",
+      "uniform_whole_character_scale": 0.55287009,
+      "whole_character_translation": [
+        -6,
+        -10
+      ],
+      "alpha_bbox": [
+        190,
+        107,
+        386,
+        473
+      ],
+      "visible_height_px": 366,
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          217,
+          264,
+          240
+        ],
+        [
+          269,
+          317,
+          294
+        ]
+      ],
+      "shoe_midpoint_x": 267.0,
+      "head_center_x": 256.141,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "frame": 22,
+      "label": "F22 controlled rise",
+      "uniform_whole_character_scale": 1.0,
+      "whole_character_translation": [
+        0,
+        0
+      ],
+      "alpha_bbox": [
+        202,
+        79,
+        362,
+        473
+      ],
+      "visible_height_px": 394,
+      "visible_baseline_y": 472,
+      "shoe_spans": [
+        [
+          210,
+          249,
+          231
+        ],
+        [
+          262,
+          304,
+          284
+        ]
+      ],
+      "shoe_midpoint_x": 257.5,
+      "head_center_x": 256.375,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "sit_rest_key_poses",
+  "frame_count": 5,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Broad-headed four-head-tall Little Chihiro with fixed beret, gray-beige bob, navy dress, satchel and rabbit.",
+    "proportions": "Standing frame controls face, head, torso, limb thickness, shoes and costume scale; sitting changes articulation and root height only.",
+    "face_and_markings": "Rounded pale face, muted blue-gray eyes and low-luminance ash-beige hair remain recognizable.",
+    "costume": "Collar, orange ribbon, brass buttons, lace hem, strap, satchel, rabbit, socks and Mary Jane shoes remain complete and topologically consistent.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Fine dark outlines, restrained warm cel shading, fixed front orthographic camera and neutral light."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.11,
+    "max_alpha_coverage": 0.52,
+    "max_color_jsd": 0.2,
+    "max_area_drift": 1.15,
+    "max_bbox_aspect_drift": 1.2,
+    "max_baseline_jitter_px": 3.0,
+    "max_center_range_px": 130.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.42,
+    "max_motion_energy_delta": 0.24,
+    "max_centroid_acceleration_px": 70.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 0, "file": "k00_stand.png", "phase": 0.0, "planned_frame_index": 0, "role": "key", "pose": "approved standing anchor, also frame 25 return target"},
+    {"index": 1, "file": "k04_descent.png", "phase": 0.16, "planned_frame_index": 4, "role": "key", "pose": "deep controlled descent; perspective update pending"},
+    {"index": 2, "file": "k06_seated_contact.png", "phase": 0.32, "planned_frame_index": 8, "role": "key", "pose": "user-approved K06 v3 stable seated contact and loop authority"},
+    {"index": 3, "file": "k09_relaxed.png", "phase": 0.48, "planned_frame_index": 12, "role": "key", "pose": "relaxed seated source placeholder; regenerate from K06 v3"},
+    {"index": 4, "file": "k14_rise.png", "phase": 0.88, "planned_frame_index": 22, "role": "key", "pose": "rising source placeholder; regenerate from K06 v3"}
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "generator": "OpenAI built-in imagegen",
+  "mode": "Two separate complete-character transition-key calls. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "generated_frames": [
+    {
+      "frame": 4,
+      "role": "deep descent between approved F00 standing and approved F08 seated contact",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-a8c0d1dc-a3c2-4939-933e-d79c9c822d0a.png",
+      "standardized_sha256": "2D498A515EEE773C6AFD6D2E29E54245695D65819582D21D71BADAEDCDE8C057",
+      "rejected_candidate": "rejected-candidates/frame_004_candidate_a_knee_cutouts.png"
+    },
+    {
+      "frame": 22,
+      "role": "controlled rise between approved F08 seated geometry and exact F25 standing return",
+      "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-8a771f9a-c4e6-4154-ab62-1be423be6245.png",
+      "standardized_sha256": "2520A2A580044F52799FF93E491EF4C1277C4413203025809E5689BCE2E67750"
+    }
+  ],
+  "normalization": {
+    "method": "uniform whole-character scaling plus whole-character translation only",
+    "target_visible_heights": {"frame_004": 370, "frame_022": 393},
+    "target_head_center_x": 256,
+    "visible_baseline_y": 472,
+    "pivot": [256, 492],
+    "standing_return": "F25 is pixel-identical to the root-normalized F00 output"
+  },
+  "automated_result": {
+    "status": "PASS",
+    "baseline_range_px": 0.0,
+    "center_range_x_px": 26.5,
+    "max_motion_energy_delta": 0.028516,
+    "max_centroid_acceleration_px": 72.665329
+  },
+  "semantic_status": "PENDING_USER_REVIEW"
+}

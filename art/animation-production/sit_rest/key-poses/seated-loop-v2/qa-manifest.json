@@ -1,0 +1,44 @@
+{
+  "name": "sit_rest_seated_loop_references_v2",
+  "frame_count": 5,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Approved K06 v3 front-facing seated Little Chihiro with fixed beret, ash-beige bob, navy dress, satchel and rabbit.",
+    "proportions": "K06 v3 controls seated head, skirt, leg, shoe and accessory scale; v2 permits only a restrained upper-body side-back support lean.",
+    "costume": "Collar, orange bow, brass buttons, lace hem, strap, satchel, rabbit, socks and shoes remain complete and consistent.",
+    "rendering": "Fine dark outlines, restrained warm cel shading, fixed front camera and uniform lighting."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.10,
+    "max_alpha_coverage": 0.46,
+    "max_color_jsd": 0.16,
+    "max_area_drift": 0.30,
+    "max_bbox_aspect_drift": 0.30,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 24.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.20,
+    "max_motion_energy_delta": 0.12,
+    "max_centroid_acceleration_px": 14.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "min_adjacent_diff": "F12 to F14 is an intentional supported-pose hold whose only semantic change is a clearly visible slow blink. The 0.0008 floor remains above the measured 0.000835 transition and does not relax scale, placement, palette or maximum-motion gates."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_008.png", "phase": 0.0, "planned_frame_index": 8, "role": "key", "pose": "approved seated contact authority"},
+    {"index": 1, "file": "frame_010.png", "phase": 0.25, "planned_frame_index": 10, "role": "breakdown", "pose": "free hand lowers and rotates toward a support contact"},
+    {"index": 2, "file": "frame_012.png", "phase": 0.5, "planned_frame_index": 12, "role": "key", "pose": "palm supports a readable but restrained relaxed side-back lean"},
+    {"index": 3, "file": "frame_014.png", "phase": 0.75, "planned_frame_index": 14, "role": "reference", "pose": "slow blink while the supported lean is held"},
+    {"index": 4, "file": "frame_016.png", "phase": 1.0, "planned_frame_index": 16, "role": "breakdown", "pose": "eyes reopen as torso and support hand begin returning toward contact"}
+  ]
+}

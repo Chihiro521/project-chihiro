@@ -1,0 +1,14 @@
+{
+  "name": "sit_rest_stand_up_prep_v3_left_hand_arc",
+  "purpose": "Create a visibly traveling left-hand arc instead of several poses with the hand fixed in one screen region.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "keys": [
+    {"frame": 19, "pose": "left hand travels inward/up toward viewer-right knee"},
+    {"frame": 20, "pose": "left palm presses on skirt-covered knee to help rise"},
+    {"frame": 21, "pose": "left hand releases and swings high toward chest/shoulder"},
+    {"frame": 22, "pose": "left arm opens far outward/back for counterbalance"}
+  ],
+  "status": "abandoned_due_user_correction_target_was_right_hand_on_strap"
+}

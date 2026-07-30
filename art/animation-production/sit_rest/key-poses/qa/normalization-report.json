@@ -1,0 +1,117 @@
+{
+  "status": "PASS",
+  "frames": [
+    {
+      "name": "k04_descent",
+      "label": "K04 controlled descent",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -3,
+        35
+      ],
+      "alpha_bbox": [
+        165,
+        149,
+        348,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k06_seated_contact",
+      "label": "K06 first seated contact",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        -5,
+        57
+      ],
+      "alpha_bbox": [
+        160,
+        162,
+        353,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k09_relaxed",
+      "label": "K09 relaxed seated rest",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        5,
+        31
+      ],
+      "alpha_bbox": [
+        155,
+        150,
+        358,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k14_rise",
+      "label": "K14 controlled rise",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.89,
+      "whole_sprite_translation": [
+        0,
+        34
+      ],
+      "alpha_bbox": [
+        180,
+        120,
+        332,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

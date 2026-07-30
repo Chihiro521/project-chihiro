@@ -1,0 +1,29 @@
+{
+  "name": "sit_rest-seated-loop-v4-rabbit-pat",
+  "purpose": "Stable seated micro-action that keeps the entire torso, pelvis, skirt, legs and feet fixed while the free forearm pats the rabbit ear.",
+  "canvas": {"source": "1024x1024", "final": "512x512"},
+  "pivot": {"x": 256, "y": 492},
+  "visible_baseline_y": 472,
+  "perspective_authority": "../k06_seated_contact_chroma.png",
+  "motion_arc": "F08 stable contact; F10 free hand approaches rabbit; F12 fingertips rest on one rabbit ear; F14 same contact with a slow blink; F16 hand withdraws toward F08.",
+  "locked_body": "Head position, torso, pelvis, skirt silhouette, leg angles, shoe contacts, strap, satchel and rabbit base position remain fixed to K06. Only the free forearm/hand, gaze, eyelids and a tiny rabbit-ear response may change.",
+  "generation_rule": "Every frame is a separately generated complete character image. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
+  "frames": [
+    {"frame": 8, "id": "contact", "file": "normalized/frame_008.png", "status": "approved K06 v3 anchor"},
+    {"frame": 10, "id": "hand_approach", "file": "normalized/frame_010.png", "status": "approved"},
+    {"frame": 12, "id": "rabbit_pat", "file": "normalized/frame_012.png", "status": "approved"},
+    {"frame": 14, "id": "rabbit_pat_blink", "file": "normalized/frame_014.png", "status": "approved"},
+    {"frame": 16, "id": "hand_withdraw", "file": "normalized/frame_016.png", "status": "approved"}
+  ],
+  "technical_status": "PASS",
+  "semantic_status": "USER_APPROVED",
+  "user_approval": {
+    "date": "2026-07-30",
+    "verdict": "这个版本合格",
+    "scope": "F08/F10/F12/F14/F16 stabilized seated rabbit-pat reference sequence"
+  },
+  "stabilization_report": "qa/stabilization-report.json",
+  "contact_sheet": "qa/sit_rest-seated-loop-v4-rabbit-pat-contact-sheet.png",
+  "preview": "qa/automated/preview.gif",
+  "qa_report": "qa/automated/qa-report.json"
+}
