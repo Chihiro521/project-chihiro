@@ -1,0 +1,70 @@
+{
+  "status": "PASS",
+  "method": "Residual magenta-like nontransparent pixel count after grading.",
+  "thresholds": {
+    "max_magenta_like_pixels": 100
+  },
+  "failures": [],
+  "frames": [
+    {
+      "frame": "frame_000.png",
+      "magenta_like_pixels": 39
+    },
+    {
+      "frame": "frame_001.png",
+      "magenta_like_pixels": 33
+    },
+    {
+      "frame": "frame_002.png",
+      "magenta_like_pixels": 26
+    },
+    {
+      "frame": "frame_003.png",
+      "magenta_like_pixels": 44
+    },
+    {
+      "frame": "frame_004.png",
+      "magenta_like_pixels": 31
+    },
+    {
+      "frame": "frame_005.png",
+      "magenta_like_pixels": 28
+    },
+    {
+      "frame": "frame_006.png",
+      "magenta_like_pixels": 19
+    },
+    {
+      "frame": "frame_007.png",
+      "magenta_like_pixels": 18
+    },
+    {
+      "frame": "frame_008.png",
+      "magenta_like_pixels": 25
+    },
+    {
+      "frame": "frame_009.png",
+      "magenta_like_pixels": 35
+    },
+    {
+      "frame": "frame_010.png",
+      "magenta_like_pixels": 29
+    },
+    {
+      "frame": "frame_011.png",
+      "magenta_like_pixels": 50
+    },
+    {
+      "frame": "frame_012.png",
+      "magenta_like_pixels": 17
+    },
+    {
+      "frame": "frame_013.png",
+      "magenta_like_pixels": 10
+    },
+    {
+      "frame": "frame_014.png",
+      "magenta_like_pixels": 24
+    }
+  ]
+}

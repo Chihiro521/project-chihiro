@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "method": "Tan-region position proxy for guard frames 4-6 after one identical sequence-wide mapping. Alpha geometry is unchanged by grading.",
+  "frames_checked": [
+    4,
+    5,
+    6
+  ],
+  "samples": [
+    {
+      "bbox": [
+        250,
+        220,
+        325,
+        365
+      ],
+      "centroid": [
+        289.608,
+        285.926
+      ],
+      "sample_count": 2504
+    },
+    {
+      "bbox": [
+        250,
+        220,
+        327,
+        365
+      ],
+      "centroid": [
+        289.486,
+        280.892
+      ],
+      "sample_count": 2436
+    },
+    {
+      "bbox": [
+        250,
+        220,
+        336,
+        363
+      ],
+      "centroid": [
+        292.913,
+        269.279
+      ],
+      "sample_count": 2867
+    }
+  ],
+  "deviation": {
+    "frame5_vs_neighbor_midpoint_dx": -1.774,
+    "frame5_vs_neighbor_midpoint_dy": 3.29,
+    "euclidean": 3.738
+  },
+  "threshold_px": 6
+}

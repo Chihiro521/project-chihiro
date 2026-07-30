@@ -1,0 +1,17 @@
+direct-frame-sources/
+dynamic-revision-sources/
+frames/
+frames-dynamic-v2/
+frames-dynamic-v3/
+frames-dynamic-v4/
+frames-dynamic-v5/
+frames-dynamic-v6-source/
+qa/
+qa-dynamic-v2/
+qa-dynamic-v3/
+qa-dynamic-v4/
+qa-dynamic-v5/
+qa-key-poses/
+**/__pycache__/
+**/*.import
+*.pyc

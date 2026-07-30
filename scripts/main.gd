@@ -89,6 +89,7 @@ var returned_after_seconds := 0.0
 var session_unrecorded_seconds := 0.0
 var poke_timestamps: Array[float] = []
 var head_pat_refused := false
+var poke_visual_clip := "poke_cheek"
 var last_stable_window_title := ""
 var last_novel_window_title := ""
 var last_foreground_app := ""
@@ -527,7 +528,7 @@ func _start_direct_behavior(intent_id: String) -> bool:
 
 func _play_intent_sfx(intent_id: String) -> void:
 	match intent_id:
-		"straighten_bag", "inspect_rabbit": sfx_player.play("bag")
+		"straighten_bag", "inspect_rabbit", "guard_bag_annoyed": sfx_player.play("bag")
 		"tidy_clothes", "stretch", "reason_pose", "return_wave": sfx_player.play("cloth")
 		"sit_rest", "window_sit": sfx_player.play("sit")
 		"window_walk": sfx_player.play("step")
@@ -881,6 +882,8 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		sprite_player.play_clip("react")
 	elif to == "cursor_annoyed":
 		sprite_player.play_clip("poke_cheek")
+	elif to == "poke_cheek":
+		sprite_player.play_clip(poke_visual_clip if manifest.has_clip(poke_visual_clip) else "poke_cheek")
 	elif to in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
 		_play_action_session_clip()
 	else:
@@ -926,7 +929,11 @@ func _on_clip_completed(clip_name: String, segment: String) -> void:
 		elif segment == "exit":
 			machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
-	if clip_name in ["poke_cheek", "clock_scare"] and machine.state in ["poke_cheek", "clock_scare"]:
+	if machine.state == "poke_cheek" and clip_name in ["poke_cheek", "guard_bag_annoyed"]:
+		poke_visual_clip = "poke_cheek"
+		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+		return
+	if clip_name == "clock_scare" and machine.state == "clock_scare":
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
 	if (clip_name == "react" and machine.state == "cursor_startle") or (clip_name == "poke_cheek" and machine.state == "cursor_annoyed") or (clip_name == "cursor_dizzy" and machine.state == "cursor_dizzy"):
@@ -1115,6 +1122,7 @@ func _trigger_poke() -> void:
 		needs_model.apply_event("rapid_poke", {"effects": {"affection": 0.3, "irritation": -6.0}})
 	_bump_interaction("pokes")
 	_emit_dialogue("poke")
+	poke_visual_clip = "poke_cheek"
 	var resume := _resume_for_new_interaction()
 	_leave_menu_for_interaction(resume)
 	interaction_resume = resume
@@ -1164,7 +1172,11 @@ func _trigger_bag_guard() -> void:
 	_bump_interaction("pokes")
 	_emit_dialogue("adjust_bag", ["bag"])
 	var resume := _resume_for_new_interaction()
+	_leave_menu_for_interaction(resume)
 	interaction_resume = resume
+	poke_visual_clip = "guard_bag_annoyed" if manifest.has_clip("guard_bag_annoyed") else "poke_cheek"
+	if poke_visual_clip == "guard_bag_annoyed":
+		sfx_player.play("bag")
 	machine.dispatch({"type": "POKE"})
 
 func _trigger_clock_scare() -> void:

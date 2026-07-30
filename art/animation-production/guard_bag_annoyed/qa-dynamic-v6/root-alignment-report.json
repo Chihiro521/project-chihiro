@@ -1,0 +1,271 @@
+{
+  "status": "PASS",
+  "method": "Measure the combined lower-foot alpha silhouette after one uniform whole-character downscale and whole-layer integer x alignment. No local transform is permitted.",
+  "target": {
+    "pivot": [
+      256,
+      492
+    ],
+    "baseline_bottom_exclusive": 472,
+    "lower_foot_centroid_x": 256.0,
+    "tolerance_px": 0.5
+  },
+  "failures": [],
+  "frames": [
+    {
+      "frame": "frame_000.png",
+      "source": "frames-dynamic-v6-source/frame_000.png",
+      "lower_foot_centroid_x": 256.4545,
+      "distance_from_target_px": 0.4545,
+      "final_bbox": [
+        180,
+        19,
+        328,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_001.png",
+      "source": "frames-dynamic-v6-source/frame_001.png",
+      "lower_foot_centroid_x": 255.7705,
+      "distance_from_target_px": 0.2295,
+      "final_bbox": [
+        183,
+        19,
+        326,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_002.png",
+      "source": "frames-dynamic-v6-source/frame_002.png",
+      "lower_foot_centroid_x": 255.7682,
+      "distance_from_target_px": 0.2318,
+      "final_bbox": [
+        183,
+        19,
+        327,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_003.png",
+      "source": "frames-dynamic-v6-source/frame_003.png",
+      "lower_foot_centroid_x": 256.3028,
+      "distance_from_target_px": 0.3028,
+      "final_bbox": [
+        182,
+        19,
+        334,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_004.png",
+      "source": "frames-dynamic-v6-source/frame_004.png",
+      "lower_foot_centroid_x": 255.7316,
+      "distance_from_target_px": 0.2684,
+      "final_bbox": [
+        180,
+        19,
+        325,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_005.png",
+      "source": "frames-dynamic-v6-source/frame_005.png",
+      "lower_foot_centroid_x": 256.3138,
+      "distance_from_target_px": 0.3138,
+      "final_bbox": [
+        181,
+        19,
+        328,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_006.png",
+      "source": "frames-dynamic-v6-source/frame_006.png",
+      "lower_foot_centroid_x": 255.906,
+      "distance_from_target_px": 0.094,
+      "final_bbox": [
+        176,
+        19,
+        336,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_007.png",
+      "source": "frames-dynamic-v6-source/frame_007.png",
+      "lower_foot_centroid_x": 255.6746,
+      "distance_from_target_px": 0.3254,
+      "final_bbox": [
+        184,
+        19,
+        325,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_008.png",
+      "source": "frames-dynamic-v6-source/frame_008.png",
+      "lower_foot_centroid_x": 256.1472,
+      "distance_from_target_px": 0.1472,
+      "final_bbox": [
+        182,
+        19,
+        327,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_009.png",
+      "source": "frames-dynamic-v6-source/frame_009.png",
+      "lower_foot_centroid_x": 255.7962,
+      "distance_from_target_px": 0.2038,
+      "final_bbox": [
+        183,
+        19,
+        326,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_010.png",
+      "source": "frames-dynamic-v6-source/frame_010.png",
+      "lower_foot_centroid_x": 256.2657,
+      "distance_from_target_px": 0.2657,
+      "final_bbox": [
+        171,
+        19,
+        331,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_011.png",
+      "source": "frames-dynamic-v6-source/frame_011.png",
+      "lower_foot_centroid_x": 255.6129,
+      "distance_from_target_px": 0.3871,
+      "final_bbox": [
+        186,
+        19,
+        332,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_012.png",
+      "source": "frames-dynamic-v6-source/frame_012.png",
+      "lower_foot_centroid_x": 255.5081,
+      "distance_from_target_px": 0.4919,
+      "final_bbox": [
+        180,
+        19,
+        327,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_013.png",
+      "source": "frames-dynamic-v6-source/frame_013.png",
+      "lower_foot_centroid_x": 255.6237,
+      "distance_from_target_px": 0.3763,
+      "final_bbox": [
+        182,
+        19,
+        333,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    },
+    {
+      "frame": "frame_014.png",
+      "source": "frames-dynamic-v6-source/frame_014.png",
+      "lower_foot_centroid_x": 256.4196,
+      "distance_from_target_px": 0.4196,
+      "final_bbox": [
+        183,
+        19,
+        328,
+        472
+      ],
+      "checks": {
+        "root": true,
+        "baseline_bottom_exclusive": true
+      },
+      "pass": true
+    }
+  ]
+}

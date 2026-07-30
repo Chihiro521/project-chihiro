@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "uniform_palette_grade": "PASS",
+  "generic_sprite_sequence_qa": "PASS",
+  "custom_reports": {
+    "alpha-identity-report.json": "PASS",
+    "proportion-report.json": "PASS",
+    "root-alignment-report.json": "PASS",
+    "palette-consistency-report.json": "PASS",
+    "texture-report.json": "PASS",
+    "chroma-fringe-report.json": "PASS",
+    "bag-alignment-report.json": "PASS",
+    "preaction-contact-proxy-report.json": "PASS"
+  },
+  "semantic_review_required": true,
+  "semantic_review_artifacts": [
+    "guard_bag_annoyed-dynamic-v6-contact-sheet.png",
+    "guard_bag_annoyed-preaction-v6-contact-sheet.png",
+    "preview-target.gif",
+    "preview-slow.gif"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "guard_bag_annoyed_key_poses",
+  "frame_count": 6,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "identity_lock": {
+    "silhouette": "Canonical reference plus five guard-bag key poses must preserve the rounded beret, broad head, compact four-head-tall body, long navy dress, sturdy legs, strap, single satchel and single rabbit.",
+    "proportions": "Frame 0 is authoritative for head and face width, overall height, skirt length, leg thickness, shoe size, foot spacing and body margins.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and low-luminance cool gray-beige hair; only the planned surprise-to-annoyance expression may change.",
+    "costume": "Cream collar, orange bow, approved brass buttons, full sleeves, lace hem, socks, shoes, strap route, one satchel and one rabbit keep exact topology.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Fine dark outlines, restrained warm cel shading, fixed front orthographic camera, neutral light and transparent background."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.14,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.45,
+    "max_bbox_aspect_drift": 0.45,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 18.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.28,
+    "max_motion_energy_delta": 0.16,
+    "max_centroid_acceleration_px": 18.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "reference", "pose": "canonical neutral identity and proportion authority"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.143, "role": "key", "pose": "K02 restrained startle"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.286, "role": "key", "pose": "K04 guard starts"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.5, "role": "key", "pose": "K07 peak guard"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.643, "role": "key", "pose": "K09 restrained annoyed hold"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.857, "role": "key", "pose": "K12 recovery transition"}
+  ]
+}

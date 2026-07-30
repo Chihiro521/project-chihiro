@@ -1,0 +1,136 @@
+{
+  "status": "PASS",
+  "method": "Automated bag-centroid continuity proxy for frames 0-4. This checks that detection and first contact do not teleport the bag and that the frame-3 protective pull approaches frame 4 smoothly. Hand contact, gaze and expression still require visual semantic review.",
+  "thresholds": {
+    "frame0_to_frame1_max_px": 12,
+    "frame1_to_frame2_max_px": 12,
+    "any_preaction_step_max_px": 24,
+    "frame3_neighbor_midpoint_deviation_max_px": 12
+  },
+  "beats": [
+    {
+      "frame": 0,
+      "label": "Neutral",
+      "visual_requirement": "Neutral standing pose; no reaction has started."
+    },
+    {
+      "frame": 1,
+      "label": "Detect poke",
+      "visual_requirement": "Eyes snap viewer-right; bag-side shoulder twitches; viewer-right hand approaches without contact; viewer-left hand remains on strap."
+    },
+    {
+      "frame": 2,
+      "label": "First contact / recoil",
+      "visual_requirement": "Small restrained recoil; viewer-right fingertips first contact the rabbit or bag; bag is not pulled yet; expression is surprised."
+    },
+    {
+      "frame": 3,
+      "label": "Protective pull begins",
+      "visual_requirement": "Viewer-right hand closes and begins a small inward-up pull; viewer-left hand starts rising; surprise changes to wary attention."
+    },
+    {
+      "frame": 4,
+      "label": "Guard start",
+      "visual_requirement": "Established protective guard pose without a motion pop."
+    }
+  ],
+  "samples": [
+    {
+      "frame": 0,
+      "bbox": [
+        250,
+        220,
+        327,
+        364
+      ],
+      "centroid": [
+        291.742,
+        287.506
+      ],
+      "sample_count": 2881
+    },
+    {
+      "frame": 1,
+      "bbox": [
+        250,
+        220,
+        326,
+        365
+      ],
+      "centroid": [
+        292.818,
+        276.207
+      ],
+      "sample_count": 2607
+    },
+    {
+      "frame": 2,
+      "bbox": [
+        250,
+        220,
+        326,
+        365
+      ],
+      "centroid": [
+        291.043,
+        285.566
+      ],
+      "sample_count": 3091
+    },
+    {
+      "frame": 3,
+      "bbox": [
+        250,
+        220,
+        334,
+        365
+      ],
+      "centroid": [
+        292.957,
+        278.489
+      ],
+      "sample_count": 2935
+    },
+    {
+      "frame": 4,
+      "bbox": [
+        250,
+        220,
+        325,
+        365
+      ],
+      "centroid": [
+        289.608,
+        285.926
+      ],
+      "sample_count": 2504
+    }
+  ],
+  "adjacent_bag_centroid_steps_px": {
+    "0->1": 11.35,
+    "1->2": 9.526,
+    "2->3": 7.331,
+    "3->4": 8.156
+  },
+  "neighbor_midpoint_deviation_px": {
+    "1": 10.427,
+    "2": 8.422,
+    "3": 7.719
+  },
+  "checks": {
+    "all_bag_samples_present": true,
+    "detect_frame_bag_stays_near_neutral": true,
+    "first_contact_has_no_large_bag_pull": true,
+    "no_preaction_bag_teleport": true,
+    "protective_pull_transition_is_smooth": true
+  },
+  "semantic_review_required": true,
+  "semantic_review_items": [
+    "Frame 1 gaze and shoulder twitch read as detecting a viewer-right poke.",
+    "Frame 1 viewer-right hand has a visible gap from bag and rabbit.",
+    "Frame 2 shows first hand contact and restrained recoil without pulling the bag.",
+    "Frame 3 closes the protective hand and starts the inward-up pull.",
+    "Frames 0-4 contain exactly one bag, one rabbit and one continuous strap.",
+    "No external hand, poke mark, effect, text, shadow or additional prop appears."
+  ]
+}

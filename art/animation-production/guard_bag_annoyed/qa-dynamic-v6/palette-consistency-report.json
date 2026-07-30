@@ -1,0 +1,854 @@
+{
+  "status": "PASS",
+  "method": "Fixed semantic-region samples against the identically graded canonical authority plus adjacent-frame luma jumps. One RGB-only mapping is applied identically to every frame and is independent of frame index and coordinates.",
+  "thresholds": {
+    "dress_mean_rgb_euclidean_max": 4.5,
+    "hair_mean_luma_delta_abs_max": 4.0,
+    "bag_mean_luma_delta_abs_max": 5.5,
+    "adjacent_dress_luma_jump_abs_max": 3.0,
+    "adjacent_hair_luma_jump_abs_max": 3.5,
+    "adjacent_bag_luma_jump_abs_max": 6.0
+  },
+  "canonical_authority": "dynamic-revision-sources/preaction-v6/canonical_palette_authority_graded.png",
+  "canonical": {
+    "dress": {
+      "sample_count": 16461,
+      "mean_rgb": [
+        52.913,
+        56.434,
+        60.302
+      ],
+      "mean_luma": 55.965,
+      "median_luma": 59.723
+    },
+    "hair": {
+      "sample_count": 3434,
+      "mean_rgb": [
+        198.754,
+        180.161,
+        157.355
+      ],
+      "mean_luma": 182.467,
+      "median_luma": 186.094
+    },
+    "bag": {
+      "sample_count": 3122,
+      "mean_rgb": [
+        190.778,
+        152.614,
+        102.821
+      ],
+      "mean_luma": 157.132,
+      "median_luma": 156.958
+    }
+  },
+  "failures": [],
+  "frames": [
+    {
+      "frame": 0,
+      "file": "frame_000.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16300,
+          "mean_rgb": [
+            52.15,
+            54.142,
+            59.727
+          ],
+          "mean_luma": 54.122,
+          "median_luma": 58.008
+        },
+        "hair": {
+          "sample_count": 3331,
+          "mean_rgb": [
+            198.164,
+            178.472,
+            156.715
+          ],
+          "mean_luma": 181.088,
+          "median_luma": 184.022
+        },
+        "bag": {
+          "sample_count": 3063,
+          "mean_rgb": [
+            190.548,
+            150.817,
+            102.008
+          ],
+          "mean_luma": 155.739,
+          "median_luma": 156.89
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 2.483,
+        "hair_mean_luma": -1.379,
+        "bag_mean_luma": -1.393
+      },
+      "adjacent_jump_from_previous": null,
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 1,
+      "file": "frame_001.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15718,
+          "mean_rgb": [
+            51.577,
+            55.348,
+            59.288
+          ],
+          "mean_luma": 54.831,
+          "median_luma": 57.795
+        },
+        "hair": {
+          "sample_count": 3252,
+          "mean_rgb": [
+            198.591,
+            180.839,
+            158.225
+          ],
+          "mean_luma": 182.981,
+          "median_luma": 186.736
+        },
+        "bag": {
+          "sample_count": 2809,
+          "mean_rgb": [
+            191.525,
+            155.271,
+            106.069
+          ],
+          "mean_luma": 159.426,
+          "median_luma": 158.533
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 1.998,
+        "hair_mean_luma": 0.514,
+        "bag_mean_luma": 2.294
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 0.709,
+        "hair": 1.893,
+        "bag": 3.687
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 2,
+      "file": "frame_002.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15376,
+          "mean_rgb": [
+            53.562,
+            57.286,
+            60.705
+          ],
+          "mean_luma": 56.741,
+          "median_luma": 59.583
+        },
+        "hair": {
+          "sample_count": 3351,
+          "mean_rgb": [
+            198.338,
+            180.727,
+            158.048
+          ],
+          "mean_luma": 182.833,
+          "median_luma": 186.094
+        },
+        "bag": {
+          "sample_count": 3384,
+          "mean_rgb": [
+            194.897,
+            157.524,
+            107.84
+          ],
+          "mean_luma": 161.883,
+          "median_luma": 157.746
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 1.144,
+        "hair_mean_luma": 0.366,
+        "bag_mean_luma": 4.751
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 1.91,
+        "hair": -0.148,
+        "bag": 2.457
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 3,
+      "file": "frame_003.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16598,
+          "mean_rgb": [
+            54.686,
+            58.867,
+            60.896
+          ],
+          "mean_luma": 58.125,
+          "median_luma": 60.651
+        },
+        "hair": {
+          "sample_count": 3039,
+          "mean_rgb": [
+            199.258,
+            181.919,
+            158.543
+          ],
+          "mean_luma": 183.918,
+          "median_luma": 187.094
+        },
+        "bag": {
+          "sample_count": 3159,
+          "mean_rgb": [
+            192.447,
+            155.283,
+            103.917
+          ],
+          "mean_luma": 159.475,
+          "median_luma": 157.389
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 3.069,
+        "hair_mean_luma": 1.451,
+        "bag_mean_luma": 2.343
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 1.384,
+        "hair": 1.085,
+        "bag": -2.408
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 4,
+      "file": "frame_004.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16086,
+          "mean_rgb": [
+            54.895,
+            58.947,
+            60.992
+          ],
+          "mean_luma": 58.233,
+          "median_luma": 61.366
+        },
+        "hair": {
+          "sample_count": 3102,
+          "mean_rgb": [
+            200.611,
+            182.474,
+            158.562
+          ],
+          "mean_luma": 184.604,
+          "median_luma": 188.203
+        },
+        "bag": {
+          "sample_count": 2724,
+          "mean_rgb": [
+            192.271,
+            154.215,
+            102.56
+          ],
+          "mean_luma": 158.576,
+          "median_luma": 157.601
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 3.274,
+        "hair_mean_luma": 2.137,
+        "bag_mean_luma": 1.444
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 0.108,
+        "hair": 0.686,
+        "bag": -0.899
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 5,
+      "file": "frame_005.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16891,
+          "mean_rgb": [
+            54.673,
+            57.895,
+            61.797
+          ],
+          "mean_luma": 57.492,
+          "median_luma": 60.723
+        },
+        "hair": {
+          "sample_count": 2998,
+          "mean_rgb": [
+            201.379,
+            182.898,
+            159.123
+          ],
+          "mean_luma": 185.11,
+          "median_luma": 189.166
+        },
+        "bag": {
+          "sample_count": 2645,
+          "mean_rgb": [
+            192.653,
+            155.061,
+            104.634
+          ],
+          "mean_luma": 159.412,
+          "median_luma": 157.886
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 2.733,
+        "hair_mean_luma": 2.643,
+        "bag_mean_luma": 2.28
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -0.741,
+        "hair": 0.506,
+        "bag": 0.836
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 6,
+      "file": "frame_006.png",
+      "regions": {
+        "dress": {
+          "sample_count": 17287,
+          "mean_rgb": [
+            52.784,
+            57.157,
+            59.964
+          ],
+          "mean_luma": 56.43,
+          "median_luma": 59.438
+        },
+        "hair": {
+          "sample_count": 3325,
+          "mean_rgb": [
+            199.284,
+            181.758,
+            158.654
+          ],
+          "mean_luma": 183.816,
+          "median_luma": 187.094
+        },
+        "bag": {
+          "sample_count": 3077,
+          "mean_rgb": [
+            192.795,
+            155.259,
+            104.97
+          ],
+          "mean_luma": 159.608,
+          "median_luma": 156.746
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 0.808,
+        "hair_mean_luma": 1.349,
+        "bag_mean_luma": 2.476
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -1.062,
+        "hair": -1.294,
+        "bag": 0.196
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 7,
+      "file": "frame_007.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15040,
+          "mean_rgb": [
+            52.351,
+            58.756,
+            61.018
+          ],
+          "mean_luma": 57.558,
+          "median_luma": 60.539
+        },
+        "hair": {
+          "sample_count": 3371,
+          "mean_rgb": [
+            199.961,
+            183.84,
+            160.732
+          ],
+          "mean_luma": 185.599,
+          "median_luma": 189.524
+        },
+        "bag": {
+          "sample_count": 2998,
+          "mean_rgb": [
+            194.381,
+            158.767,
+            107.429
+          ],
+          "mean_luma": 162.632,
+          "median_luma": 158.248
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 2.494,
+        "hair_mean_luma": 3.132,
+        "bag_mean_luma": 5.5
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 1.128,
+        "hair": 1.783,
+        "bag": 3.024
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 8,
+      "file": "frame_008.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15122,
+          "mean_rgb": [
+            52.269,
+            56.141,
+            60.698
+          ],
+          "mean_luma": 55.647,
+          "median_luma": 58.511
+        },
+        "hair": {
+          "sample_count": 3417,
+          "mean_rgb": [
+            201.537,
+            182.933,
+            159.713
+          ],
+          "mean_luma": 185.212,
+          "median_luma": 188.379
+        },
+        "bag": {
+          "sample_count": 2830,
+          "mean_rgb": [
+            192.466,
+            155.16,
+            103.719
+          ],
+          "mean_luma": 159.377,
+          "median_luma": 158.427
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 0.811,
+        "hair_mean_luma": 2.745,
+        "bag_mean_luma": 2.245
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -1.911,
+        "hair": -0.387,
+        "bag": -3.255
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 9,
+      "file": "frame_009.png",
+      "regions": {
+        "dress": {
+          "sample_count": 14991,
+          "mean_rgb": [
+            52.304,
+            54.327,
+            60.008
+          ],
+          "mean_luma": 54.307,
+          "median_luma": 57.08
+        },
+        "hair": {
+          "sample_count": 3550,
+          "mean_rgb": [
+            198.765,
+            179.291,
+            156.901
+          ],
+          "mean_luma": 181.815,
+          "median_luma": 184.591
+        },
+        "bag": {
+          "sample_count": 2752,
+          "mean_rgb": [
+            190.991,
+            153.52,
+            105.528
+          ],
+          "mean_luma": 158.022,
+          "median_luma": 157.746
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 2.213,
+        "hair_mean_luma": -0.652,
+        "bag_mean_luma": 0.89
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -1.34,
+        "hair": -3.397,
+        "bag": -1.355
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 10,
+      "file": "frame_010.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15852,
+          "mean_rgb": [
+            53.006,
+            56.677,
+            60.951
+          ],
+          "mean_luma": 56.205,
+          "median_luma": 58.583
+        },
+        "hair": {
+          "sample_count": 3326,
+          "mean_rgb": [
+            200.239,
+            181.93,
+            158.978
+          ],
+          "mean_luma": 184.165,
+          "median_luma": 187.379
+        },
+        "bag": {
+          "sample_count": 2930,
+          "mean_rgb": [
+            192.313,
+            155.232,
+            105.554
+          ],
+          "mean_luma": 159.529,
+          "median_luma": 158.533
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 0.699,
+        "hair_mean_luma": 1.698,
+        "bag_mean_luma": 2.397
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 1.898,
+        "hair": 2.35,
+        "bag": 1.507
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 11,
+      "file": "frame_011.png",
+      "regions": {
+        "dress": {
+          "sample_count": 15936,
+          "mean_rgb": [
+            53.733,
+            57.468,
+            61.758
+          ],
+          "mean_luma": 56.984,
+          "median_luma": 59.511
+        },
+        "hair": {
+          "sample_count": 2755,
+          "mean_rgb": [
+            201.054,
+            182.245,
+            158.601
+          ],
+          "mean_luma": 184.537,
+          "median_luma": 188.307
+        },
+        "bag": {
+          "sample_count": 3026,
+          "mean_rgb": [
+            193.577,
+            155.355,
+            104.16
+          ],
+          "mean_luma": 159.784,
+          "median_luma": 158.601
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 1.965,
+        "hair_mean_luma": 2.07,
+        "bag_mean_luma": 2.652
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 0.779,
+        "hair": 0.372,
+        "bag": 0.255
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 12,
+      "file": "frame_012.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16282,
+          "mean_rgb": [
+            53.414,
+            58.233,
+            60.8
+          ],
+          "mean_luma": 57.394,
+          "median_luma": 60.438
+        },
+        "hair": {
+          "sample_count": 3336,
+          "mean_rgb": [
+            197.843,
+            180.574,
+            157.374
+          ],
+          "mean_luma": 182.57,
+          "median_luma": 186.238
+        },
+        "bag": {
+          "sample_count": 3146,
+          "mean_rgb": [
+            191.453,
+            154.869,
+            104.465
+          ],
+          "mean_luma": 159.008,
+          "median_luma": 157.248
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 1.933,
+        "hair_mean_luma": 0.103,
+        "bag_mean_luma": 1.876
+      },
+      "adjacent_jump_from_previous": {
+        "dress": 0.41,
+        "hair": -1.967,
+        "bag": -0.776
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 13,
+      "file": "frame_013.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16489,
+          "mean_rgb": [
+            53.331,
+            57.034,
+            60.546
+          ],
+          "mean_luma": 56.5,
+          "median_luma": 59.723
+        },
+        "hair": {
+          "sample_count": 3011,
+          "mean_rgb": [
+            199.648,
+            181.583,
+            158.443
+          ],
+          "mean_luma": 183.753,
+          "median_luma": 187.166
+        },
+        "bag": {
+          "sample_count": 3050,
+          "mean_rgb": [
+            192.304,
+            154.895,
+            104.825
+          ],
+          "mean_luma": 159.233,
+          "median_luma": 157.673
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 0.771,
+        "hair_mean_luma": 1.286,
+        "bag_mean_luma": 2.101
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -0.894,
+        "hair": 1.183,
+        "bag": 0.225
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    },
+    {
+      "frame": 14,
+      "file": "frame_014.png",
+      "regions": {
+        "dress": {
+          "sample_count": 16122,
+          "mean_rgb": [
+            53.39,
+            56.543,
+            60.881
+          ],
+          "mean_luma": 56.185,
+          "median_luma": 59.723
+        },
+        "hair": {
+          "sample_count": 3265,
+          "mean_rgb": [
+            198.32,
+            179.832,
+            157.23
+          ],
+          "mean_luma": 182.131,
+          "median_luma": 185.451
+        },
+        "bag": {
+          "sample_count": 2979,
+          "mean_rgb": [
+            190.532,
+            152.568,
+            102.636
+          ],
+          "mean_luma": 157.034,
+          "median_luma": 156.746
+        }
+      },
+      "delta_vs_canonical": {
+        "dress_mean_rgb_euclidean": 0.758,
+        "hair_mean_luma": -0.336,
+        "bag_mean_luma": -0.098
+      },
+      "adjacent_jump_from_previous": {
+        "dress": -0.315,
+        "hair": -1.622,
+        "bag": -2.199
+      },
+      "checks": {
+        "dress_vs_canonical": true,
+        "hair_vs_canonical": true,
+        "bag_vs_canonical": true,
+        "adjacent_dress": true,
+        "adjacent_hair": true,
+        "adjacent_bag": true
+      }
+    }
+  ]
+}

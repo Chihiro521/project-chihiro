@@ -1,0 +1,158 @@
+{
+  "status": "PASS",
+  "method": "Apply the exact v5 RGB-only semantic color-compression function once to every accepted v6 source frame. The function depends only on each pixel's RGB value, never on frame index or coordinates. Alpha is preserved byte-for-byte; geometry, contacts, proportions, pivot and root placement are unchanged.",
+  "grade_function_authority": "dynamic-revision-sources/palette-v5/apply_uniform_palette_grade.py::grade_pixel",
+  "source_frames": "frames-dynamic-v6-source",
+  "output_frames": "frames-dynamic-v6",
+  "graded_palette_authority": "dynamic-revision-sources/preaction-v6/canonical_palette_authority_graded.png",
+  "graded_palette_authority_alpha_identical": true,
+  "rules": {
+    "hair": {
+      "center_luma": 182.473,
+      "center_offsets": [
+        16.274,
+        -2.301,
+        -25.124
+      ],
+      "luma_compression": 0.52,
+      "chroma_retention": 0.38
+    },
+    "satchel_tan": {
+      "center_luma": 154.373,
+      "center_offsets": [
+        34.729,
+        -4.637,
+        -56.323
+      ],
+      "luma_compression": 0.2,
+      "chroma_retention": 0.3,
+      "selector_r_minus_g": [
+        8,
+        70
+      ],
+      "selector_g_minus_b": [
+        5,
+        75
+      ]
+    },
+    "dark_navy_charcoal": {
+      "center_luma": 57.165,
+      "center_offsets": [
+        -3.016,
+        0.432,
+        4.601
+      ],
+      "luma_compression": 0.52,
+      "chroma_retention": 0.35,
+      "ink_black_below_luma": 32
+    }
+  },
+  "per_frame_adjustment": false,
+  "frames": [
+    {
+      "frame": "frame_000.png",
+      "source": "frames-dynamic-v6-source/frame_000.png",
+      "output": "frames-dynamic-v6/frame_000.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28318
+    },
+    {
+      "frame": "frame_001.png",
+      "source": "frames-dynamic-v6-source/frame_001.png",
+      "output": "frames-dynamic-v6/frame_001.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28464
+    },
+    {
+      "frame": "frame_002.png",
+      "source": "frames-dynamic-v6-source/frame_002.png",
+      "output": "frames-dynamic-v6/frame_002.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28684
+    },
+    {
+      "frame": "frame_003.png",
+      "source": "frames-dynamic-v6-source/frame_003.png",
+      "output": "frames-dynamic-v6/frame_003.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 30050
+    },
+    {
+      "frame": "frame_004.png",
+      "source": "frames-dynamic-v6-source/frame_004.png",
+      "output": "frames-dynamic-v6/frame_004.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28888
+    },
+    {
+      "frame": "frame_005.png",
+      "source": "frames-dynamic-v6-source/frame_005.png",
+      "output": "frames-dynamic-v6/frame_005.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 29236
+    },
+    {
+      "frame": "frame_006.png",
+      "source": "frames-dynamic-v6-source/frame_006.png",
+      "output": "frames-dynamic-v6/frame_006.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 30760
+    },
+    {
+      "frame": "frame_007.png",
+      "source": "frames-dynamic-v6-source/frame_007.png",
+      "output": "frames-dynamic-v6/frame_007.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28071
+    },
+    {
+      "frame": "frame_008.png",
+      "source": "frames-dynamic-v6-source/frame_008.png",
+      "output": "frames-dynamic-v6/frame_008.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28350
+    },
+    {
+      "frame": "frame_009.png",
+      "source": "frames-dynamic-v6-source/frame_009.png",
+      "output": "frames-dynamic-v6/frame_009.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28283
+    },
+    {
+      "frame": "frame_010.png",
+      "source": "frames-dynamic-v6-source/frame_010.png",
+      "output": "frames-dynamic-v6/frame_010.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28950
+    },
+    {
+      "frame": "frame_011.png",
+      "source": "frames-dynamic-v6-source/frame_011.png",
+      "output": "frames-dynamic-v6/frame_011.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28140
+    },
+    {
+      "frame": "frame_012.png",
+      "source": "frames-dynamic-v6-source/frame_012.png",
+      "output": "frames-dynamic-v6/frame_012.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 29366
+    },
+    {
+      "frame": "frame_013.png",
+      "source": "frames-dynamic-v6-source/frame_013.png",
+      "output": "frames-dynamic-v6/frame_013.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28541
+    },
+    {
+      "frame": "frame_014.png",
+      "source": "frames-dynamic-v6-source/frame_014.png",
+      "output": "frames-dynamic-v6/frame_014.png",
+      "alpha_identical": true,
+      "changed_nontransparent_rgb_pixels": 28443
+    }
+  ]
+}

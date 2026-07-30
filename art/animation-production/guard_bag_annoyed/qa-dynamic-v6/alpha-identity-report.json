@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "method": "Byte-level SHA-256 comparison of decoded alpha planes before and after the one sequence-wide RGB mapping.",
+  "frames": [
+    {
+      "frame": "frame_000.png",
+      "source_alpha_sha256": "7018eb9e7a2adfd5717660f58cb8c1f6deb1b6af918f453b118670032cb17443",
+      "graded_alpha_sha256": "7018eb9e7a2adfd5717660f58cb8c1f6deb1b6af918f453b118670032cb17443",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_001.png",
+      "source_alpha_sha256": "b9697017dc95a93d35d7986eb7a43e8e1d204f6c85353c6c595eaa993946dc7e",
+      "graded_alpha_sha256": "b9697017dc95a93d35d7986eb7a43e8e1d204f6c85353c6c595eaa993946dc7e",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_002.png",
+      "source_alpha_sha256": "881d213f3fe4fc86de8354d290383e94f9a02f308964bf3974e6fab1233ed42d",
+      "graded_alpha_sha256": "881d213f3fe4fc86de8354d290383e94f9a02f308964bf3974e6fab1233ed42d",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_003.png",
+      "source_alpha_sha256": "80bfab3f5855a23f48d78184cf0334c29f58e4f30551f79020a3b3ee85a00944",
+      "graded_alpha_sha256": "80bfab3f5855a23f48d78184cf0334c29f58e4f30551f79020a3b3ee85a00944",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_004.png",
+      "source_alpha_sha256": "de5eb2fa5ad0eb3e526e6108c3123f71e52088923b89a558f1bb6a82496ab9cb",
+      "graded_alpha_sha256": "de5eb2fa5ad0eb3e526e6108c3123f71e52088923b89a558f1bb6a82496ab9cb",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_005.png",
+      "source_alpha_sha256": "ad7b9208c874dc02d7a48d54b1e2819ea6d64cea6843a777678247d993d6a13c",
+      "graded_alpha_sha256": "ad7b9208c874dc02d7a48d54b1e2819ea6d64cea6843a777678247d993d6a13c",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_006.png",
+      "source_alpha_sha256": "e914f41b120497fff00a52f151629ebfa8f605c5128cae8b11f0a39a76c0b409",
+      "graded_alpha_sha256": "e914f41b120497fff00a52f151629ebfa8f605c5128cae8b11f0a39a76c0b409",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_007.png",
+      "source_alpha_sha256": "0d7e2ce4454f6e78d5d1f00bb1dd188ebe5155ec22f9880a186329fdc8186b2c",
+      "graded_alpha_sha256": "0d7e2ce4454f6e78d5d1f00bb1dd188ebe5155ec22f9880a186329fdc8186b2c",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_008.png",
+      "source_alpha_sha256": "1eb3bfe7ae6150aa40698afbc52fa8a0af4682cb12752eb3abd8b795e0ed163b",
+      "graded_alpha_sha256": "1eb3bfe7ae6150aa40698afbc52fa8a0af4682cb12752eb3abd8b795e0ed163b",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_009.png",
+      "source_alpha_sha256": "68221a525ee93fd91a34eb74ce5b91edd47fcc8ec300485740c38fc2284d854c",
+      "graded_alpha_sha256": "68221a525ee93fd91a34eb74ce5b91edd47fcc8ec300485740c38fc2284d854c",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_010.png",
+      "source_alpha_sha256": "02f145e8926d06bb25ff5e67a52cd98d95791b393679260ca03b82ba20802e30",
+      "graded_alpha_sha256": "02f145e8926d06bb25ff5e67a52cd98d95791b393679260ca03b82ba20802e30",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_011.png",
+      "source_alpha_sha256": "38d035d2fc3aab0e5003556357dde0424347f2b2df44507310b1725848a8d6b3",
+      "graded_alpha_sha256": "38d035d2fc3aab0e5003556357dde0424347f2b2df44507310b1725848a8d6b3",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_012.png",
+      "source_alpha_sha256": "29384ab62868f3c221d485819259da362c381e1cb0bdde396e4f747b2f3f2cd1",
+      "graded_alpha_sha256": "29384ab62868f3c221d485819259da362c381e1cb0bdde396e4f747b2f3f2cd1",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_013.png",
+      "source_alpha_sha256": "fa53ab6b63cbac02141c1fca8a4b5d176e0f076c9735fe56d92d771f525ca2c0",
+      "graded_alpha_sha256": "fa53ab6b63cbac02141c1fca8a4b5d176e0f076c9735fe56d92d771f525ca2c0",
+      "alpha_identical": true
+    },
+    {
+      "frame": "frame_014.png",
+      "source_alpha_sha256": "a266420a133681110086df34e3f86dbf7aa809e2a4788fe312a24035508ff458",
+      "graded_alpha_sha256": "a266420a133681110086df34e3f86dbf7aa809e2a4788fe312a24035508ff458",
+      "alpha_identical": true
+    }
+  ]
+}
