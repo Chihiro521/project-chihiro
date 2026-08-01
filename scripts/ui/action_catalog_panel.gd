@@ -179,12 +179,12 @@ func _build_ui() -> void:
 
 	var preview_and_info := HSplitContainer.new()
 	preview_and_info.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview_and_info.split_offset = 540
+	preview_and_info.split_offset = 480
 	preview_and_info.add_theme_constant_override("separation", 12)
 	detail_column.add_child(preview_and_info)
 
 	var preview_panel := PanelContainer.new()
-	preview_panel.custom_minimum_size = Vector2(500.0, 500.0)
+	preview_panel.custom_minimum_size = Vector2(420.0, 420.0)
 	preview_panel.add_theme_stylebox_override("panel", _panel_style(Color("#11161d"), Color("#2c3b4c"), 10))
 	preview_and_info.add_child(preview_panel)
 	_preview = PetActionPreviewCanvas.new()
