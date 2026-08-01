@@ -559,25 +559,32 @@ func _test_state_store_and_dialogue() -> void:
 	if FileAccess.file_exists(previous_path): DirAccess.remove_absolute(previous_path)
 
 func _test_speech_bubble() -> void:
-	_expect(PetSpeechBubble.required_window_size(Vector2i(360, 360)) == Vector2i(520, 480), "normal actions keep the compact speech host")
-	_expect(PetSpeechBubble.required_window_size(Vector2i(436, 436)) == Vector2i(520, 540), "tall umbrella actions reserve a separate speech row")
+	var work := Rect2(0.0, 0.0, 1920.0, 1080.0)
+	var top_pet := Rect2(900.0, 0.0, 360.0, 360.0)
+	var floor_pet := Rect2(900.0, 720.0, 360.0, 360.0)
+	_expect(PetSpeechBubble.resolve_placement(top_pet, work) == "below", "a pet near the screen top flips its speech bubble below instead of clipping")
+	_expect(PetSpeechBubble.resolve_placement(floor_pet, work) == "above", "a floor pet keeps its speech bubble above")
+	var top_position := PetSpeechBubble.resolve_position(top_pet, work, "below")
+	var floor_position := PetSpeechBubble.resolve_position(floor_pet, work, "above")
+	_expect(top_position.y >= top_pet.end.y and floor_position.y + PetSpeechBubble.WINDOW_SIZE.y <= floor_pet.position.y, "speech positions stay on the selected side of the pet")
+	_expect(work.encloses(Rect2(top_position, Vector2(PetSpeechBubble.WINDOW_SIZE))), "speech position is clamped inside the current monitor work area")
 	var bubble := PetSpeechBubble.new()
-	var label := Label.new()
-	label.name = "Text"
-	bubble.add_child(label)
 	root.add_child(bubble)
 	await process_frame
-	bubble.show_message("first", "第一条", 10.0)
+	_expect(bubble.force_native and bubble.transparent and bubble.mouse_passthrough, "speech uses a transparent native click-through window without changing the pet host geometry")
+	bubble.show_message("first", "第一条", 10.0, top_pet, work)
 	await process_frame
+	_expect(bubble.placement() == "below", "the live bubble applies the resolved screen-edge placement")
 	bubble.hide_message()
 	_expect(bubble.is_showing() and bubble.current_id == "first", "speech host stays reserved throughout fade-out")
 	await create_timer(0.04).timeout
-	bubble.show_message("second", "第二条", 10.0)
+	bubble.show_message("second", "第二条", 10.0, floor_pet, work)
 	await create_timer(0.18).timeout
-	_expect(bubble.is_showing() and bubble.current_id == "second" and label.text == "第二条", "a new message cancels a stale fade without leaving an empty panel")
+	var live_snapshot := bubble.snapshot()
+	_expect(bubble.is_showing() and bubble.current_id == "second" and str(live_snapshot.get("text", "")) == "第二条", "a new message cancels a stale fade without leaving an empty panel")
 	bubble.hide_message()
 	await create_timer(0.18).timeout
-	_expect(not bubble.is_showing() and bubble.current_id.is_empty() and label.text.is_empty(), "speech panel hides atomically with its text")
+	_expect(not bubble.is_showing() and bubble.current_id.is_empty() and str(bubble.snapshot().get("text", "")).is_empty(), "speech panel hides atomically with its text")
 	bubble.queue_free()
 	await process_frame
 

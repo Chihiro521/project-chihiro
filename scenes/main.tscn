@@ -25,16 +25,20 @@ offset = Vector2(-256, -491.52)
 script = ExtResource("2_player")
 sprite_path = NodePath("../PetSprite")
 
-[node name="SpeechBubble" type="PanelContainer" parent="."]
-offset_left = 72.0
-offset_top = 12.0
-offset_right = 448.0
-offset_bottom = 104.0
+[node name="SpeechBubble" type="Window" parent="."]
+title = "千寻气泡"
+size = Vector2i(384, 146)
+min_size = Vector2i(384, 146)
+max_size = Vector2i(384, 146)
+visible = false
+borderless = true
+transparent = true
+transparent_bg = true
+unfocusable = true
+always_on_top = true
+mouse_passthrough = true
+force_native = true
 script = ExtResource("6_bubble")
-
-[node name="Text" type="Label" parent="SpeechBubble"]
-custom_minimum_size = Vector2(344, 64)
-layout_mode = 2
 
 [node name="DebugOverlay" type="PanelContainer" parent="."]
 offset_left = 8.0

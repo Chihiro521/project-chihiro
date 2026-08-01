@@ -161,7 +161,6 @@ func _ready() -> void:
 	sprite_player.frame_changed.connect(_on_sprite_frame_changed)
 	sprite_player.loop_boundary.connect(_on_sprite_loop_boundary)
 	sprite_player.passthrough_polygon_changed.connect(_on_passthrough_polygon_changed)
-	speech_bubble.message_finished.connect(_on_speech_finished)
 	_setup_menus()
 	base_window_size = PetRenderBox.resolve_size(manifest)
 	pet_window_size = base_window_size
@@ -222,6 +221,8 @@ func _process(delta: float) -> void:
 	if mechanism_dashboard.visible and now >= next_mechanism_dashboard_update:
 		next_mechanism_dashboard_update = now + MECHANISM_DASHBOARD_REFRESH_MS
 		mechanism_dashboard.set_snapshot(_mechanism_snapshot(now))
+	if speech_bubble.is_showing():
+		speech_bubble.update_anchor(_speech_anchor_rect(), work_area)
 
 func _input(event: InputEvent) -> void:
 	if not started:
@@ -348,6 +349,7 @@ func _on_menu_id_pressed(id: int) -> void:
 			desktop.set_visible(true)
 			_recenter()
 		MENU_HIDE:
+			speech_bubble.hide_message(true)
 			desktop.set_visible(false)
 		MENU_AUTO_WANDER, TRAY_AUTO_WANDER:
 			auto_wander = not auto_wander
@@ -386,6 +388,7 @@ func _on_menu_id_pressed(id: int) -> void:
 		MENU_MECHANISM_DASHBOARD, TRAY_MECHANISM_DASHBOARD:
 			_show_mechanism_dashboard()
 		MENU_QUIT, TRAY_QUIT:
+			speech_bubble.hide_message(true)
 			_save_position()
 			_save_user_settings()
 			_save_life_state()
@@ -1132,22 +1135,14 @@ func _on_passthrough_polygon_changed(polygon: PackedVector2Array) -> void:
 func _show_speech(id: String, text: String, duration_seconds := -1.0) -> void:
 	if not speech_bubbles_enabled or text.strip_edges().is_empty():
 		return
-	var clip := manifest.clip(sprite_player.current_clip)
-	_set_window_geometry(_desired_window_size(clip, true), clip, clip)
-	speech_bubble.show_message(id, text, duration_seconds)
+	speech_bubble.show_message(id, text, duration_seconds, _speech_anchor_rect(), work_area)
 	sfx_player.play("bubble", 0.02)
 
-func _on_speech_finished(_id: String) -> void:
-	if manifest == null:
-		return
-	var clip := manifest.clip(sprite_player.current_clip)
-	_set_window_geometry(_desired_window_size(clip, false), clip, clip)
+func _speech_anchor_rect() -> Rect2:
+	return Rect2(position, Vector2(pet_window_size))
 
-func _desired_window_size(clip: Dictionary, force_bubble := false) -> Vector2i:
-	var result: Vector2i = render_box_lock if render_box_lock is Vector2i else PetRenderBox.resolve_size(manifest, clip)
-	if force_bubble or (speech_bubble != null and speech_bubble.is_showing()):
-		result = PetSpeechBubble.required_window_size(result)
-	return result
+func _desired_window_size(clip: Dictionary) -> Vector2i:
+	return render_box_lock if render_box_lock is Vector2i else PetRenderBox.resolve_size(manifest, clip)
 
 func _begin_press(local_point: Vector2) -> void:
 	if machine.state == "suspended" or menu.visible:
@@ -1835,6 +1830,7 @@ func _check_system_context() -> void:
 	var fullscreen := bool(context.get("foreground_fullscreen", false))
 	if fullscreen and not suspended:
 		suspended = true
+		speech_bubble.hide_message(true)
 		_interrupt_action("fullscreen")
 		motion.clear()
 		_cancel_edge_patrol()
