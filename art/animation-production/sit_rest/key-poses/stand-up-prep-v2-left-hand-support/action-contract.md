@@ -14,7 +14,7 @@
 
 - Design authority: `../../anchors/model-sheet.png`
 - Standing proportion authority: `../../anchors/approved_idle_chroma.png`
-- Seated pose-family authority: `../../../seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
+- Seated pose-family authority: `git-history://5e67e44/art/animation-production/sit_rest/seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
 - Low-crouch pose guide: `../stand-up-prep-v1/chroma/frame_020.png`
 - Authority rule: temporal poses control motion and contacts only; they never replace design or proportion authority.
 

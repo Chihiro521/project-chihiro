@@ -5,7 +5,7 @@
   "pivot": {"x": 256, "y": 492},
   "visible_baseline_y": 472,
   "bounds": {
-    "previous": "../../../seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png",
+    "previous": "git-history://5e67e44/art/animation-production/sit_rest/seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png",
     "next": "../transition-keys-v1/chroma/frame_022.png",
     "identity": "../../anchors/model-sheet.png"
   },

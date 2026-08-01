@@ -9,7 +9,7 @@
 
 - Design authority: `../../anchors/model-sheet.png`
 - Standing authority: `../../anchors/approved_idle_chroma.png`
-- Seated authority: `../../../seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
+- Seated authority: `git-history://5e67e44/art/animation-production/sit_rest/seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
 - Body-pose guides: v2 frames may control body mechanics only; they are rejected as left-hand motion authority.
 
 ## Left-hand path

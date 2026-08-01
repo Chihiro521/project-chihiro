@@ -8,7 +8,7 @@
     {
       "index": 0,
       "label": "K00 slight descent",
-      "source_file": "key-sources/k00_descent_chroma.png",
+      "source_file": "git-history://5e67e44/art/animation-production/window_land_recover/key-sources/k00_descent_chroma.png",
       "source_canvas": [
         1024,
         1024
@@ -51,7 +51,7 @@
     {
       "index": 3,
       "label": "K03 first sole contact",
-      "source_file": "key-sources/k03_contact_chroma.png",
+      "source_file": "git-history://5e67e44/art/animation-production/window_land_recover/key-sources/k03_contact_chroma.png",
       "source_canvas": [
         1024,
         1024
@@ -94,7 +94,7 @@
     {
       "index": 6,
       "label": "K06 deepest absorption",
-      "source_file": "key-sources/k06_absorb_chroma.png",
+      "source_file": "git-history://5e67e44/art/animation-production/window_land_recover/key-sources/k06_absorb_chroma.png",
       "source_canvas": [
         1024,
         1024
@@ -137,7 +137,7 @@
     {
       "index": 10,
       "label": "K10 stabilized rise",
-      "source_file": "key-sources/k10_stabilize_chroma.png",
+      "source_file": "git-history://5e67e44/art/animation-production/window_land_recover/key-sources/k10_stabilize_chroma.png",
       "source_canvas": [
         1024,
         1024
@@ -180,7 +180,7 @@
     {
       "index": 14,
       "label": "K14 recovered standing",
-      "source_file": "key-sources/k14_recovered_chroma.png",
+      "source_file": "git-history://5e67e44/art/animation-production/window_land_recover/key-sources/k14_recovered_chroma.png",
       "source_canvas": [
         1024,
         1024

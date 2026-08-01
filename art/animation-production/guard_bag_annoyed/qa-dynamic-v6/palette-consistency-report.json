@@ -9,7 +9,7 @@
     "adjacent_hair_luma_jump_abs_max": 3.5,
     "adjacent_bag_luma_jump_abs_max": 6.0
   },
-  "canonical_authority": "dynamic-revision-sources/preaction-v6/canonical_palette_authority_graded.png",
+  "canonical_authority": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/dynamic-revision-sources/preaction-v6/canonical_palette_authority_graded.png",
   "canonical": {
     "dress": {
       "sample_count": 16461,

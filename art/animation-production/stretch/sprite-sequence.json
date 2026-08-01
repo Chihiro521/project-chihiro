@@ -46,8 +46,8 @@
     "k04_open": "key-poses/k04_open_chroma.png",
     "k06_peak": "key-poses/k06_peak_chroma.png",
     "k09_settle": "key-poses/k09_settle_chroma.png",
-    "fist_accent_candidate": "direct-frame-sources/frame_008_chroma.png",
-    "frame_010_body_volume_repair": "direct-frame-sources/frame_010_chroma.png",
+    "fist_accent_candidate": "git-history://5e67e44/art/animation-production/stretch/direct-frame-sources/frame_008_chroma.png",
+    "frame_010_body_volume_repair": "git-history://5e67e44/art/animation-production/stretch/direct-frame-sources/frame_010_chroma.png",
     "status": "approved_and_integrated",
     "strategy": "Generate each key as a complete full-character drawing from the canonical identity anchor and approved idle. After approval, generate every remaining motion frame separately with both temporal neighbors. Never construct motion by moving or blending image parts."
   },

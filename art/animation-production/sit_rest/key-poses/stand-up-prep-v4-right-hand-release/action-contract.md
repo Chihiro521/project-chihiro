@@ -9,7 +9,7 @@
 
 - Design authority: `../../anchors/model-sheet.png`
 - Standing authority: `../../anchors/approved_idle_chroma.png`
-- Seated authority: `../../../seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
+- Seated authority: `git-history://5e67e44/art/animation-production/sit_rest/seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png`
 - Rise body guides: `../stand-up-prep-v1/chroma/frame_019.png` through `frame_021.png`, plus `../transition-keys-v1/chroma/frame_022.png`
 - Authority rule: rise guides control body/feet only; their fixed right-hand strap grip is explicitly rejected.
 

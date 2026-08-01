@@ -46,7 +46,7 @@
     "k04_contact": "key-poses/k04_contact_chroma.png",
     "k07_reasoning": "key-poses/k07_reasoning_chroma.png",
     "k09_conclusion": "key-poses/k09_conclusion_chroma.png",
-    "proportion_authority": "direct-frame-sources/frame_000_chroma.png",
+    "proportion_authority": "git-history://5e67e44/art/animation-production/reason_pose/direct-frame-sources/frame_000_chroma.png",
     "review_contact_sheet": "key-poses/reason_pose-key-contact-sheet-v4.png",
     "status": "sequence_accepted_ready_for_godot",
     "strategy": "Generate every key and later every transition as a separate complete full-character drawing from the canonical identity anchor and approved temporal neighbors. Never construct motion by moving, blending or warping image parts."

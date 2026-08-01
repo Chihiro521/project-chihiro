@@ -76,7 +76,7 @@
     "lossless_slow_preview": "qa/preview-hq-slow-v2.png",
     "preview_notes": "The lossless APNG uses full-frame source blending with disposal 0. Its 17 decoded frames match the composited source PNGs exactly; review-only start and end holds separate repeats of this non-looping one-shot.",
     "summary": "All 17 frames are complete independent full-character drawings. The two restrained wave beats are driven mainly by small wrist rotations while the elbow remains close to the torso; the blink and reopening eyes form the central micro-expression beat. A uniform full-frame clarity grade removes the washed-out preview impression without changing pose geometry, alpha geometry or identity. All normalized frames share visible top y=19, bottom y=472 and height 453.",
-    "revision_notes": "After user review, all frames received the same restrained full-frame grade: brightness 0.985, contrast 1.025, saturation 1.045 and a small unsharp mask (radius 0.65, percent 55, threshold 2). Alpha was preserved exactly. The prior accepted frames remain recoverable in frames-before-clarity/."
+    "revision_notes": "After user review, all frames received the same restrained full-frame grade: brightness 0.985, contrast 1.025, saturation 1.045 and a small unsharp mask (radius 0.65, percent 55, threshold 2). Alpha was preserved exactly. The prior accepted frames remain recoverable in git-history://5e67e44/art/animation-production/return_wave/frames-before-clarity/."
   },
   "thresholds": {
     "min_alpha_coverage": 0.145,
@@ -104,7 +104,7 @@
     "background_removal": "Use a perfectly flat #FF00FF source background, fixed two-channel #FF00FF chroma removal, a 90-to-150 soft alpha ramp and despill.",
     "final_downsample": "Uniformly normalize complete 1024x1024 drawings into a fixed 512x512 cell, preserving body scale, shoe center and the y=472 visible baseline.",
     "color_clarity_grade": "Apply one identical whole-frame color and clarity correction to every complete RGBA frame; preserve alpha exactly and do not move, warp, blend, composite or reconstruct any character part.",
-    "pre_grade_backup": "frames-before-clarity/"
+    "pre_grade_backup": "git-history://5e67e44/art/animation-production/return_wave/frames-before-clarity/"
   },
   "frames": [
     {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "pose": "neutral idle endpoint"},

@@ -19,8 +19,8 @@
     "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
     "pose_family_authorities": {
       "standing": "../return_wave/frames/frame_000.png",
-      "airborne": "key-temporal/k00_descent_chroma.png (user accepted 2026-07-30)",
-      "compression": "key-temporal/k06_absorb_chroma.png (user accepted 2026-07-30)"
+      "airborne": "git-history://5e67e44/art/animation-production/window_land_recover/key-temporal/k00_descent_chroma.png (user accepted 2026-07-30)",
+      "compression": "git-history://5e67e44/art/animation-production/window_land_recover/key-temporal/k06_absorb_chroma.png (user accepted 2026-07-30)"
     },
     "rule": "Temporal neighbors control motion and contacts only and never replace design or proportion authority."
   },
