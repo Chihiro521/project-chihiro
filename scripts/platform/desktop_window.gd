@@ -60,6 +60,9 @@ func set_geometry(value_position: Vector2, value_size: Vector2i) -> void:
 func set_visible(value: bool) -> void:
 	_window.visible = value
 
+func is_visible() -> bool:
+	return _window != null and _window.visible
+
 func set_unfocusable(value: bool) -> void:
 	_window.unfocusable = value
 

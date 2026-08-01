@@ -1,5 +1,7 @@
 extends SceneTree
 
+const DialogueSchedulerScript := preload("res://scripts/core/pet_dialogue_scheduler.gd")
+
 var failures: Array[String] = []
 var assertions := 0
 
@@ -18,6 +20,7 @@ func _run() -> void:
 	_test_behavior_director()
 	_test_action_session()
 	_test_state_store_and_dialogue()
+	_test_dialogue_scheduler()
 	await _test_speech_bubble()
 	_test_action_catalog()
 	_test_mechanism_dashboard()
@@ -577,6 +580,22 @@ func _test_speech_bubble() -> void:
 	_expect(not bubble.is_showing() and bubble.current_id.is_empty() and label.text.is_empty(), "speech panel hides atomically with its text")
 	bubble.queue_free()
 	await process_frame
+
+func _test_dialogue_scheduler() -> void:
+	var scheduler := DialogueSchedulerScript.new()
+	scheduler.reset(1000.0)
+	_expect(not scheduler.should_attempt(90999.0), "ambient scheduler honors its initial delay")
+	_expect(scheduler.should_attempt(91000.0, {
+		"enabled": true,
+		"surface_visible": true,
+		"bubble_busy": false,
+		"machine_state": "cursor_track",
+		"action_active": true,
+	}), "ambient speech remains eligible during gaze and active animations")
+	scheduler.commit_attempt(91000.0, 211000.0)
+	_expect(is_equal_approx(scheduler.seconds_until_attempt(121000.0), 90.0), "ambient scheduler follows the dialogue director cooldown")
+	_expect(not scheduler.should_attempt(211000.0, {"enabled": true, "surface_visible": true, "bubble_busy": true}), "an existing bubble delays rather than overlaps ambient speech")
+	_expect(scheduler.should_attempt(216000.0, {"enabled": true, "surface_visible": true, "bubble_busy": false}), "ambient speech retries after the current bubble closes")
 
 func _test_action_catalog() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")

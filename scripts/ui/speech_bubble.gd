@@ -15,6 +15,7 @@ var _hiding := false
 var _transition_tween: Tween
 
 func _ready() -> void:
+	z_index = 20
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label = get_node(label_path) as Label
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

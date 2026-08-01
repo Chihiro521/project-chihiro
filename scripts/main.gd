@@ -3,6 +3,7 @@ extends Node
 const SKIN_MANIFEST := "res://skins/little-chihiro/pet.json"
 const BEHAVIOR_PROFILE := "res://data/behavior_profile.json"
 const DIALOGUE_DATA := "res://data/dialogue_zh_CN.json"
+const DialogueSchedulerScript := preload("res://scripts/core/pet_dialogue_scheduler.gd")
 const IDLE_BLINK_MIN_MS := 2400.0
 const IDLE_BLINK_MAX_MS := 5200.0
 const AUTO_HEAD_PAT_MS := 900.0
@@ -58,6 +59,7 @@ var behavior_director: PetBehaviorDirector
 var action_session := PetActionSession.new()
 var state_store := PetStateStore.new()
 var dialogue_director := PetDialogueDirector.new(21013)
+var dialogue_scheduler := DialogueSchedulerScript.new()
 var window_platform_service := WindowPlatformService.new()
 
 var work_area := Rect2(0, 0, 1280, 720)
@@ -127,7 +129,6 @@ var next_cursor_sample := 0.0
 var next_system_check := 0.0
 var next_debug_update := 0.0
 var next_life_save := 0.0
-var next_ambient_dialogue_check := 0.0
 var next_window_refresh := 0.0
 var next_platform_track := 0.0
 var next_platform_swap := 0.0
@@ -183,6 +184,7 @@ func _process(delta: float) -> void:
 	var now := _now_ms()
 	_update_window_platforms(now)
 	_update_life_systems(delta, now)
+	_update_dialogue_system(now)
 	_update_motion(now)
 	_update_edge_patrol(now)
 	_update_drag_idle(now)
@@ -211,6 +213,11 @@ func _process(delta: float) -> void:
 			"needs": needs_model.snapshot() if needs_model != null else {},
 			"scores": behavior_director.last_candidates if behavior_director != null else [],
 			"platform": active_platform.stable_id() if active_platform != null else "",
+			"bubble": speech_bubble.snapshot(),
+			"dialogue": {
+				"ambient_seconds": dialogue_scheduler.seconds_until_attempt(now),
+				"event_cooldown_seconds": maxf(0.0, (dialogue_director.next_event_at_ms - now) / 1000.0),
+			},
 		})
 	if mechanism_dashboard.visible and now >= next_mechanism_dashboard_update:
 		next_mechanism_dashboard_update = now + MECHANISM_DASHBOARD_REFRESH_MS
@@ -417,9 +424,9 @@ func _initialize_life_systems() -> void:
 		for error in dialogue_director.errors:
 			push_error(error)
 	dialogue_director.reset_session(persistent_state.get("recent_dialogue_ids", []))
+	dialogue_scheduler.reset(_now_ms())
 	action_session.session_completed.connect(_on_action_session_completed)
 	next_life_save = _now_ms() + LIFE_SAVE_INTERVAL_MS
-	next_ambient_dialogue_check = _now_ms() + 90000.0
 
 func _load_json_dictionary(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
@@ -451,10 +458,16 @@ func _update_life_systems(delta: float, now: float) -> void:
 	if now >= next_life_save:
 		next_life_save = now + LIFE_SAVE_INTERVAL_MS
 		_save_life_state()
-	if now >= next_ambient_dialogue_check:
-		next_ambient_dialogue_check = now + 5000.0
-		if machine.state == "idle" and not speech_bubble.is_showing():
-			_emit_dialogue("ambient")
+
+func _update_dialogue_system(now: float) -> void:
+	if not dialogue_scheduler.should_attempt(now, {
+		"enabled": speech_bubbles_enabled,
+		"surface_visible": not suspended and desktop.is_visible(),
+		"bubble_busy": speech_bubble.is_showing(),
+	}):
+		return
+	var emitted := _emit_dialogue("ambient")
+	dialogue_scheduler.commit_attempt(now, dialogue_director.next_ambient_at_ms if emitted else -INF)
 
 func _save_life_state() -> void:
 	if persistent_state.is_empty() or needs_model == null:
@@ -510,7 +523,7 @@ func _dialogue_context(event_name: String, tags: Array = []) -> Dictionary:
 	}
 
 func _emit_dialogue(event_name: String, tags: Array = []) -> bool:
-	if not speech_bubbles_enabled or dialogue_director == null:
+	if not speech_bubbles_enabled or suspended or not desktop.is_visible() or dialogue_director == null:
 		return false
 	var line := dialogue_director.select_line(_dialogue_context(event_name, tags), _now_ms())
 	if not line.is_empty():
@@ -554,9 +567,6 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 	var state_stats_value: Variant = persistent_state.get("interaction_stats", {})
 	var state_stats: Dictionary = state_stats_value if state_stats_value is Dictionary else {}
 	var merged_stats := PetMechanismDashboard.merge_interaction_stats(state_stats, interaction_delta)
-	var ambient_target := next_ambient_dialogue_check
-	if dialogue_director.next_ambient_at_ms > 0.0:
-		ambient_target = maxf(ambient_target, dialogue_director.next_ambient_at_ms)
 	var event_cooldown_seconds := 0.0
 	if dialogue_director.next_event_at_ms > now:
 		event_cooldown_seconds = (dialogue_director.next_event_at_ms - now) / 1000.0
@@ -583,7 +593,7 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 		},
 		"dialogue": {
 			"event_cooldown_seconds": event_cooldown_seconds,
-			"ambient_seconds": maxf(0.0, (ambient_target - now) / 1000.0),
+			"ambient_seconds": dialogue_scheduler.seconds_until_attempt(now),
 			"recent_ids": dialogue_director.recent_dialogue_ids(),
 		},
 		"persistence": {
@@ -795,14 +805,14 @@ func _update_window_platforms(now: float) -> void:
 		if not foreground_app.is_empty() and foreground_app != last_foreground_app:
 			last_foreground_app = foreground_app
 			needs_model.apply_event("novel_window")
-			if machine.state == "idle": _emit_dialogue("app_context")
+			_emit_dialogue("app_context")
 		if title_awareness:
 			var stable_title := dialogue_director.observe_window_title(str(foreground.get("title", "")), now)
 			if not stable_title.is_empty():
 				if stable_title != last_novel_window_title:
 					last_novel_window_title = stable_title
 					needs_model.apply_event("novel_window")
-				if stable_title != last_stable_window_title and machine.state == "idle" and _emit_dialogue("window_title"):
+				if stable_title != last_stable_window_title and _emit_dialogue("window_title"):
 					last_stable_window_title = stable_title
 	if (active_platform != null or pending_platform != null) and now >= next_platform_track:
 		next_platform_track = now + 33.0

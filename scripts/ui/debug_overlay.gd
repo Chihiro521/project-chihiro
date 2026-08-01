@@ -43,6 +43,16 @@ func set_snapshot(snapshot: Dictionary) -> void:
 	for score in scores.slice(0, mini(3, scores.size())):
 		if score is Dictionary:
 			lines.append("  %s  %.2f" % [str(score.get("id", "?")), float(score.get("score", 0.0))])
+	var bubble: Dictionary = snapshot.get("bubble", {})
+	var dialogue: Dictionary = snapshot.get("dialogue", {})
+	lines.append("bubble: %s%s" % [
+		"visible" if bool(bubble.get("visible", false)) else "hidden",
+		" · %s" % str(bubble.get("id", "")) if not str(bubble.get("id", "")).is_empty() else "",
+	])
+	lines.append("talk in %.1fs · event %.1fs" % [
+		float(dialogue.get("ambient_seconds", 0.0)),
+		float(dialogue.get("event_cooldown_seconds", 0.0)),
+	])
 	_label.text = "\n".join(lines)
 
 func toggle() -> void:
