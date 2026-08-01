@@ -21,6 +21,7 @@ public:
 	Dictionary get_window_snapshot(int64_t handle, bool include_title = true) const;
 	Dictionary get_foreground_window_snapshot(bool include_title = true) const;
 	int64_t get_current_process_id() const;
+	bool set_window_rect(int64_t handle, int32_t x, int32_t y, int32_t width, int32_t height) const;
 	bool atomic_replace_file(const String &temporary_path, const String &target_path) const;
 };
 

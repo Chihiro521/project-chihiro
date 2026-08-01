@@ -86,6 +86,8 @@ var umbrella_visual_phase := ""
 var interaction_resume := "idle"
 var menu_resume := "idle"
 var current_intent: Dictionary = {}
+var pending_front_intent: Dictionary = {}
+var pending_front_handoff_clip := ""
 var resumable_platform_intent: Dictionary = {}
 var deferred_wake_action: Dictionary = {}
 var persistent_state: Dictionary = {}
@@ -157,6 +159,7 @@ func _ready() -> void:
 	sprite_player.clip_completed.connect(_on_clip_completed)
 	sprite_player.clip_changed.connect(_on_clip_changed)
 	sprite_player.frame_changed.connect(_on_sprite_frame_changed)
+	sprite_player.loop_boundary.connect(_on_sprite_loop_boundary)
 	sprite_player.passthrough_polygon_changed.connect(_on_passthrough_polygon_changed)
 	speech_bubble.message_finished.connect(_on_speech_finished)
 	_setup_menus()
@@ -604,10 +607,24 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 	}
 
 func _start_autonomous_intent(intent: Dictionary) -> bool:
-	if intent.is_empty() or machine.state != "idle" or action_session.is_active():
+	if intent.is_empty() or machine.state != "idle" or action_session.is_active() or not pending_front_intent.is_empty():
 		return false
 	if str(intent.get("id", "")) == "window_walk":
 		intent = _prepare_platform_walk(intent)
+	elif idle_pose_facing != 0:
+		var handoff_clip := "idle_%s_enter" % _facing_segment(idle_pose_facing)
+		if manifest.has_clip(handoff_clip):
+			pending_front_intent = intent.duplicate(true)
+			pending_front_handoff_clip = handoff_clip
+			wander_deadline = -1.0
+			blink_deadline = -1.0
+			# The existing side-entry sequence is pixel-identical at both ends,
+			# so reverse it to return to the front pose without scaling artwork.
+			sprite_player.play_clip(handoff_clip, true, "", true)
+			return true
+	return _begin_autonomous_intent(intent)
+
+func _begin_autonomous_intent(intent: Dictionary) -> bool:
 	current_intent = intent.duplicate(true)
 	if not action_session.begin(current_intent, int(_now_ms())):
 		current_intent.clear()
@@ -621,6 +638,12 @@ func _start_autonomous_intent(intent: Dictionary) -> bool:
 	if str(current_intent.get("id", "")) == "return_wave":
 		returned_after_seconds = 0.0
 	return true
+
+func _resume_front_handoff(intent: Dictionary) -> void:
+	if machine.state != "idle" or action_session.is_active():
+		return
+	if not _begin_autonomous_intent(intent):
+		_play_idle_pose()
 
 func _start_direct_behavior(intent_id: String) -> bool:
 	if behavior_director == null or needs_model == null:
@@ -700,7 +723,7 @@ func _interrupt_action(kind: String, context: Dictionary = {}) -> void:
 	if not resolved_context.has("platform_valid"):
 		resolved_context["platform_valid"] = _platform_still_valid(active_platform)
 	var decision := action_session.request_interrupt(kind, resolved_context, int(_now_ms()))
-	if bool(decision.get("accepted", false)) and action_session.is_active():
+	if bool(decision.get("accepted", false)) and action_session.is_active() and bool(decision.get("phase_changed", false)):
 		_play_action_session_clip()
 
 func _defer_until_wake(kind: String, payload: Dictionary = {}) -> bool:
@@ -933,6 +956,9 @@ func _crossed_platform(previous_position: Vector2, next_position: Vector2) -> Wi
 func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	wander_deadline = -1.0
 	blink_deadline = -1.0
+	if to != "idle" and not pending_front_intent.is_empty():
+		pending_front_intent.clear()
+		pending_front_handoff_clip = ""
 	var keeps_paused_patrol := not edge_session.is_empty() and bool(edge_session.get("paused", false)) and to in ["menu_wait", "head_pat", "poke_cheek", "clock_scare"]
 	if not edge_session.is_empty() and to != "edge_patrol" and not keeps_paused_patrol:
 		_cancel_edge_patrol()
@@ -1008,6 +1034,13 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	if to == "idle": _schedule_wander()
 
 func _on_clip_completed(clip_name: String, segment: String) -> void:
+	if machine.state == "idle" and not pending_front_intent.is_empty() and clip_name == pending_front_handoff_clip:
+		var intent := pending_front_intent.duplicate(true)
+		pending_front_intent.clear()
+		pending_front_handoff_clip = ""
+		idle_pose_facing = 0
+		call_deferred("_resume_front_handoff", intent)
+		return
 	if action_session.is_active() and clip_name == action_session.current_clip():
 		action_session.on_clip_finished(int(_now_ms()))
 		if action_session.is_active():
@@ -1077,6 +1110,12 @@ func _on_sprite_frame_changed(_frame_index: int, _frame_count: int) -> void:
 		return
 	position.y += adjustment
 	_apply_position()
+
+func _on_sprite_loop_boundary(clip_name: String, _segment: String, _completed_cycle: int) -> void:
+	if not action_session.is_active() or action_session.current_phase() != "loop" or action_session.current_clip() != clip_name:
+		return
+	if action_session.on_loop_boundary(int(_now_ms())):
+		_play_action_session_clip()
 
 func _on_passthrough_polygon_changed(polygon: PackedVector2Array) -> void:
 	desktop.set_mouse_passthrough(polygon)
@@ -1535,7 +1574,7 @@ func _schedule_idle_blink() -> void:
 	blink_deadline = _now_ms() + randf_range(IDLE_BLINK_MIN_MS, IDLE_BLINK_MAX_MS)
 
 func _trigger_idle_blink() -> void:
-	if machine.state != "idle": return
+	if machine.state != "idle" or not pending_front_intent.is_empty(): return
 	var name := "idle_blink"
 	if idle_pose_facing != 0:
 		var candidate := "idle_%s_blink" % _facing_segment(idle_pose_facing)
@@ -1550,7 +1589,7 @@ func _schedule_wander() -> void:
 	wander_deadline = _now_ms() + randf_range(minimum, maximum)
 
 func _trigger_ambient_behavior() -> void:
-	if machine.state != "idle": return
+	if machine.state != "idle" or not pending_front_intent.is_empty(): return
 	if behavior_director != null and behavior_director.is_valid():
 		var intent := behavior_director.select_intent(needs_model, _behavior_context(), int(_now_ms()))
 		if _start_autonomous_intent(intent):
@@ -1562,7 +1601,7 @@ func _trigger_ambient_behavior() -> void:
 		_trigger_wander()
 
 func _trigger_wander() -> void:
-	if machine.state != "idle": return
+	if machine.state != "idle" or not pending_front_intent.is_empty(): return
 	if not platforms.is_empty() and (active_platform != null or needs_model.get_need("curiosity") >= 45.0) and randf() < 0.42:
 		var target_platform: WindowPlatform = null
 		if active_platform != null:
@@ -1745,8 +1784,7 @@ func _set_window_geometry(next_size: Vector2i, previous_clip: Dictionary, next_c
 		motion.to = Vector2(motion.to) + shift
 	if not press.is_empty():
 		press.offset = Vector2(press.offset) - shift
-	desktop.set_size(pet_window_size)
-	desktop.set_position(position)
+	desktop.set_geometry(position, pet_window_size)
 	sprite_player.refresh_layout()
 
 func _default_position() -> Vector2:

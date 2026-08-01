@@ -26,6 +26,7 @@ var _phase_started_ms := 0
 var _interrupted_by := ""
 var _resume_allowed := false
 var _completion_outcome := ""
+var _finish_pending := false
 
 static func priority_for(kind: String) -> int:
 	return int(PRIORITIES.get(kind, 0))
@@ -42,6 +43,7 @@ func begin(intent: Dictionary, now_ms: int = -1) -> bool:
 	_interrupted_by = ""
 	_resume_allowed = false
 	_completion_outcome = ""
+	_finish_pending = false
 	_active = true
 	_started_ms = _resolve_now(now_ms)
 	if str(_session.get("type", "sequence")) == "one_shot":
@@ -96,9 +98,19 @@ func request_finish(now_ms: int = -1) -> bool:
 	if _phase == "exit":
 		return true
 	if not str(_session.get("exit", "")).is_empty():
-		_set_phase("exit", _resolve_now(now_ms))
+		if _phase == "loop":
+			_finish_pending = true
+		else:
+			_set_phase("exit", _resolve_now(now_ms))
 	else:
 		_complete("completed")
+	return true
+
+func on_loop_boundary(now_ms: int = -1) -> bool:
+	if not _active or _phase != "loop" or not _finish_pending:
+		return false
+	_finish_pending = false
+	_set_phase("exit", _resolve_now(now_ms))
 	return true
 
 func request_interrupt(kind: String, context: Dictionary = {}, now_ms: int = -1) -> Dictionary:
@@ -110,6 +122,7 @@ func request_interrupt(kind: String, context: Dictionary = {}, now_ms: int = -1)
 		"current_priority": _current_priority,
 		"resume_allowed": false,
 		"next_clip": current_clip(),
+		"phase_changed": false,
 	}
 	if not _active or incoming_priority <= _current_priority:
 		return decision
@@ -121,7 +134,11 @@ func request_interrupt(kind: String, context: Dictionary = {}, now_ms: int = -1)
 	decision["resume_allowed"] = _resume_allowed
 	session_interrupted.emit(kind, _resume_allowed)
 	if interrupt_mode == "wake_then_idle" and not str(_session.get("exit", "")).is_empty():
-		_set_phase("exit", _resolve_now(now_ms))
+		if _phase == "loop":
+			_finish_pending = true
+		else:
+			_set_phase("exit", _resolve_now(now_ms))
+			decision["phase_changed"] = true
 	else:
 		_complete("interrupted")
 	decision["next_clip"] = current_clip()
@@ -158,6 +175,9 @@ func is_active() -> bool:
 func current_phase() -> String:
 	return _phase
 
+func finish_pending() -> bool:
+	return _finish_pending
+
 func current_clip() -> String:
 	match _phase:
 		"enter", "loop", "exit":
@@ -182,16 +202,20 @@ func snapshot() -> Dictionary:
 		"interrupted_by": _interrupted_by,
 		"resume_allowed": _resume_allowed,
 		"outcome": _completion_outcome,
+		"finish_pending": _finish_pending,
 	}
 
 func _set_phase(next_phase: String, now_ms: int) -> void:
 	var previous := _phase
 	_phase = next_phase
+	if _phase != "loop":
+		_finish_pending = false
 	_phase_started_ms = now_ms
 	phase_changed.emit(previous, _phase, current_clip())
 
 func _complete(outcome: String) -> void:
 	_active = false
+	_finish_pending = false
 	_phase = "completed"
 	_completion_outcome = outcome
 	session_completed.emit(outcome)

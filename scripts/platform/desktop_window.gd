@@ -12,11 +12,13 @@ const DEFAULT_SETTINGS := {
 }
 
 var _window: Window
+var _native_bridge: Variant = null
 
 func _ready() -> void:
 	_window = get_window()
 
 func configure() -> void:
+	_native_bridge = ClassDB.instantiate("WindowsWindowEnumerator") if ClassDB.class_exists("WindowsWindowEnumerator") else null
 	_window.transparent_bg = true
 	_window.borderless = true
 	_window.always_on_top = true
@@ -38,6 +40,22 @@ func set_position(value: Vector2) -> void:
 
 func set_size(value: Vector2i) -> void:
 	_window.size = value
+
+func set_geometry(value_position: Vector2, value_size: Vector2i) -> void:
+	var resolved_position := Vector2i(roundi(value_position.x), roundi(value_position.y))
+	if _native_bridge != null and _native_bridge.has_method("set_window_rect"):
+		var handle := DisplayServer.window_get_native_handle(DisplayServer.WINDOW_HANDLE, _window.get_window_id())
+		if handle != 0 and bool(_native_bridge.call(
+			"set_window_rect",
+			handle,
+			resolved_position.x,
+			resolved_position.y,
+			value_size.x,
+			value_size.y,
+		)):
+			return
+	_window.position = resolved_position
+	_window.size = value_size
 
 func set_visible(value: bool) -> void:
 	_window.visible = value

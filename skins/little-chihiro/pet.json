@@ -1024,14 +1024,14 @@
     },
     "nap_loop": {
       "frames": [
-        "animations/nap_loop/frame_008.png",
         "animations/nap_loop/frame_009.png",
         "animations/nap_loop/frame_010.png",
         "animations/nap_loop/frame_011.png",
         "animations/nap_loop/frame_012.png",
         "animations/nap_loop/frame_013.png",
         "animations/nap_loop/frame_014.png",
-        "animations/nap_loop/frame_015.png"
+        "animations/nap_loop/frame_015.png",
+        "animations/nap_loop/frame_008.png"
       ],
       "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
       "loop": true,

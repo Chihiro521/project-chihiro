@@ -163,6 +163,7 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_window_snapshot", "handle", "include_title"), &WindowsWindowEnumerator::get_window_snapshot, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_foreground_window_snapshot", "include_title"), &WindowsWindowEnumerator::get_foreground_window_snapshot, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_current_process_id"), &WindowsWindowEnumerator::get_current_process_id);
+	ClassDB::bind_method(D_METHOD("set_window_rect", "handle", "x", "y", "width", "height"), &WindowsWindowEnumerator::set_window_rect);
 	ClassDB::bind_method(D_METHOD("atomic_replace_file", "temporary_path", "target_path"), &WindowsWindowEnumerator::atomic_replace_file);
 }
 
@@ -185,6 +186,21 @@ Dictionary WindowsWindowEnumerator::get_foreground_window_snapshot(bool include_
 
 int64_t WindowsWindowEnumerator::get_current_process_id() const {
 	return static_cast<int64_t>(::GetCurrentProcessId());
+}
+
+bool WindowsWindowEnumerator::set_window_rect(int64_t handle, int32_t x, int32_t y, int32_t width, int32_t height) const {
+	HWND window = reinterpret_cast<HWND>(static_cast<intptr_t>(handle));
+	if (window == nullptr || !IsWindow(window) || width <= 0 || height <= 0) {
+		return false;
+	}
+	return SetWindowPos(
+			window,
+			nullptr,
+			x,
+			y,
+			width,
+			height,
+			SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER) != FALSE;
 }
 
 bool WindowsWindowEnumerator::atomic_replace_file(const String &temporary_path, const String &target_path) const {

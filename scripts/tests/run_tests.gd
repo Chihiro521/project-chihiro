@@ -10,7 +10,7 @@ func _run() -> void:
 	_test_manifest()
 	_test_state_machine()
 	_test_render_box()
-	_test_playback()
+	await _test_playback()
 	_test_gaze()
 	_test_drag_and_umbrella()
 	_test_edge_patrol()
@@ -286,6 +286,45 @@ func _test_playback() -> void:
 	_expect(is_equal_approx(float(phase.elapsed_in_frame_ms), 50.0), "elapsed playback keeps local phase")
 	phase = PetSpritePlayer.resolve_playback_frame([100, 200, 300], 0, 2, true, false, 50.0)
 	_expect(int(phase.frame_index) == 2, "reverse playback starts at range end")
+	var host := Node2D.new()
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite"
+	var player := PetSpritePlayer.new()
+	player.name = "Player"
+	player.sprite_path = NodePath("../Sprite")
+	host.add_child(sprite)
+	host.add_child(player)
+	root.add_child(host)
+	await process_frame
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
+	player.set_manifest(manifest)
+	var expected_texture := load(manifest.frame_resource_path(str(manifest.clip("stretch").get("frames", [""])[0]))) as Texture2D
+	var signal_probe := {"texture_ready": false}
+	player.clip_changed.connect(func(name: String, _previous: String) -> void:
+		if name == "stretch":
+			signal_probe.texture_ready = sprite.texture == expected_texture
+	)
+	player.play_clip("stretch")
+	_expect(bool(signal_probe.texture_ready), "clip switch commits its first texture before geometry listeners run")
+	var boundary_probe := {"switched": false}
+	player.loop_boundary.connect(func(name: String, _segment: String, _cycle: int) -> void:
+		if name == "idle":
+			player.play_clip("stretch")
+			boundary_probe.switched = true
+	)
+	player.play_clip("idle")
+	player._process(20.0)
+	_expect(bool(boundary_probe.switched) and player.current_clip == "stretch" and sprite.texture == expected_texture, "loop seam can switch clips without restoring a stale loop frame")
+	var front_texture := load(manifest.frame_resource_path(str(manifest.clip("idle").get("frames", [""])[0]))) as Texture2D
+	var side_texture := load(manifest.frame_resource_path(str(manifest.clip("idle_right").get("frames", [""])[0]))) as Texture2D
+	var handoff_frames: Array = manifest.clip("idle_right_enter").get("frames", [])
+	var handoff_front := load(manifest.frame_resource_path(str(handoff_frames[0]))) as Texture2D
+	var handoff_side := load(manifest.frame_resource_path(str(handoff_frames[-1]))) as Texture2D
+	_expect(front_texture.get_image().get_data() == handoff_front.get_image().get_data(), "reverse side handoff ends on the exact front-idle pixels")
+	_expect(side_texture.get_image().get_data() == handoff_side.get_image().get_data(), "reverse side handoff starts on the exact side-idle pixels")
+	host.queue_free()
+	await process_frame
 
 func _test_gaze() -> void:
 	var gaze := PetGazeTracker.new()
@@ -456,8 +495,9 @@ func _test_action_session() -> void:
 	session.on_clip_finished(3010)
 	_expect(session.current_phase() == "loop", "sequence advances from enter to loop")
 	session.tick(3110)
-	_expect(session.current_phase() == "exit", "bounded loop requests its exit at maximum duration")
-	session.on_clip_finished(3120)
+	_expect(session.current_phase() == "loop" and session.finish_pending(), "bounded loop defers its exit until a visual seam")
+	_expect(session.on_loop_boundary(3120) and session.current_phase() == "exit", "loop boundary releases a pending graceful exit")
+	session.on_clip_finished(3130)
 	_expect(not session.is_active(), "sequence completes after its exit clip")
 	var sleep_intent := {
 		"id": "nap", "clip": "nap_enter", "priority": "autonomous",
@@ -466,8 +506,9 @@ func _test_action_session() -> void:
 	_expect(session.begin(sleep_intent, 4000), "sleep session begins")
 	session.on_clip_finished(4010)
 	session.request_interrupt("direct_interaction", {}, 4020)
-	_expect(session.is_active() and session.current_clip() == "nap_wake", "sleep interruption plays wake before returning idle")
-	session.on_clip_finished(4030)
+	_expect(session.is_active() and session.current_clip() == "nap_loop" and session.finish_pending(), "sleep interruption waits for the loop seam instead of cutting an arbitrary frame")
+	_expect(session.on_loop_boundary(4030) and session.current_clip() == "nap_wake", "sleep loop seam starts the wake clip")
+	session.on_clip_finished(4040)
 	_expect(not session.is_active(), "wake exit releases the action session")
 
 func _test_state_store_and_dialogue() -> void:
@@ -595,6 +636,8 @@ func _test_window_platforms() -> void:
 	_expect(bool(reused_track.get("lost", false)), "reused HWND with another process id is rejected")
 	var native_service := WindowPlatformService.new()
 	_expect(native_service.native_available(), "Windows test baseline loads the native GDExtension")
+	var native_bridge: Variant = ClassDB.instantiate("WindowsWindowEnumerator")
+	_expect(native_bridge != null and native_bridge.has_method("set_window_rect"), "native bridge exposes atomic position-and-size updates")
 	native_service.capture_titles = false
 	var native_snapshots := native_service.enumerate_snapshots(12)
 	_expect(native_snapshots.size() <= 12, "native enumeration is capped at twelve relevant HWNDs")

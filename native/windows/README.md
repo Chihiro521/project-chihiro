@@ -15,6 +15,9 @@ The extension registers `WindowsWindowEnumerator`:
 - `get_foreground_window_snapshot(include_title := true) -> Dictionary` uses
   the actual Win32 foreground HWND.
 - `get_current_process_id() -> int` lets the Godot service exclude this pet.
+- `set_window_rect(handle, x, y, width, height) -> bool` applies position and
+  size through one Win32 `SetWindowPos` call so transparent-window resizing
+  never exposes a half-updated rectangle.
 - `atomic_replace_file(temporary_path, target_path) -> bool` uses
   `MoveFileExW(..., MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)`.
 

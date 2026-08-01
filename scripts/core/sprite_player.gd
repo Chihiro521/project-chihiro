@@ -4,6 +4,7 @@ extends Node
 signal clip_changed(name: String, previous_name: String)
 signal clip_completed(name: String, segment: String)
 signal frame_changed(frame_index: int, frame_count: int)
+signal loop_boundary(name: String, segment: String, completed_cycle: int)
 signal passthrough_polygon_changed(polygon: PackedVector2Array)
 
 @export var sprite_path: NodePath
@@ -51,22 +52,41 @@ func play_clip(name: String, restart := true, segment := "", reverse := false) -
 	if not segment.is_empty() and segment_data.is_empty():
 		return
 	_prepare_clip_sync(clip)
+	var next_range_start := int(segment_data.get("start", 0))
+	var next_range_end := int(segment_data.get("end", max(0, (clip.get("frames", []) as Array).size() - 1)))
+	var next_range_loop := bool(segment_data.get("loop", clip.get("loop", false)))
+	var next_frame := next_range_end if playback_direction < 0 else next_range_start
+	var next_variant := _resolve_cycle_variant_for(
+		name,
+		clip,
+		0,
+		next_range_start,
+		next_range_end,
+		next_range_loop,
+	)
+	var next_texture := _texture(_resolved_frame_path(clip, next_frame, next_variant))
+	if next_texture == null:
+		return
 	var previous := current_clip
 	current_clip = name
 	current_segment = segment
-	_range_start = int(segment_data.get("start", 0))
-	_range_end = int(segment_data.get("end", max(0, (clip.get("frames", []) as Array).size() - 1)))
-	_range_loop = bool(segment_data.get("loop", clip.get("loop", false)))
+	_range_start = next_range_start
+	_range_end = next_range_end
+	_range_loop = next_range_loop
 	_playback_direction = playback_direction
-	current_frame = _range_end if _playback_direction < 0 else _range_start
+	current_frame = next_frame
 	_elapsed_in_frame_ms = 0.0
 	_finished = false
 	_manual_frame = -1
 	_externally_driven = false
 	_cycle_index = 0
-	_cycle_variant_index = _resolve_cycle_variant(clip, 0)
+	_cycle_variant_index = next_variant
+	# Install the next texture before native window geometry changes. This keeps
+	# the compositor from briefly stretching the previous clip into the new box.
+	_sprite.texture = next_texture
 	clip_changed.emit(name, previous)
-	_apply_frame()
+	_layout()
+	frame_changed.emit(current_frame, (clip.get("frames", []) as Array).size())
 
 func prepare_clips(names: Array[String]) -> void:
 	if manifest == null:
@@ -240,8 +260,13 @@ func _process(delta: float) -> void:
 			current_frame = next
 			_apply_frame()
 		elif _range_loop:
+			var completed_clip := current_clip
+			var completed_segment := current_segment
 			_cycle_index += 1
 			_cycle_variant_index = _resolve_cycle_variant(clip, _cycle_index)
+			loop_boundary.emit(completed_clip, completed_segment, _cycle_index)
+			if current_clip != completed_clip or current_segment != completed_segment or not _range_loop:
+				return
 			current_frame = _range_end if _playback_direction < 0 else _range_start
 			_apply_frame()
 		else:
@@ -256,12 +281,7 @@ func _apply_frame() -> void:
 	var frames: Array = clip.get("frames", [])
 	if current_frame < 0 or current_frame >= frames.size():
 		return
-	var frame_path := str(frames[current_frame])
-	var variants: Array = clip.get("cycleVariants", [])
-	if _cycle_variant_index >= 0 and _cycle_variant_index < variants.size():
-		var variant: Dictionary = variants[_cycle_variant_index]
-		var overrides: Dictionary = variant.get("frameOverrides", {})
-		frame_path = str(overrides.get(str(current_frame), frame_path))
+	var frame_path := _resolved_frame_path(clip, current_frame, _cycle_variant_index)
 	var texture := _texture(frame_path)
 	if texture == null:
 		return
@@ -330,8 +350,18 @@ func _clip_range_duration(clip: Dictionary) -> float:
 	return total
 
 func _resolve_cycle_variant(clip: Dictionary, cycle: int) -> int:
+	return _resolve_cycle_variant_for(current_clip, clip, cycle, _range_start, _range_end, _range_loop)
+
+func _resolve_cycle_variant_for(
+	clip_name: String,
+	clip: Dictionary,
+	cycle: int,
+	range_start: int,
+	range_end: int,
+	range_loop: bool,
+) -> int:
 	var variants: Array = clip.get("cycleVariants", [])
-	if variants.is_empty() or not _range_loop or _range_start != 0 or _range_end != (clip.get("frames", []) as Array).size() - 1:
+	if variants.is_empty() or not range_loop or range_start != 0 or range_end != (clip.get("frames", []) as Array).size() - 1:
 		return -1
 	var last_activation := -1_000_000
 	for cycle_index in range(cycle + 1):
@@ -339,7 +369,7 @@ func _resolve_cycle_variant(clip: Dictionary, cycle: int) -> int:
 		var selected_score := 2.0
 		for variant_index in range(variants.size()):
 			var variant: Dictionary = variants[variant_index]
-			var score := _deterministic_random("%s|%s|%d" % [current_clip, str(variant.get("id", variant_index)), cycle_index])
+			var score := _deterministic_random("%s|%s|%d" % [clip_name, str(variant.get("id", variant_index)), cycle_index])
 			if score < float(variant.get("probability", 0.0)) and cycle_index - last_activation > int(variant.get("minGapCycles", 0)) and score < selected_score:
 				selected = variant_index
 				selected_score = score
@@ -348,6 +378,18 @@ func _resolve_cycle_variant(clip: Dictionary, cycle: int) -> int:
 			if cycle_index == cycle:
 				return selected
 	return -1
+
+func _resolved_frame_path(clip: Dictionary, frame_index: int, variant_index: int) -> String:
+	var frames: Array = clip.get("frames", [])
+	if frame_index < 0 or frame_index >= frames.size():
+		return ""
+	var frame_path := str(frames[frame_index])
+	var variants: Array = clip.get("cycleVariants", [])
+	if variant_index >= 0 and variant_index < variants.size():
+		var variant: Dictionary = variants[variant_index]
+		var overrides: Dictionary = variant.get("frameOverrides", {})
+		frame_path = str(overrides.get(str(frame_index), frame_path))
+	return frame_path
 
 func _deterministic_random(key: String) -> float:
 	var random := RandomNumberGenerator.new()
