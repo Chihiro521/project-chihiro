@@ -134,6 +134,9 @@ func placement() -> String:
 func layout_revision() -> int:
 	return _layout_revision
 
+func text_layout_size() -> Vector2:
+	return _label.size if _label != null else Vector2.ZERO
+
 func snapshot() -> Dictionary:
 	return {
 		"visible": is_showing(),
@@ -141,6 +144,7 @@ func snapshot() -> Dictionary:
 		"text": _label.text if _label != null else "",
 		"placement": _placement,
 		"layout_revision": _layout_revision,
+		"text_size": text_layout_size(),
 	}
 
 static func resolve_placement(anchor_rect: Rect2, work_area: Rect2, bubble_size := Vector2(WINDOW_SIZE)) -> String:
@@ -213,6 +217,8 @@ func _build_surface() -> void:
 
 	var column := VBoxContainer.new()
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 2)
 	margins.add_child(column)
 
@@ -235,6 +241,8 @@ func _build_surface() -> void:
 
 	_label = Label.new()
 	_label.name = "Text"
+	_label.custom_minimum_size = Vector2(0.0, 64.0)
+	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

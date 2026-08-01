@@ -575,6 +575,7 @@ func _test_speech_bubble() -> void:
 	bubble.show_message("first", "第一条", 10.0, top_pet, work)
 	await process_frame
 	_expect(bubble.placement() == "below", "the live bubble applies the resolved screen-edge placement")
+	_expect(bubble.text_layout_size().x >= 300.0 and bubble.text_layout_size().y >= 60.0, "speech body keeps a visible text layout area after the native window is shown")
 	var stable_revision := bubble.layout_revision()
 	for _index in range(120):
 		bubble.update_anchor(top_pet, work)
