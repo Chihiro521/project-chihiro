@@ -1,0 +1,470 @@
+{
+  "name": "nap",
+  "image": "nap-sheet.png",
+  "frame_width": 512,
+  "frame_height": 512,
+  "columns": 6,
+  "rows": 5,
+  "frame_count": 30,
+  "fps": 6.0,
+  "loop": false,
+  "fixed_cells": true,
+  "trimmed": false,
+  "acceptance": {
+    "automated_status": "PASS",
+    "qa_report": "qa-report.json",
+    "semantic_review": "accepted"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_000.png",
+      "x": 0,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 1,
+      "file": "frame_001.png",
+      "x": 512,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.143,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 2,
+      "file": "frame_002.png",
+      "x": 1024,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.286,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 3,
+      "file": "frame_003.png",
+      "x": 1536,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.429,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 4,
+      "file": "frame_004.png",
+      "x": 2048,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.571,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 5,
+      "file": "frame_005.png",
+      "x": 2560,
+      "y": 0,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.714,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 6,
+      "file": "frame_006.png",
+      "x": 0,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.857,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 7,
+      "file": "frame_007.png",
+      "x": 512,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 1.0,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 8,
+      "file": "frame_008.png",
+      "x": 1024,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 9,
+      "file": "frame_009.png",
+      "x": 1536,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.125,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 10,
+      "file": "frame_010.png",
+      "x": 2048,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.25,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 11,
+      "file": "frame_011.png",
+      "x": 2560,
+      "y": 512,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.375,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 12,
+      "file": "frame_012.png",
+      "x": 0,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.5,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 13,
+      "file": "frame_013.png",
+      "x": 512,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.625,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 14,
+      "file": "frame_014.png",
+      "x": 1024,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.75,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 15,
+      "file": "frame_015.png",
+      "x": 1536,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.875,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 16,
+      "file": "frame_016.png",
+      "x": 2048,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 17,
+      "file": "frame_017.png",
+      "x": 2560,
+      "y": 1024,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.077,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 18,
+      "file": "frame_018.png",
+      "x": 0,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.154,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 19,
+      "file": "frame_019.png",
+      "x": 512,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.231,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 20,
+      "file": "frame_020.png",
+      "x": 1024,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.308,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 21,
+      "file": "frame_021.png",
+      "x": 1536,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.385,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 22,
+      "file": "frame_022.png",
+      "x": 2048,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.462,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 23,
+      "file": "frame_023.png",
+      "x": 2560,
+      "y": 1536,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.538,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 24,
+      "file": "frame_024.png",
+      "x": 0,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.615,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 25,
+      "file": "frame_025.png",
+      "x": 512,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.692,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 26,
+      "file": "frame_026.png",
+      "x": 1024,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.769,
+      "role": "breakdown",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 27,
+      "file": "frame_027.png",
+      "x": 1536,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.846,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 28,
+      "file": "frame_028.png",
+      "x": 2048,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 0.923,
+      "role": "direct",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    },
+    {
+      "index": 29,
+      "file": "frame_029.png",
+      "x": 2560,
+      "y": 2048,
+      "w": 512,
+      "h": 512,
+      "duration_ms": 167,
+      "phase": 1.0,
+      "role": "key",
+      "pivot": {
+        "x": 256.0,
+        "y": 492.0
+      }
+    }
+  ]
+}

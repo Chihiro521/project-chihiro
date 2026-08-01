@@ -1,0 +1,276 @@
+{
+  "status": "PENDING_SEMANTIC_REVIEW",
+  "note": "Sparse keys intentionally contain large pose changes; geometry is reported for review and is not a continuity PASS.",
+  "frames": [
+    {
+      "name": "k00_tired_prepare",
+      "label": "K00 \u00b7 fatigue preparation",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5195,
+      "pose_family_scale_correction": 1.039,
+      "whole_sprite_translation": [
+        -11,
+        -17
+      ],
+      "alpha_bbox": [
+        181,
+        19,
+        332,
+        473
+      ],
+      "alpha_coverage": 0.155964,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k04_lowered_sit",
+      "label": "K04 \u00b7 lowered / first sit",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.49,
+      "pose_family_scale_correction": 0.98,
+      "whole_sprite_translation": [
+        25,
+        23
+      ],
+      "alpha_bbox": [
+        126,
+        110,
+        387,
+        473
+      ],
+      "alpha_coverage": 0.1759,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k08_sleep_master",
+      "label": "K08 \u00b7 sleep family mother",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5,
+      "pose_family_scale_correction": 1.0,
+      "whole_sprite_translation": [
+        12,
+        29
+      ],
+      "alpha_bbox": [
+        124,
+        94,
+        389,
+        473
+      ],
+      "alpha_coverage": 0.187744,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k12_sleep_breath_opposite",
+      "label": "K12 \u00b7 opposite breath",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5,
+      "pose_family_scale_correction": 1.0,
+      "whole_sprite_translation": [
+        11,
+        26
+      ],
+      "alpha_bbox": [
+        127,
+        87,
+        386,
+        473
+      ],
+      "alpha_coverage": 0.185333,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k16_wake_notice",
+      "label": "K16 \u00b7 interrupted wake",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5,
+      "pose_family_scale_correction": 1.0,
+      "whole_sprite_translation": [
+        12,
+        29
+      ],
+      "alpha_bbox": [
+        124,
+        95,
+        390,
+        473
+      ],
+      "alpha_coverage": 0.187016,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k18_eye_rub",
+      "label": "K18 \u00b7 gentle eye rub",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5,
+      "pose_family_scale_correction": 1.0,
+      "whole_sprite_translation": [
+        12,
+        29
+      ],
+      "alpha_bbox": [
+        124,
+        94,
+        388,
+        473
+      ],
+      "alpha_coverage": 0.190819,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k21_small_yawn",
+      "label": "K21 \u00b7 small covered yawn",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.532,
+      "pose_family_scale_correction": 1.064,
+      "whole_sprite_translation": [
+        -10,
+        11
+      ],
+      "alpha_bbox": [
+        126,
+        91,
+        387,
+        473
+      ],
+      "alpha_coverage": 0.184917,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k23_rise_preparation",
+      "label": "K23 \u00b7 rise preparation",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5625,
+      "pose_family_scale_correction": 1.125,
+      "whole_sprite_translation": [
+        -51,
+        -28
+      ],
+      "alpha_bbox": [
+        157,
+        100,
+        356,
+        473
+      ],
+      "alpha_coverage": 0.176651,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k29_standing_recovery",
+      "label": "K29 \u00b7 standing recovery",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "whole_drawing_scale": 0.5,
+      "pose_family_scale_correction": 1.0,
+      "whole_sprite_translation": [
+        1,
+        -12
+      ],
+      "alpha_bbox": [
+        183,
+        19,
+        330,
+        473
+      ],
+      "alpha_coverage": 0.15237,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

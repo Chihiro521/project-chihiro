@@ -530,7 +530,7 @@ func _play_intent_sfx(intent_id: String) -> void:
 	match intent_id:
 		"straighten_bag", "inspect_rabbit", "guard_bag_annoyed": sfx_player.play("bag")
 		"tidy_clothes", "stretch", "reason_pose", "return_wave": sfx_player.play("cloth")
-		"sit_rest", "window_sit": sfx_player.play("sit")
+		"sit_rest", "nap", "window_sit": sfx_player.play("sit")
 		"window_walk": sfx_player.play("step")
 		"window_land_recover": sfx_player.play("land")
 

@@ -1,0 +1,608 @@
+{
+  "status": "PASS",
+  "frame_count": 30,
+  "dimensions": [
+    512,
+    512
+  ],
+  "automated_checks": {
+    "baseline_range_px": 0,
+    "head_alpha_width_proxy": {
+      "min": 107.0,
+      "median": 110.0,
+      "max": 121.0,
+      "range": 14.0
+    },
+    "hair_luminance_proxy": {
+      "min": 175.198,
+      "median": 177.705,
+      "max": 181.415,
+      "range": 6.217
+    },
+    "navy_high_frequency_proxy": {
+      "min": 5.9297,
+      "median": 6.4356,
+      "max": 8.6574,
+      "range": 2.7277
+    },
+    "artifacts": {
+      "identity_contact_sheet": "local-identity-contact-sheet.png",
+      "material_contact_sheet": "material-contact-sheet.png",
+      "target_fps_gif": "nap-preview-6fps.gif",
+      "slow_gif": "nap-preview-slow-3fps.gif",
+      "loop_gif": "nap-loop-6fps.gif",
+      "enter_slow_gif": "nap-enter-slow-3fps.gif",
+      "leg_continuity_contact_sheet": "leg-continuity-contact-sheet.png",
+      "leg_sync_example_gif": "nap-leg-sync-example-4fps.gif"
+    }
+  },
+  "manual_review": {
+    "status": "PASS",
+    "reviewed_on": "2026-07-31",
+    "evidence": [
+      "contact-sheet.png",
+      "local-identity-contact-sheet.png",
+      "material-contact-sheet.png",
+      "leg-continuity-contact-sheet.png",
+      "nap-preview-6fps.gif",
+      "nap-preview-slow-3fps.gif",
+      "nap-enter-slow-3fps.gif",
+      "nap-leg-sync-example-4fps.gif",
+      "nap-loop-6fps.gif",
+      "../key-qa/nap-key-contact-sheet.png"
+    ],
+    "findings": "Frames 004, 005 and 006 are fresh complete full-character redraws using frame 007 as the lower-body authority. Across F04/F05/F06/F07, occupied heights are 311/315/309/307 px and head-width proxies are 108/107/108/107 px. The knees remain close, both shins point diagonally viewer-left, the far shoe remains upper-left, the near shoe remains lower-right, and leg/sock/shoe ownership does not change. Upper-body beats remain distinct: first-contact strap/bracing hand, half-open sleepy lap settle, closed-eye nod, then settled sleep. Baseline range is 0 px; face, hair, garment, continuous strap, one satchel and one attached rabbit remain coherent. No local part translation, interpolation or compositing was used.",
+    "required_checks": [
+      "head_and_face_size",
+      "torso_and_limb_volume",
+      "garment_topology",
+      "hair_luminance",
+      "navy_fabric_high_frequency",
+      "strap_bag_rabbit_topology",
+      "leg_and_shoe_readability",
+      "ground_baseline"
+    ]
+  },
+  "per_frame": [
+    {
+      "index": 0,
+      "alpha_bbox": [
+        181,
+        19,
+        332,
+        473
+      ],
+      "head_crop_box": [
+        178,
+        13,
+        336,
+        171
+      ],
+      "head_alpha_width_proxy": 109.0,
+      "hair_luminance_proxy": 175.231,
+      "navy_high_frequency_proxy": 7.7263
+    },
+    {
+      "index": 1,
+      "alpha_bbox": [
+        180,
+        37,
+        332,
+        473
+      ],
+      "head_crop_box": [
+        176,
+        31,
+        334,
+        189
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 181.395,
+      "navy_high_frequency_proxy": 6.7304
+    },
+    {
+      "index": 2,
+      "alpha_bbox": [
+        180,
+        84,
+        332,
+        473
+      ],
+      "head_crop_box": [
+        176,
+        78,
+        320,
+        222
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 178.991,
+      "navy_high_frequency_proxy": 6.8814
+    },
+    {
+      "index": 3,
+      "alpha_bbox": [
+        170,
+        133,
+        342,
+        473
+      ],
+      "head_crop_box": [
+        186,
+        127,
+        312,
+        253
+      ],
+      "head_alpha_width_proxy": 114.0,
+      "hair_luminance_proxy": 180.054,
+      "navy_high_frequency_proxy": 7.7295
+    },
+    {
+      "index": 4,
+      "alpha_bbox": [
+        145,
+        162,
+        369,
+        473
+      ],
+      "head_crop_box": [
+        225,
+        156,
+        343,
+        274
+      ],
+      "head_alpha_width_proxy": 108.0,
+      "hair_luminance_proxy": 176.769,
+      "navy_high_frequency_proxy": 6.2798
+    },
+    {
+      "index": 5,
+      "alpha_bbox": [
+        146,
+        158,
+        367,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        152,
+        332,
+        270
+      ],
+      "head_alpha_width_proxy": 107.0,
+      "hair_luminance_proxy": 176.001,
+      "navy_high_frequency_proxy": 6.4397
+    },
+    {
+      "index": 6,
+      "alpha_bbox": [
+        150,
+        164,
+        363,
+        473
+      ],
+      "head_crop_box": [
+        208,
+        158,
+        326,
+        276
+      ],
+      "head_alpha_width_proxy": 108.0,
+      "hair_luminance_proxy": 175.52,
+      "navy_high_frequency_proxy": 6.2624
+    },
+    {
+      "index": 7,
+      "alpha_bbox": [
+        141,
+        166,
+        371,
+        473
+      ],
+      "head_crop_box": [
+        218,
+        160,
+        336,
+        278
+      ],
+      "head_alpha_width_proxy": 107.0,
+      "hair_luminance_proxy": 176.631,
+      "navy_high_frequency_proxy": 6.2715
+    },
+    {
+      "index": 8,
+      "alpha_bbox": [
+        143,
+        146,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        140,
+        334,
+        261
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 175.484,
+      "navy_high_frequency_proxy": 6.3232
+    },
+    {
+      "index": 9,
+      "alpha_bbox": [
+        144,
+        146,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        140,
+        336,
+        261
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 177.694,
+      "navy_high_frequency_proxy": 6.2198
+    },
+    {
+      "index": 10,
+      "alpha_bbox": [
+        144,
+        143,
+        369,
+        473
+      ],
+      "head_crop_box": [
+        212,
+        137,
+        334,
+        259
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 178.503,
+      "navy_high_frequency_proxy": 6.4078
+    },
+    {
+      "index": 11,
+      "alpha_bbox": [
+        143,
+        147,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        213,
+        141,
+        334,
+        262
+      ],
+      "head_alpha_width_proxy": 111.0,
+      "hair_luminance_proxy": 177.592,
+      "navy_high_frequency_proxy": 6.2614
+    },
+    {
+      "index": 12,
+      "alpha_bbox": [
+        145,
+        141,
+        368,
+        473
+      ],
+      "head_crop_box": [
+        212,
+        135,
+        334,
+        258
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 181.415,
+      "navy_high_frequency_proxy": 7.0263
+    },
+    {
+      "index": 13,
+      "alpha_bbox": [
+        142,
+        145,
+        371,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        139,
+        335,
+        260
+      ],
+      "head_alpha_width_proxy": 111.0,
+      "hair_luminance_proxy": 176.838,
+      "navy_high_frequency_proxy": 6.3394
+    },
+    {
+      "index": 14,
+      "alpha_bbox": [
+        140,
+        146,
+        373,
+        473
+      ],
+      "head_crop_box": [
+        218,
+        140,
+        340,
+        261
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 178.651,
+      "navy_high_frequency_proxy": 6.4314
+    },
+    {
+      "index": 15,
+      "alpha_bbox": [
+        141,
+        149,
+        371,
+        473
+      ],
+      "head_crop_box": [
+        219,
+        143,
+        339,
+        263
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 178.934,
+      "navy_high_frequency_proxy": 6.317
+    },
+    {
+      "index": 16,
+      "alpha_bbox": [
+        143,
+        147,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        141,
+        334,
+        262
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 175.198,
+      "navy_high_frequency_proxy": 6.6386
+    },
+    {
+      "index": 17,
+      "alpha_bbox": [
+        143,
+        147,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        212,
+        141,
+        333,
+        262
+      ],
+      "head_alpha_width_proxy": 117.0,
+      "hair_luminance_proxy": 176.897,
+      "navy_high_frequency_proxy": 6.3908
+    },
+    {
+      "index": 18,
+      "alpha_bbox": [
+        143,
+        146,
+        370,
+        473
+      ],
+      "head_crop_box": [
+        206,
+        140,
+        327,
+        261
+      ],
+      "head_alpha_width_proxy": 121.0,
+      "hair_luminance_proxy": 176.868,
+      "navy_high_frequency_proxy": 5.9297
+    },
+    {
+      "index": 19,
+      "alpha_bbox": [
+        144,
+        145,
+        368,
+        473
+      ],
+      "head_crop_box": [
+        206,
+        139,
+        328,
+        260
+      ],
+      "head_alpha_width_proxy": 121.0,
+      "hair_luminance_proxy": 176.534,
+      "navy_high_frequency_proxy": 6.1984
+    },
+    {
+      "index": 20,
+      "alpha_bbox": [
+        143,
+        147,
+        369,
+        473
+      ],
+      "head_crop_box": [
+        213,
+        141,
+        334,
+        262
+      ],
+      "head_alpha_width_proxy": 111.0,
+      "hair_luminance_proxy": 178.152,
+      "navy_high_frequency_proxy": 6.1354
+    },
+    {
+      "index": 21,
+      "alpha_bbox": [
+        144,
+        144,
+        368,
+        473
+      ],
+      "head_crop_box": [
+        214,
+        138,
+        336,
+        260
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 178.301,
+      "navy_high_frequency_proxy": 6.0129
+    },
+    {
+      "index": 22,
+      "alpha_bbox": [
+        166,
+        139,
+        347,
+        473
+      ],
+      "head_crop_box": [
+        186,
+        133,
+        310,
+        257
+      ],
+      "head_alpha_width_proxy": 107.0,
+      "hair_luminance_proxy": 179.22,
+      "navy_high_frequency_proxy": 6.9588
+    },
+    {
+      "index": 23,
+      "alpha_bbox": [
+        171,
+        152,
+        342,
+        473
+      ],
+      "head_crop_box": [
+        174,
+        146,
+        294,
+        265
+      ],
+      "head_alpha_width_proxy": 112.0,
+      "hair_luminance_proxy": 177.716,
+      "navy_high_frequency_proxy": 7.5481
+    },
+    {
+      "index": 24,
+      "alpha_bbox": [
+        172,
+        122,
+        341,
+        473
+      ],
+      "head_crop_box": [
+        161,
+        116,
+        291,
+        246
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 179.245,
+      "navy_high_frequency_proxy": 7.6942
+    },
+    {
+      "index": 25,
+      "alpha_bbox": [
+        181,
+        105,
+        332,
+        473
+      ],
+      "head_crop_box": [
+        168,
+        99,
+        304,
+        235
+      ],
+      "head_alpha_width_proxy": 111.0,
+      "hair_luminance_proxy": 179.646,
+      "navy_high_frequency_proxy": 8.6574
+    },
+    {
+      "index": 26,
+      "alpha_bbox": [
+        189,
+        83,
+        325,
+        473
+      ],
+      "head_crop_box": [
+        170,
+        77,
+        314,
+        221
+      ],
+      "head_alpha_width_proxy": 109.0,
+      "hair_luminance_proxy": 177.723,
+      "navy_high_frequency_proxy": 8.1821
+    },
+    {
+      "index": 27,
+      "alpha_bbox": [
+        187,
+        50,
+        327,
+        473
+      ],
+      "head_crop_box": [
+        177,
+        44,
+        334,
+        201
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 175.938,
+      "navy_high_frequency_proxy": 7.6682
+    },
+    {
+      "index": 28,
+      "alpha_bbox": [
+        182,
+        18,
+        330,
+        473
+      ],
+      "head_crop_box": [
+        176,
+        12,
+        334,
+        170
+      ],
+      "head_alpha_width_proxy": 110.0,
+      "hair_luminance_proxy": 177.995,
+      "navy_high_frequency_proxy": 7.1438
+    },
+    {
+      "index": 29,
+      "alpha_bbox": [
+        183,
+        19,
+        330,
+        473
+      ],
+      "head_crop_box": [
+        180,
+        13,
+        338,
+        171
+      ],
+      "head_alpha_width_proxy": 107.0,
+      "hair_luminance_proxy": 176.385,
+      "navy_high_frequency_proxy": 7.2125
+    }
+  ]
+}

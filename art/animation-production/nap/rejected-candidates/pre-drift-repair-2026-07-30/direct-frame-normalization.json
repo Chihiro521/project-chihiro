@@ -1,0 +1,11 @@
+{
+  "scale_corrections": {
+    "13": 1.06,
+    "14": 0.96,
+    "25": 1.09,
+    "27": 1.05,
+    "28": 1.15
+  },
+  "translation_overrides": {},
+  "notes": "Corrections apply only to complete drawings. F13 1.06 and F14 0.96 remove a loop-scale pulse against F12/F15; F25 1.09 and F27 1.05 preserve monotonic rise height; F28 1.15 matches accepted standing authority F29. No local anatomy or costume part was transformed."
+}

@@ -1,0 +1,383 @@
+{
+  "status": "IN_PROGRESS",
+  "frames": [
+    {
+      "index": 1,
+      "whole_drawing_scale": 0.545,
+      "whole_sprite_translation": [
+        -24,
+        -21
+      ],
+      "alpha_bbox": [
+        180,
+        37,
+        332,
+        473
+      ],
+      "alpha_coverage": 0.142014,
+      "visible_baseline_y": 472,
+      "source": "frame_001_alpha.png",
+      "pose_family_scale_correction": 1.09
+    },
+    {
+      "index": 2,
+      "whole_drawing_scale": 0.5675,
+      "whole_sprite_translation": [
+        -32,
+        -27
+      ],
+      "alpha_bbox": [
+        180,
+        84,
+        332,
+        473
+      ],
+      "alpha_coverage": 0.14077,
+      "visible_baseline_y": 472,
+      "source": "frame_002_alpha.png",
+      "pose_family_scale_correction": 1.135
+    },
+    {
+      "index": 3,
+      "whole_drawing_scale": 0.5,
+      "whole_sprite_translation": [
+        -8,
+        15
+      ],
+      "alpha_bbox": [
+        170,
+        133,
+        342,
+        473
+      ],
+      "alpha_coverage": 0.135231,
+      "visible_baseline_y": 472,
+      "source": "frame_003_alpha.png",
+      "pose_family_scale_correction": 1.0
+    },
+    {
+      "index": 5,
+      "whole_drawing_scale": 0.4145,
+      "whole_sprite_translation": [
+        54,
+        104
+      ],
+      "alpha_bbox": [
+        146,
+        158,
+        367,
+        473
+      ],
+      "alpha_coverage": 0.130142,
+      "visible_baseline_y": 472,
+      "source": "frame_005_alpha.png",
+      "pose_family_scale_correction": 0.829
+    },
+    {
+      "index": 6,
+      "whole_drawing_scale": 0.418,
+      "whole_sprite_translation": [
+        41,
+        103
+      ],
+      "alpha_bbox": [
+        150,
+        164,
+        363,
+        473
+      ],
+      "alpha_coverage": 0.125092,
+      "visible_baseline_y": 472,
+      "source": "frame_006_alpha.png",
+      "pose_family_scale_correction": 0.836
+    },
+    {
+      "index": 7,
+      "whole_drawing_scale": 0.455,
+      "whole_sprite_translation": [
+        30,
+        71
+      ],
+      "alpha_bbox": [
+        141,
+        166,
+        371,
+        473
+      ],
+      "alpha_coverage": 0.131973,
+      "visible_baseline_y": 472,
+      "source": "frame_007_alpha.png",
+      "pose_family_scale_correction": 0.91
+    },
+    {
+      "index": 9,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        44,
+        89
+      ],
+      "alpha_bbox": [
+        144,
+        146,
+        370,
+        473
+      ],
+      "alpha_coverage": 0.138489,
+      "visible_baseline_y": 472,
+      "source": "frame_009_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 10,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        47,
+        90
+      ],
+      "alpha_bbox": [
+        144,
+        143,
+        369,
+        473
+      ],
+      "alpha_coverage": 0.138241,
+      "visible_baseline_y": 472,
+      "source": "frame_010_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 11,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        46,
+        91
+      ],
+      "alpha_bbox": [
+        143,
+        147,
+        370,
+        473
+      ],
+      "alpha_coverage": 0.137512,
+      "visible_baseline_y": 472,
+      "source": "frame_011_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 13,
+      "whole_drawing_scale": 0.4558,
+      "whole_sprite_translation": [
+        22,
+        77
+      ],
+      "alpha_bbox": [
+        142,
+        145,
+        371,
+        473
+      ],
+      "alpha_coverage": 0.140778,
+      "visible_baseline_y": 472,
+      "source": "frame_013_alpha.png",
+      "pose_family_scale_correction": 0.9116
+    },
+    {
+      "index": 14,
+      "whole_drawing_scale": 0.5325,
+      "whole_sprite_translation": [
+        -8,
+        41
+      ],
+      "alpha_bbox": [
+        140,
+        146,
+        373,
+        473
+      ],
+      "alpha_coverage": 0.140568,
+      "visible_baseline_y": 472,
+      "source": "frame_014_alpha.png",
+      "pose_family_scale_correction": 1.065
+    },
+    {
+      "index": 15,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        46,
+        91
+      ],
+      "alpha_bbox": [
+        141,
+        149,
+        371,
+        473
+      ],
+      "alpha_coverage": 0.137123,
+      "visible_baseline_y": 472,
+      "source": "frame_015_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 17,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        46,
+        91
+      ],
+      "alpha_bbox": [
+        143,
+        147,
+        370,
+        473
+      ],
+      "alpha_coverage": 0.142254,
+      "visible_baseline_y": 472,
+      "source": "frame_017_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 19,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        44,
+        89
+      ],
+      "alpha_bbox": [
+        144,
+        145,
+        368,
+        473
+      ],
+      "alpha_coverage": 0.13903,
+      "visible_baseline_y": 472,
+      "source": "frame_019_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 20,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        46,
+        91
+      ],
+      "alpha_bbox": [
+        143,
+        147,
+        369,
+        473
+      ],
+      "alpha_coverage": 0.136703,
+      "visible_baseline_y": 472,
+      "source": "frame_020_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 22,
+      "whole_drawing_scale": 0.43,
+      "whole_sprite_translation": [
+        28,
+        79
+      ],
+      "alpha_bbox": [
+        166,
+        139,
+        347,
+        473
+      ],
+      "alpha_coverage": 0.127193,
+      "visible_baseline_y": 472,
+      "source": "frame_022_alpha.png",
+      "pose_family_scale_correction": 0.86
+    },
+    {
+      "index": 24,
+      "whole_drawing_scale": 0.5485,
+      "whole_sprite_translation": [
+        -28,
+        2
+      ],
+      "alpha_bbox": [
+        172,
+        122,
+        341,
+        473
+      ],
+      "alpha_coverage": 0.121532,
+      "visible_baseline_y": 472,
+      "source": "frame_024_alpha.png",
+      "pose_family_scale_correction": 1.097
+    },
+    {
+      "index": 25,
+      "whole_drawing_scale": 0.495,
+      "whole_sprite_translation": [
+        -2,
+        18
+      ],
+      "alpha_bbox": [
+        181,
+        105,
+        332,
+        473
+      ],
+      "alpha_coverage": 0.11993,
+      "visible_baseline_y": 472,
+      "source": "frame_025_alpha.png",
+      "pose_family_scale_correction": 0.99
+    },
+    {
+      "index": 26,
+      "whole_drawing_scale": 0.495,
+      "whole_sprite_translation": [
+        -2,
+        15
+      ],
+      "alpha_bbox": [
+        189,
+        83,
+        325,
+        473
+      ],
+      "alpha_coverage": 0.119781,
+      "visible_baseline_y": 472,
+      "source": "frame_026_alpha.png",
+      "pose_family_scale_correction": 0.99
+    },
+    {
+      "index": 27,
+      "whole_drawing_scale": 0.5175,
+      "whole_sprite_translation": [
+        -6,
+        -1
+      ],
+      "alpha_bbox": [
+        187,
+        50,
+        327,
+        473
+      ],
+      "alpha_coverage": 0.133911,
+      "visible_baseline_y": 472,
+      "source": "frame_027_alpha.png",
+      "pose_family_scale_correction": 1.035
+    },
+    {
+      "index": 28,
+      "whole_drawing_scale": 0.575,
+      "whole_sprite_translation": [
+        -38,
+        -67
+      ],
+      "alpha_bbox": [
+        182,
+        18,
+        330,
+        473
+      ],
+      "alpha_coverage": 0.155396,
+      "visible_baseline_y": 472,
+      "source": "frame_028_alpha.png",
+      "pose_family_scale_correction": 1.15
+    }
+  ]
+}

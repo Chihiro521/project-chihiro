@@ -1000,6 +1000,78 @@
       ],
       "visualBounds": {"x": 154, "y": 3, "width": 236, "height": 470}
     },
+    "nap_enter": {
+      "frames": [
+        "animations/nap_enter/frame_000.png",
+        "animations/nap_enter/frame_001.png",
+        "animations/nap_enter/frame_002.png",
+        "animations/nap_enter/frame_003.png",
+        "animations/nap_enter/frame_004.png",
+        "animations/nap_enter/frame_005.png",
+        "animations/nap_enter/frame_006.png",
+        "animations/nap_enter/frame_007.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 141, "y": 19, "width": 230, "height": 454}
+    },
+    "nap_loop": {
+      "frames": [
+        "animations/nap_loop/frame_008.png",
+        "animations/nap_loop/frame_009.png",
+        "animations/nap_loop/frame_010.png",
+        "animations/nap_loop/frame_011.png",
+        "animations/nap_loop/frame_012.png",
+        "animations/nap_loop/frame_013.png",
+        "animations/nap_loop/frame_014.png",
+        "animations/nap_loop/frame_015.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": true,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 120}, {"x": 370, "y": 120},
+        {"x": 391, "y": 300}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 160, "y": 478},
+        {"x": 119, "y": 330}
+      ],
+      "visualBounds": {"x": 140, "y": 141, "width": 233, "height": 332}
+    },
+    "nap_wake": {
+      "frames": [
+        "animations/nap_wake/frame_016.png",
+        "animations/nap_wake/frame_017.png",
+        "animations/nap_wake/frame_018.png",
+        "animations/nap_wake/frame_019.png",
+        "animations/nap_wake/frame_020.png",
+        "animations/nap_wake/frame_021.png",
+        "animations/nap_wake/frame_022.png",
+        "animations/nap_wake/frame_023.png",
+        "animations/nap_wake/frame_024.png",
+        "animations/nap_wake/frame_025.png",
+        "animations/nap_wake/frame_026.png",
+        "animations/nap_wake/frame_027.png",
+        "animations/nap_wake/frame_028.png",
+        "animations/nap_wake/frame_029.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 143, "y": 18, "width": 227, "height": 455}
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",

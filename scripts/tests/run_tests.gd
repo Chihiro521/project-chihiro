@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 74, "manifest should contain 74 animations")
+	_expect(manifest.animation_names().size() == 77, "manifest should contain 77 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -153,6 +153,25 @@ func _test_manifest() -> void:
 			var resource_path := manifest.frame_resource_path(str(frame))
 			sit_textures_load = sit_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(sit_textures_load, "all sit-rest runtime frames should import as Texture2D resources")
+	var nap_specs := [
+		{"name": "nap_enter", "frames": 8, "loop": false},
+		{"name": "nap_loop", "frames": 8, "loop": true},
+		{"name": "nap_wake", "frames": 14, "loop": false},
+	]
+	var nap_textures_load := true
+	for spec in nap_specs:
+		var nap_clip := manifest.clip(str(spec["name"]))
+		_expect((nap_clip.get("frames", []) as Array).size() == int(spec["frames"]), "%s should contain its approved sleep segment" % spec["name"])
+		_expect(bool(nap_clip.get("loop", false)) == bool(spec["loop"]), "%s should preserve its sleep loop policy" % spec["name"])
+		var nap_durations: Array = nap_clip.get("frameDurationsMs", [])
+		var nap_at_six_fps := nap_durations.size() == int(spec["frames"])
+		for duration in nap_durations:
+			nap_at_six_fps = nap_at_six_fps and is_equal_approx(float(duration), 167.0)
+		_expect(nap_at_six_fps, "%s should play at approximately six FPS" % spec["name"])
+		for frame in nap_clip.get("frames", []):
+			var resource_path := manifest.frame_resource_path(str(frame))
+			nap_textures_load = nap_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(nap_textures_load, "all nap runtime frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -161,7 +180,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1458, "manifest should expose 1458 runtime frames")
+	_expect(frame_count == 1488, "manifest should expose 1488 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -302,6 +321,11 @@ func _test_behavior_director() -> void:
 	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")
 	var sit_session: Dictionary = sit_intent.get("session", {})
 	_expect(str(sit_session.get("loop", "")) == "sit_loop" and str(sit_session.get("exit", "")) == "sit_exit", "sit-rest behavior preserves enter-loop-exit routing")
+	needs.set_need("energy", 20.0)
+	var nap_intent := director.create_intent("nap", needs, context, 99950)
+	_expect(str(nap_intent.get("clip", "")) == "nap_enter", "nap behavior enters through the approved sleep descent")
+	var nap_session: Dictionary = nap_intent.get("session", {})
+	_expect(str(nap_session.get("loop", "")) == "nap_loop" and str(nap_session.get("exit", "")) == "nap_wake", "nap behavior preserves enter-loop-wake routing")
 	needs.set_need("energy", 72.0)
 	var selected_ids: Array[String] = []
 	for index in range(8):

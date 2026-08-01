@@ -8,3 +8,5 @@ native/windows/.sconsign.dblite
 native/windows/src/*.obj.import
 *.tmp
 *.log
+__pycache__/
+*.pyc

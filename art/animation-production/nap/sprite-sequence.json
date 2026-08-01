@@ -1,0 +1,167 @@
+{
+  "name": "nap",
+  "frame_count": 30,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "segments": {
+    "nap_enter": {"start": 0, "end": 7, "loop": false},
+    "nap_loop": {"start": 8, "end": 15, "loop": true},
+    "nap_wake": {"start": 16, "end": 29, "loop": false}
+  },
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "pose_family_authorities": {
+      "standing": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+      "sleeping_floor_sit": "key-poses/k08_sleep_master_chroma.png"
+    },
+    "rule": "Temporal neighbors control motion only and never replace the canonical design or current pose-family proportion authority. K08 was accepted by the user as the sleeping/floor-sitting pose authority on 2026-07-30; its complete drawing is uniformly normalized to the standing authority's world scale before use."
+  },
+  "identity_lock": {
+    "silhouette": "Large rounded navy beret, broad ash-beige bob and face, compact navy dress, short sturdy limbs, tan strap, one viewer-right satchel and one attached rabbit remain unmistakable.",
+    "proportions": "Preserve the approved broad head and face, approximately four-head-tall compact standing body, torso volume, arm and leg thickness, garment length and shoe size. The seated sleeping family may foreshorten height but may not slim or miniaturize anatomy.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and matte dark ash-beige hair. Only eyelids, gaze, a tiny sleepy mouth and a restrained wake reaction may change.",
+    "costume": "Deep navy beret and connected A-line dress with cream collar, orange ribbon, three brass buttons, puffed sleeves, continuous lace hem, cream socks, black Mary Janes, tan cross-body strap, one satchel and one rabbit with orange bow.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Soft polished anime game illustration with fine dark outlines, restrained warm cel shading, smooth low-noise navy fabric, subdued original hair highlights, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She grows visibly tired, lowers herself into a compact floor-sitting doze, breathes quietly, notices an interruption, wakes and returns to the approved standing pose.",
+    "allowed_motion": "Eyelids, gaze, small mouth, head pitch, shoulders, arms and hands, hip/knee/ankle flexion, root descent and rise, and minimal gravity-driven dress, strap, satchel and rabbit response.",
+    "forbidden_changes": "No interpolation or part compositing; no body slimming, face-size drift, thin legs, brighter hair, costume redesign, rabbit holding, extra props, scenery, shadow, floor, text, watermark or crop.",
+    "contact_ledger": [
+      {"object": "strap and satchel", "count": 1, "side": "viewer-right", "owner": "cross-body attachment", "contact_points": "continuous shoulder-to-bag route and seated floor settle", "occlusion_order": "strap before dress; rabbit before satchel"},
+      {"object": "rabbit", "count": 1, "side": "satchel front", "owner": "satchel attachment", "contact_points": "fixed attachment throughout", "occlusion_order": "rabbit remains in front of satchel and is never held"},
+      {"object": "legs and shoes", "count": 2, "side": "bilateral", "owner": "body", "contact_points": "standing ground, seated fold, standing recovery", "occlusion_order": "dress may overlap upper legs without erasing anatomy"}
+    ]
+  },
+  "key_pose_plan": [
+    {"index": 0, "file": "key-poses/k00_tired_prepare_chroma.png", "segment": "nap_enter", "pose": "fatigued standing preparation"},
+    {"index": 4, "file": "key-poses/k04_lowered_sit_chroma.png", "segment": "nap_enter", "pose": "lowered center and first seated contact"},
+    {"index": 8, "file": "key-poses/k08_sleep_master_chroma.png", "segment": "nap_loop", "pose": "stable sleeping pose-family mother"},
+    {"index": 12, "file": "key-poses/k12_sleep_breath_opposite_chroma.png", "segment": "nap_loop", "pose": "opposite subtle breathing phase"},
+    {"index": 16, "file": "key-poses/k16_wake_notice_chroma.png", "segment": "nap_wake", "pose": "interrupted wake and alert seated reaction"},
+    {"index": 18, "file": "key-poses/k18_eye_rub_chroma.png", "segment": "nap_wake", "pose": "one-hand gentle eye rub while still seated"},
+    {"index": 21, "file": "key-poses/k21_small_yawn_chroma.png", "segment": "nap_wake", "pose": "same hand covers a small restrained yawn"},
+    {"index": 23, "file": "key-poses/k23_rise_preparation_chroma.png", "segment": "nap_wake", "pose": "hand lowered and torso inclined to prepare standing"},
+    {"index": 29, "file": "key-poses/k29_standing_recovery_chroma.png", "segment": "nap_wake", "pose": "recovered standing endpoint"}
+  ],
+  "thresholds": {
+    "min_alpha_coverage": 0.10,
+    "max_alpha_coverage": 0.48,
+    "max_color_jsd": 0.20,
+    "max_area_drift": 0.75,
+    "max_bbox_aspect_drift": 1.55,
+    "max_baseline_jitter_px": 4.0,
+    "max_center_range_px": 44.0,
+    "min_adjacent_diff": 0.001,
+    "max_adjacent_diff": 0.42,
+    "max_motion_energy_delta": 0.24,
+    "max_centroid_acceleration_px": 30.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "Standing-to-floor-sitting foreshortening legitimately changes silhouette area; sleeping frames are additionally checked against the approved K08 family master.",
+    "max_bbox_aspect_drift": "The floor-sitting family is intentionally wider and shorter than the standing anchor. The 1.55 limit is set just above the measured 1.484 peak while retaining a finite failure bound for unexpected silhouette expansion.",
+    "max_center_range_px": "The root intentionally descends inside the fixed cell while the ground baseline and pivot remain stable.",
+    "cross_family_normalization": "After the common 1024-to-512 downsample, every standing, crouching and seated source is measured in one shared world scale. The rebuilt K04 key receives a 0.98 complete-drawing key correction followed by the 0.86 seated-family correction; rebuilt F05/F06 and repaired F07 use the per-frame complete-drawing values recorded in direct-frame-normalization.json. No anatomy, costume part or accessory is moved independently or composited."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "per_segment",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": ["head_and_face_size", "torso_and_limb_volume", "garment_topology", "hair_luminance", "navy_fabric_high_frequency", "strap_bag_rabbit_topology", "leg_and_shoe_readability", "ground_baseline"]
+  },
+  "key_pose_review": {
+    "status": "original_keys_accepted_k04_leg_sync_repair_final_user_review_pending",
+    "contact_sheet": "key-qa/nap-key-contact-sheet.png",
+    "geometry_report": "key-qa/key-geometry-report.json",
+    "scope": "The original nine independently generated keys were accepted on 2026-07-30. At the user's request, K04 was freshly redrawn on 2026-07-31 so its complete lower body uses the approved F07 paired-leg topology; the other eight keys remain frozen.",
+    "normalization": "All built-in outputs were uniformly standardized to 1024x1024, extracted with the fixed #FF00FF chroma workflow, downsampled with LANCZOS to 512x512 and aligned only as complete drawings to baseline y=472. K00 uses 1.039, rebuilt K04 uses 0.98, K21 uses 1.064 and K23 uses 1.125 at the key-source stage. K18/K21/K23 required a stricter two-channel threshold to remove low-alpha magenta border residue. No body part was moved.",
+    "rejected_candidates": [
+      {"path": "rejected-candidates/k25-v1-gradient-background", "reason": "Background was measurably non-uniform magenta and therefore excluded from the reference chain."},
+      {"path": "rejected-candidates/k21-v1-gradient-background", "reason": "First yawn candidate had a non-uniform magenta background and was excluded from the reference chain before K23 generation."}
+    ]
+  },
+  "review_state": {
+    "status": "packaged_ready_for_engine",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-08-01",
+    "user_approval_artifact": "qa/nap-contact-sheet.png",
+    "controller_qa_report": "qa/controller-recheck/qa-report.json",
+    "user_approval": {
+      "date": "2026-08-01",
+      "verdict": "应该已经完成了，可以验收并且接入godot 并分阶段提交了。"
+    },
+    "direct_frame_count": 21,
+    "direct_frame_method": "Every non-key frame was independently generated as a complete 1024x1024 drawing on pure #FF00FF, then uniformly downsampled, chroma-extracted and aligned as a whole drawing.",
+    "qa_report": "qa/qa-report.json",
+    "local_identity_report": "qa/local-identity-report.json",
+    "target_fps_preview": "qa/nap-preview-6fps.gif",
+    "slow_preview": "qa/nap-preview-slow-3fps.gif",
+    "drift_repair": {
+      "date": "2026-07-30",
+      "redrawn_complete_frames": [1, 2, 7, 14, 24, 25, 26, 27],
+      "policy": "Fresh complete drawings only, followed by uniform whole-drawing scaling and baseline placement.",
+      "result": "Ordinary unobscured head widths are approximately 107-112 px, sleeping frames remain 110 plus or minus 1 px, and the rise occupied heights progress monotonically through 321, 351, 368, 390, 423 and 455 px."
+    },
+    "leg_continuity_repair": {
+      "date": "2026-07-31",
+      "frame": 7,
+      "temporal_bounds": [6, 8],
+      "method": "Fresh complete full-character drawing from the design authority, sleeping-family authority and both accepted temporal bounds; uniform whole-drawing normalization only.",
+      "result": "F07 establishes the accepted paired-leg topology: knees close, shins diagonal to viewer-left, far shoe upper-left and near shoe lower-right.",
+      "artifacts": ["qa/leg-continuity-contact-sheet.png", "qa/nap-enter-slow-3fps.gif"]
+    },
+    "leg_pose_sync": {
+      "date": "2026-07-31",
+      "redrawn_complete_frames": [4, 5, 6],
+      "lower_body_authority": 7,
+      "method": "Each frame was freshly generated as a complete full-character drawing from the immutable design authority, sleeping-family authority, its own upper-body beat and F07 lower-body topology. No pasted, translated or composited legs.",
+      "result": "F04/F05/F06/F07 occupied heights are 311/315/309/307 px and head-width proxies are 108/107/108/107 px. All four frames retain the same knee, shin, sock and shoe ownership/order.",
+      "artifacts": ["qa/leg-continuity-contact-sheet.png", "qa/nap-enter-slow-3fps.gif", "qa/nap-leg-sync-example-4fps.gif", "key-qa/nap-key-contact-sheet.png"]
+    }
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "segment": "nap_enter", "pose": "fatigued standing preparation"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.143, "role": "direct", "segment": "nap_enter", "pose": "eyelids lower and shoulders soften"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.286, "role": "direct", "segment": "nap_enter", "pose": "knees begin to bend while feet stay planted"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.429, "role": "direct", "segment": "nap_enter", "pose": "root descends and dress begins to gather"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.571, "role": "key", "segment": "nap_enter", "pose": "first seated contact with F07-authority paired legs established"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.714, "role": "direct", "segment": "nap_enter", "pose": "hands settle toward the lap while the paired lower body holds"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.857, "role": "direct", "segment": "nap_enter", "pose": "eyes close and head begins to nod while the paired lower body holds"},
+    {"index": 7, "file": "frame_007.png", "phase": 1.0, "role": "direct", "segment": "nap_enter", "pose": "enter endpoint approaching stable sleep"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.0, "role": "key", "segment": "nap_loop", "pose": "stable sleeping pose-family master at breath neutral"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.125, "role": "direct", "segment": "nap_loop", "pose": "shoulders begin a small inhale rise"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.25, "role": "direct", "segment": "nap_loop", "pose": "quiet inhale with tiny head response"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.375, "role": "direct", "segment": "nap_loop", "pose": "breath eases through neutral"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.5, "role": "key", "segment": "nap_loop", "pose": "opposite subtle exhale phase"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.625, "role": "direct", "segment": "nap_loop", "pose": "exhale settles with minimal rabbit-ear delay"},
+    {"index": 14, "file": "frame_014.png", "phase": 0.75, "role": "direct", "segment": "nap_loop", "pose": "shoulders begin returning toward breath neutral"},
+    {"index": 15, "file": "frame_015.png", "phase": 0.875, "role": "direct", "segment": "nap_loop", "pose": "near-neutral pre-seam sleeping phase"},
+    {"index": 16, "file": "frame_016.png", "phase": 0.0, "role": "key", "segment": "nap_wake", "pose": "interrupted wake with eyes opening heavily and head lifting"},
+    {"index": 17, "file": "frame_017.png", "phase": 0.077, "role": "direct", "segment": "nap_wake", "pose": "sleepy gaze focuses while one hand begins to lift"},
+    {"index": 18, "file": "frame_018.png", "phase": 0.154, "role": "key", "segment": "nap_wake", "pose": "raised hand gently rubs one eye"},
+    {"index": 19, "file": "frame_019.png", "phase": 0.231, "role": "direct", "segment": "nap_wake", "pose": "small second eye-rub beat with seated root fixed"},
+    {"index": 20, "file": "frame_020.png", "phase": 0.308, "role": "direct", "segment": "nap_wake", "pose": "hand releases the eye and travels toward the mouth"},
+    {"index": 21, "file": "frame_021.png", "phase": 0.385, "role": "key", "segment": "nap_wake", "pose": "same hand covers a small restrained yawn"},
+    {"index": 22, "file": "frame_022.png", "phase": 0.462, "role": "direct", "segment": "nap_wake", "pose": "yawn closes and hand lowers from the mouth"},
+    {"index": 23, "file": "frame_023.png", "phase": 0.538, "role": "key", "segment": "nap_wake", "pose": "torso inclines forward and feet prepare to carry weight"},
+    {"index": 24, "file": "frame_024.png", "phase": 0.615, "role": "direct", "segment": "nap_wake", "pose": "weight transfers through feet while hands clear the face"},
+    {"index": 25, "file": "frame_025.png", "phase": 0.692, "role": "direct", "segment": "nap_wake", "pose": "hips lift and knees begin to extend"},
+    {"index": 26, "file": "frame_026.png", "phase": 0.769, "role": "breakdown", "segment": "nap_wake", "pose": "half-rise with dress falling under gravity"},
+    {"index": 27, "file": "frame_027.png", "phase": 0.846, "role": "direct", "segment": "nap_wake", "pose": "torso approaches upright and satchel descends to standing side"},
+    {"index": 28, "file": "frame_028.png", "phase": 0.923, "role": "direct", "segment": "nap_wake", "pose": "posture and expression compose toward neutral"},
+    {"index": 29, "file": "frame_029.png", "phase": 1.0, "role": "key", "segment": "nap_wake", "pose": "independently rendered recovered standing endpoint"}
+  ]
+}

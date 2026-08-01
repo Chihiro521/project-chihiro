@@ -1,0 +1,33 @@
+{
+  "scale_corrections": {
+    "1": 1.09,
+    "2": 1.135,
+    "4": 0.86,
+    "5": 0.829,
+    "6": 0.836,
+    "7": 0.91,
+    "8": 0.86,
+    "9": 0.86,
+    "10": 0.86,
+    "11": 0.86,
+    "12": 0.86,
+    "13": 0.9116,
+    "14": 1.065,
+    "15": 0.86,
+    "16": 0.86,
+    "17": 0.86,
+    "18": 0.86,
+    "19": 0.86,
+    "20": 0.86,
+    "21": 0.86,
+    "22": 0.86,
+    "23": 0.86,
+    "24": 1.097,
+    "25": 0.99,
+    "26": 0.99,
+    "27": 1.035,
+    "28": 1.15
+  },
+  "translation_overrides": {},
+  "notes": "Corrections apply only to complete drawings. Repaired descent frames F01/F02 use 1.09/1.135 to match neighboring head size and height. On 2026-07-31 F04/F05/F06 were freshly redrawn with the accepted F07 lower-body topology; F04 uses a 0.98 key-source correction followed by the existing 0.86 seated-family correction, while F05/F06 use 0.829/0.836. F07 uses 0.91. These values keep F04-F07 at approximately the same 107 px head width without changing any local anatomy. F14 uses 1.065. Repaired rise frames F24/F25/F26/F27 use 1.097/0.99/0.99/1.035 so head width remains about 109-110 px while height rises monotonically. F28 1.15 matches F29. No local anatomy or costume part is transformed."
+}
