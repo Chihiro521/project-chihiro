@@ -100,7 +100,9 @@ static func plan(options: Dictionary) -> Dictionary:
 	var work_area: Rect2 = options.get("work_area", Rect2(0, 0, 1920, 1040))
 	var clips: Dictionary = options.get("clips", VARIANT_A_CLIPS).duplicate()
 	var bounds := resolve_bounds(work_area, float(options.get("box_side", 360.0)), float(options.get("coordinate_scale", 1.0)))
-	var available: Array[String] = options.get("available_clips", [])
+	var available: Array[String] = []
+	for clip_name in options.get("available_clips", []):
+		available.append(str(clip_name))
 	var capabilities := inspect_capabilities(available, clips)
 	var random := RandomNumberGenerator.new()
 	random.seed = abs(str(options.get("seed", "CHIHIRO")).hash())

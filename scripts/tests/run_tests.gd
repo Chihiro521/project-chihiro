@@ -10,6 +10,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_manifest()
+	_test_animation_resource_closure()
 	_test_state_machine()
 	_test_render_box()
 	await _test_playback()
@@ -240,6 +241,58 @@ func _test_manifest() -> void:
 	_expect(frame_count == 1511, "manifest should expose 1511 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
+func _test_animation_resource_closure() -> void:
+	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
+	var referenced := {}
+	var every_texture_loads := true
+	for clip_name in manifest.animation_names():
+		var clip := manifest.clip(clip_name)
+		for frame in clip.get("frames", []):
+			var relative := str(frame).replace("\\", "/")
+			referenced[relative] = true
+			var resource_path := manifest.frame_resource_path(relative)
+			var texture: Resource = ResourceLoader.load(resource_path, "Texture2D")
+			every_texture_loads = every_texture_loads and texture is Texture2D
+			texture = null
+		for variant_value in clip.get("cycleVariants", []):
+			if not variant_value is Dictionary:
+				continue
+			for override_path in (variant_value as Dictionary).get("frameOverrides", {}).values():
+				var relative := str(override_path).replace("\\", "/")
+				referenced[relative] = true
+				var resource_path := manifest.frame_resource_path(relative)
+				var texture: Resource = ResourceLoader.load(resource_path, "Texture2D")
+				every_texture_loads = every_texture_loads and texture is Texture2D
+				texture = null
+	_expect(every_texture_loads, "every manifest frame should load as a Texture2D")
+	_expect(referenced.size() == 1511, "manifest should reference 1511 unique runtime PNGs")
+	var animation_root := ProjectSettings.globalize_path("res://skins/little-chihiro/animations").replace("\\", "/")
+	var png_files: Array[String] = []
+	var import_files: Array[String] = []
+	_collect_files_with_suffix(animation_root, ".png", png_files)
+	_collect_files_with_suffix(animation_root, ".png.import", import_files)
+	var orphan_count := 0
+	var sidecar_missing_count := 0
+	for absolute_path in png_files:
+		var relative := "animations/%s" % absolute_path.trim_prefix("%s/" % animation_root)
+		if not referenced.has(relative):
+			orphan_count += 1
+		if not FileAccess.file_exists("%s.import" % absolute_path):
+			sidecar_missing_count += 1
+	var stray_sidecar_count := 0
+	for sidecar_path in import_files:
+		if not FileAccess.file_exists(sidecar_path.trim_suffix(".import")):
+			stray_sidecar_count += 1
+	_expect(png_files.size() == 1511, "skin should contain exactly 1511 runtime PNGs")
+	_expect(import_files.size() == 1511, "every runtime PNG should have one tracked import sidecar")
+	_expect(orphan_count == 0, "skin animation directory should contain no unreferenced PNGs")
+	_expect(sidecar_missing_count == 0 and stray_sidecar_count == 0, "runtime PNGs and import sidecars should be one-to-one")
+	for removed_name in [
+		"head_pat", "dragged", "patrol_ceiling_left", "patrol_ceiling_right",
+		"patrol_door_enter_left", "patrol_door_enter_right", "patrol_door_exit_left", "patrol_door_exit_right",
+	]:
+		_expect(not manifest.has_clip(removed_name), "retired clip should stay absent: %s" % removed_name)
+
 func _test_state_machine() -> void:
 	var machine := PetStateMachine.new()
 	_expect(machine.state == "boot", "state machine starts in boot")
@@ -348,24 +401,56 @@ func _test_drag_and_umbrella() -> void:
 
 func _test_edge_patrol() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
-	var clips := EdgePatrolPlanner.clips_for_variant("a")
-	var plan := EdgePatrolPlanner.plan({
-		"work_area": Rect2(0, 0, 1920, 1040),
-		"box_side": 436.0,
-		"start": Vector2(1200, 604),
-		"available_clips": manifest.animation_names(),
-		"clips": clips,
-		"seed": "test-route",
+	var available := manifest.animation_names()
+	for variant in ["a", "b"]:
+		var clips := EdgePatrolPlanner.clips_for_variant(variant)
+		var all_variant_clips_exist := true
+		for clip_name in clips.values():
+			all_variant_clips_exist = all_variant_clips_exist and manifest.has_clip(str(clip_name))
+		_expect(all_variant_clips_exist, "edge patrol variant %s should reference only manifest clips" % variant)
+		var plan := EdgePatrolPlanner.plan({
+			"work_area": Rect2(0, 0, 1920, 1040),
+			"box_side": 436.0,
+			"start": Vector2(1200, 604),
+			"available_clips": available,
+			"clips": clips,
+			"seed": "test-route-%s" % variant,
+		})
+		_expect(str(plan.mode) == "full", "complete variant %s plans a full edge route" % variant)
+		_expect((plan.poses as Array).size() == 9, "variant %s full route contains nine poses" % variant)
+		var uses_balloon_flight := false
+		var uses_wall_transition := false
+		var uses_only_active_pose_kinds := true
+		var bounds: Dictionary = plan.bounds
+		for pose in plan.poses:
+			var pose_kind := str(pose.get("kind", ""))
+			uses_only_active_pose_kinds = uses_only_active_pose_kinds and pose_kind in ["traverse", "corner"]
+			var clip_name := str(pose.get("clip_name", ""))
+			uses_balloon_flight = uses_balloon_flight or clip_name in [clips.flight_left, clips.flight_right]
+			uses_wall_transition = uses_wall_transition or clip_name in [clips.floor_to_wall_left, clips.floor_to_wall_right, clips.wall_left_to_floor_right, clips.wall_right_to_floor_left]
+			_expect(not ("ceiling" in clip_name or "door" in clip_name or "patrol_corner" in clip_name), "route should not revive retired transition clips")
+			for key in ["from", "to", "position"]:
+				if not pose.has(key): continue
+				var point := Vector2(pose[key])
+				_expect(point.x >= float(bounds.min_x) - 0.01 and point.x <= float(bounds.max_x) + 0.01, "route x stays inside work area")
+				_expect(point.y >= float(bounds.min_y) - 0.01 and point.y <= float(bounds.max_y) + 0.01, "route y stays inside work area")
+		_expect(uses_balloon_flight, "variant %s full route should cross the top with balloon flight" % variant)
+		_expect(uses_wall_transition, "variant %s full route should use dedicated floor-wall transitions" % variant)
+		_expect(uses_only_active_pose_kinds, "variant %s should contain only traverse and corner poses" % variant)
+	var fallback_clips := EdgePatrolPlanner.clips_for_variant("a")
+	var wall_available := available.duplicate()
+	wall_available.erase(str(fallback_clips.flight_left))
+	wall_available.erase(str(fallback_clips.flight_right))
+	var wall_plan := EdgePatrolPlanner.plan({"available_clips": wall_available, "clips": fallback_clips, "seed": "wall-fallback"})
+	_expect(str(wall_plan.mode) == "wall", "missing flight clips should degrade edge patrol to a wall route")
+	var ground_plan := EdgePatrolPlanner.plan({
+		"available_clips": [str(fallback_clips.ground_left), str(fallback_clips.ground_right)],
+		"clips": fallback_clips,
+		"seed": "ground-fallback",
 	})
-	_expect(str(plan.mode) == "full", "complete skin plans a full edge route")
-	_expect((plan.poses as Array).size() == 9, "full route contains nine poses")
-	var bounds: Dictionary = plan.bounds
-	for pose in plan.poses:
-		for key in ["from", "to", "position"]:
-			if not pose.has(key): continue
-			var point := Vector2(pose[key])
-			_expect(point.x >= float(bounds.min_x) - 0.01 and point.x <= float(bounds.max_x) + 0.01, "route x stays inside work area")
-			_expect(point.y >= float(bounds.min_y) - 0.01 and point.y <= float(bounds.max_y) + 0.01, "route y stays inside work area")
+	_expect(str(ground_plan.mode) == "ground", "ground clips alone should degrade edge patrol to ground walking")
+	var unavailable_plan := EdgePatrolPlanner.plan({"available_clips": [], "clips": fallback_clips, "seed": "none-fallback"})
+	_expect(str(unavailable_plan.mode) == "none", "missing patrol clips should fall back to ordinary wandering")
 
 func _test_life_model() -> void:
 	var profile := _load_json("res://data/behavior_profile.json")
@@ -637,6 +722,10 @@ func _test_action_catalog() -> void:
 		every_clip_has_label = every_clip_has_label and not str(labels.get(clip_name, "")).is_empty()
 	_expect(every_clip_has_label, "every action browser entry has a Chinese display label")
 	var behavior_map := PetActionCatalogPanel.build_behavior_clip_map(profile)
+	var every_behavior_clip_exists := true
+	for clip_name in behavior_map.keys():
+		every_behavior_clip_exists = every_behavior_clip_exists and manifest.has_clip(str(clip_name))
+	_expect(every_behavior_clip_exists, "behavior profile should reference only manifest clips")
 	_expect(behavior_map.has("idle_breathe") and behavior_map.has("window_sit_loop"), "action browser maps one-shots and sequence loops back to behavior intents")
 	var window_sit_loop_mapping := false
 	for mapping in behavior_map.get("window_sit_loop", []):
@@ -720,6 +809,22 @@ func _load_json(path: String) -> Dictionary:
 	if file == null: return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	return parsed if parsed is Dictionary else {}
+
+func _collect_files_with_suffix(root: String, suffix: String, output: Array[String]) -> void:
+	var directory := DirAccess.open(root)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		if entry != "." and entry != "..":
+			var absolute_path := root.path_join(entry).replace("\\", "/")
+			if directory.current_is_dir():
+				_collect_files_with_suffix(absolute_path, suffix, output)
+			elif entry.ends_with(suffix):
+				output.append(absolute_path)
+		entry = directory.get_next()
+	directory.list_dir_end()
 
 func _expect(condition: bool, message: String) -> void:
 	assertions += 1

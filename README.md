@@ -44,7 +44,8 @@ Godot 4.7/GDScript 承担。
 & 'D:\godot\引擎版本\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe' --headless --path 'D:\workspace\project-chihiro' --log-file 'D:\workspace\project-chihiro\godot-tests.log' --script res://scripts/tests/run_tests.gd
 ```
 
-当前基线为 `PASS: 245 assertions`。
+当前基线为 `PASS: 360 assertions`，其中包含 75 个 clip / 1511 张 PNG 的
+资源闭包、Texture2D 可加载性、import sidecar 一一对应和 A/B 巡逻降级验证。
 
 先构建 Windows GDExtension（详见 `native/windows/README.md`），再安装 Godot
 4.7.1 export templates 并导出：
@@ -71,5 +72,5 @@ art/animation-production/       # 动画模型锁、动作契约与审核产物
 ```
 
 动画制作遵循逐动作确认：角色模型锁确认后，先审关键姿势，再生成中间帧，最后审
-GIF、接触表和自动 QA 报告。运行时代码对尚未完成的新动画使用现有动作降级，旧动画
-目录保持不变。
+GIF、接触表和自动 QA 报告。运行时仅保留已接入的最终帧；被淘汰的动作与制作中间稿
+可从对应 Git 历史提交恢复。
