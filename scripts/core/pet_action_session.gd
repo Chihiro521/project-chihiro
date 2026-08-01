@@ -166,9 +166,6 @@ func discard_resume() -> void:
 	_intent.clear()
 	_session.clear()
 
-func can_accept(kind: String) -> bool:
-	return _active and priority_for(kind) > _current_priority
-
 func is_active() -> bool:
 	return _active
 

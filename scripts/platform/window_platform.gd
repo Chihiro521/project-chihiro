@@ -58,14 +58,6 @@ static func rect_from_value(value: Variant) -> Rect2i:
 	return Rect2i()
 
 
-func source_right() -> int:
-	return rect.position.x + rect.size.x
-
-
-func source_bottom() -> int:
-	return rect.position.y + rect.size.y
-
-
 func segment_left() -> int:
 	return top_edge.position.x
 
@@ -84,17 +76,3 @@ func contains_x(x: float) -> bool:
 
 func stable_id() -> String:
 	return "%d:%d:%d" % [handle, segment_left(), segment_right()]
-
-
-func to_dictionary() -> Dictionary:
-	return {
-		"handle": handle,
-		"process_id": process_id,
-		"rect": rect,
-		"top_edge": top_edge,
-		"z_order": z_order,
-		"title": title,
-		"process_name": process_name,
-		"class_name": window_class,
-		"maximized": maximized,
-	}

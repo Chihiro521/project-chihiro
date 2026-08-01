@@ -32,9 +32,6 @@ func get_work_area() -> Rect2i:
 func get_cursor_position() -> Vector2i:
 	return DisplayServer.mouse_get_position()
 
-func get_position() -> Vector2i:
-	return _window.position
-
 func set_position(value: Vector2) -> void:
 	_window.position = Vector2i(roundi(value.x), roundi(value.y))
 
@@ -68,11 +65,6 @@ func set_unfocusable(value: bool) -> void:
 
 func set_mouse_passthrough(polygon: PackedVector2Array) -> void:
 	_window.mouse_passthrough_polygon = polygon
-
-func device_scale() -> float:
-	# Godot exposes window, input and DisplayServer positions in one pixel space.
-	# Keeping this bridge at 1 avoids mixing OS scale with already-scaled values.
-	return 1.0
 
 func save_position(position: Vector2, base_size: Vector2i, current_size: Vector2i) -> void:
 	var normalized := Vector2(

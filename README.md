@@ -10,12 +10,12 @@ Godot 4.7/GDScript 承担。
 - 透明、无边框、置顶、不可缩放的 Windows 桌宠窗口
 - Godot `StatusIndicator` 原生托盘菜单
 - 2D 编辑器内显示待机帧预览，运行时再由逐帧播放器接管纹理
-- 原 `pet.json` schema v1，以及 83 组动作、1575 张运行帧
+- 原 `pet.json` schema v1，以及 75 组动作、1511 张运行帧
 - 自定义逐帧播放器：独立帧时长、片段、倒放、循环与确定性循环变体
 - `boot / idle / float / edge_patrol / dragged / drag_fall / land` 等状态机
 - 点击、摸头、戳脸、拖拽、急停/反向、直坠与持伞缓降
 - 九向注视、距离/角度迟滞、快速扫过、反复横摆和绕圈反应
-- A/B 攀墙家族、地面/墙面/顶部飞行、转角、root motion 和降级路线
+- A/B 攀墙家族、地面/墙面/气球飞行、专用转角、root motion 和降级路线
 - 动态 `360 / 424 / 436` 方形渲染箱与边/角停靠
 - 位置持久化、自主闲逛开关、光标跟随开关和隐藏/恢复
 - `energy / boredom / curiosity / irritation / affection` 五项生命状态与五档关系

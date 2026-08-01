@@ -105,11 +105,6 @@ func set_need(need_name: String, amount: float, reason: String = "set") -> bool:
 	values_changed.emit(snapshot(), reason)
 	return true
 
-func adjust_need(need_name: String, delta: float, reason: String = "adjust") -> bool:
-	if not _values.has(need_name):
-		return false
-	return set_need(need_name, float(_values[need_name]) + delta, reason)
-
 func get_need(need_name: String, fallback: float = 0.0) -> float:
 	return float(_values.get(need_name, fallback))
 
@@ -140,9 +135,6 @@ func relationship_rank(tier_id: String) -> int:
 		if str(tiers[index].get("id", "")) == tier_id:
 			return index
 	return -1
-
-func current_relationship_rank() -> int:
-	return relationship_rank(relationship_tier())
 
 func _relationship_tiers() -> Array:
 	var configured: Variant = _relationship_config.get("tiers", DEFAULT_RELATIONSHIP_TIERS)

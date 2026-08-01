@@ -3,56 +3,42 @@ extends RefCounted
 
 const EPSILON := 0.001
 
-const DEFAULT_CLIPS := {
+const VARIANT_A_CLIPS := {
 	"ground_left": "patrol_floor_left",
 	"ground_right": "patrol_floor_right",
-	"wall_left": "patrol_wall_left",
-	"wall_right": "patrol_wall_right",
+	"wall_left": "patrol_wall_left_a",
+	"wall_right": "patrol_wall_right_a",
 	"flight_left": "patrol_flight_left",
 	"flight_right": "patrol_flight_right",
 	"balloon_depart_left": "patrol_balloon_depart_left",
 	"balloon_depart_right": "patrol_balloon_depart_right",
-	"balloon_arrive_left": "patrol_balloon_arrive_left",
+	"balloon_arrive_left": "patrol_balloon_arrive_left_a",
 	"balloon_arrive_right": "patrol_balloon_arrive_right",
-	"floor_to_wall_left": "patrol_floor_to_wall_left",
-	"floor_to_wall_right": "patrol_floor_to_wall_right",
-	"wall_left_to_floor_right": "patrol_wall_left_to_floor_right",
-	"wall_right_to_floor_left": "patrol_wall_right_to_floor_left",
+	"floor_to_wall_left": "patrol_floor_to_wall_left_a",
+	"floor_to_wall_right": "patrol_floor_to_wall_right_a",
+	"wall_left_to_floor_right": "patrol_wall_left_to_floor_right_a",
+	"wall_right_to_floor_left": "patrol_wall_right_to_floor_left_a",
 }
 
-const DOOR_CLIPS := {
-	"enter_left": "patrol_door_enter_left",
-	"enter_right": "patrol_door_enter_right",
-	"exit_left": "patrol_door_exit_left",
-	"exit_right": "patrol_door_exit_right",
+const VARIANT_B_CLIPS := {
+	"ground_left": "patrol_floor_left",
+	"ground_right": "patrol_floor_right",
+	"wall_left": "patrol_wall_left_b",
+	"wall_right": "patrol_wall_right_b",
+	"flight_left": "patrol_flight_left",
+	"flight_right": "patrol_flight_right",
+	"balloon_depart_left": "patrol_balloon_depart_left_b",
+	"balloon_depart_right": "patrol_balloon_depart_right_b",
+	"balloon_arrive_left": "patrol_balloon_arrive_left_b",
+	"balloon_arrive_right": "patrol_balloon_arrive_right_b",
+	"floor_to_wall_left": "patrol_floor_to_wall_left_b",
+	"floor_to_wall_right": "patrol_floor_to_wall_right_b",
+	"wall_left_to_floor_right": "patrol_wall_left_to_floor_right_b",
+	"wall_right_to_floor_left": "patrol_wall_right_to_floor_left_b",
 }
 
 static func clips_for_variant(variant: String) -> Dictionary:
-	var clips := DEFAULT_CLIPS.duplicate()
-	if variant == "a":
-		clips.merge({
-			"wall_left": "patrol_wall_left_a",
-			"wall_right": "patrol_wall_right_a",
-			"balloon_arrive_left": "patrol_balloon_arrive_left_a",
-			"floor_to_wall_left": "patrol_floor_to_wall_left_a",
-			"floor_to_wall_right": "patrol_floor_to_wall_right_a",
-			"wall_left_to_floor_right": "patrol_wall_left_to_floor_right_a",
-			"wall_right_to_floor_left": "patrol_wall_right_to_floor_left_a",
-		}, true)
-	elif variant == "b":
-		clips.merge({
-			"wall_left": "patrol_wall_left_b",
-			"wall_right": "patrol_wall_right_b",
-			"balloon_depart_left": "patrol_balloon_depart_left_b",
-			"balloon_depart_right": "patrol_balloon_depart_right_b",
-			"balloon_arrive_left": "patrol_balloon_arrive_left_b",
-			"balloon_arrive_right": "patrol_balloon_arrive_right_b",
-			"floor_to_wall_left": "patrol_floor_to_wall_left_b",
-			"floor_to_wall_right": "patrol_floor_to_wall_right_b",
-			"wall_left_to_floor_right": "patrol_wall_left_to_floor_right_b",
-			"wall_right_to_floor_left": "patrol_wall_right_to_floor_left_b",
-		}, true)
-	return clips
+	return (VARIANT_B_CLIPS if variant == "b" else VARIANT_A_CLIPS).duplicate(true)
 
 static func resolve_bounds(work_area: Rect2, box_side: float, coordinate_scale := 1.0) -> Dictionary:
 	var side := maxf(0.0, box_side)
@@ -89,7 +75,7 @@ static func corner_position(bounds: Dictionary, corner_name: String) -> Vector2:
 		"bottom-right": return Vector2(bounds.max_x, bounds.max_y)
 	return Vector2(bounds.min_x, bounds.max_y)
 
-static func inspect_capabilities(available_names: Array[String], clips: Dictionary, door_clips := DOOR_CLIPS) -> Dictionary:
+static func inspect_capabilities(available_names: Array[String], clips: Dictionary) -> Dictionary:
 	var available := {}
 	for name in available_names:
 		available[name] = true
@@ -98,39 +84,28 @@ static func inspect_capabilities(available_names: Array[String], clips: Dictiona
 		if not available.has(str(name)):
 			missing_full.append(str(name))
 	var both_ground := available.has(str(clips.ground_left)) and available.has(str(clips.ground_right))
-	var missing_door: Array[String] = []
-	for name in [clips.ground_left, clips.ground_right, door_clips.enter_left, door_clips.enter_right, door_clips.exit_left, door_clips.exit_right]:
-		if not available.has(str(name)):
-			missing_door.append(str(name))
 	var wall_left := both_ground and available.has(str(clips.wall_left)) and available.has(str(clips.floor_to_wall_left)) and available.has(str(clips.wall_left_to_floor_right))
 	var wall_right := both_ground and available.has(str(clips.wall_right)) and available.has(str(clips.floor_to_wall_right)) and available.has(str(clips.wall_right_to_floor_left))
 	return {
-		"door": missing_door.is_empty(),
 		"full": missing_full.is_empty(),
 		"wall": wall_left or wall_right,
 		"wall_left": wall_left,
 		"wall_right": wall_right,
 		"ground_left": available.has(str(clips.ground_left)),
 		"ground_right": available.has(str(clips.ground_right)),
-		"missing_for_door_route": missing_door,
 		"missing_for_full_route": missing_full,
 	}
 
 static func plan(options: Dictionary) -> Dictionary:
 	var work_area: Rect2 = options.get("work_area", Rect2(0, 0, 1920, 1040))
-	var clips: Dictionary = options.get("clips", DEFAULT_CLIPS).duplicate()
-	var door_clips: Dictionary = options.get("door_clips", DOOR_CLIPS).duplicate()
+	var clips: Dictionary = options.get("clips", VARIANT_A_CLIPS).duplicate()
 	var bounds := resolve_bounds(work_area, float(options.get("box_side", 360.0)), float(options.get("coordinate_scale", 1.0)))
 	var available: Array[String] = options.get("available_clips", [])
-	var capabilities := inspect_capabilities(available, clips, door_clips)
+	var capabilities := inspect_capabilities(available, clips)
 	var random := RandomNumberGenerator.new()
 	random.seed = abs(str(options.get("seed", "CHIHIRO")).hash())
 	var source: Vector2 = options.get("start", Vector2.ZERO)
 	var start := Vector2(clampf(source.x, bounds.min_x, bounds.max_x), bounds.max_y)
-	var door_chance := clampf(float(options.get("door_warp_chance", 0.18)), 0.0, 1.0)
-	if bounds.fits and bounds.horizontal_span > EPSILON and capabilities.door and door_chance > 0.0 and random.randf() < door_chance:
-		var direction := "via-left" if random.randf() < 0.5 else "via-right"
-		return _result("door", direction, bounds, _build_door_route(direction, start, bounds, clips, door_clips, random), capabilities)
 	if bounds.fits and bounds.horizontal_span > EPSILON and bounds.vertical_span > EPSILON and capabilities.full:
 		var direction := "via-left" if random.randf() < 0.5 else "via-right"
 		return _result("full", direction, bounds, _build_full_route(direction, start, bounds, clips, random), capabilities)
@@ -199,26 +174,6 @@ static func _build_wall_route(direction: String, start: Vector2, bounds: Diction
 		_traverse("bottom", "left", clips.ground_left, false, bottom_right, edge_position(bounds, "bottom", 1.0 - finish_inset)),
 	]
 
-static func _build_door_route(direction: String, start: Vector2, bounds: Dictionary, clips: Dictionary, door_clips: Dictionary, random: RandomNumberGenerator) -> Array[Dictionary]:
-	var bottom_left := corner_position(bounds, "bottom-left")
-	var bottom_right := corner_position(bounds, "bottom-right")
-	var finish_inset := 0.22 + random.randf() * 0.22
-	if direction == "via-left":
-		return [
-			_traverse("bottom", "left", clips.ground_left, false, start, bottom_left),
-			_door("enter", "left", door_clips.enter_left, bottom_left),
-			_warp("left", "right", bottom_left, bottom_right),
-			_door("exit", "right", door_clips.exit_right, bottom_right),
-			_traverse("bottom", "left", clips.ground_left, false, bottom_right, edge_position(bounds, "bottom", 1.0 - finish_inset)),
-		]
-	return [
-		_traverse("bottom", "right", clips.ground_right, false, start, bottom_right),
-		_door("enter", "right", door_clips.enter_right, bottom_right),
-		_warp("right", "left", bottom_right, bottom_left),
-		_door("exit", "left", door_clips.exit_left, bottom_left),
-		_traverse("bottom", "right", clips.ground_right, false, bottom_left, edge_position(bounds, "bottom", finish_inset)),
-	]
-
 static func _ground_fallback(start: Vector2, bounds: Dictionary, clips: Dictionary, capabilities: Dictionary, random: RandomNumberGenerator) -> Array[Dictionary]:
 	if not bounds.fits or bounds.horizontal_span <= EPSILON:
 		return []
@@ -239,12 +194,5 @@ static func _traverse(edge: String, direction: String, clip_name: String, revers
 static func _corner(corner_name: String, from_edge: String, to_edge: String, clip_name: String, reverse: bool, position: Vector2) -> Dictionary:
 	return {"kind": "corner", "corner": corner_name, "from_edge": from_edge, "to_edge": to_edge, "clip_name": clip_name, "reverse": reverse, "position": position}
 
-static func _door(phase: String, side: String, clip_name: String, position: Vector2) -> Dictionary:
-	return {"kind": "door", "phase": phase, "side": side, "clip_name": clip_name, "position": position}
-
-static func _warp(from_side: String, to_side: String, from: Vector2, to: Vector2) -> Dictionary:
-	return {"kind": "warp", "from_side": from_side, "to_side": to_side, "from": from, "to": to}
-
 static func _result(mode: String, direction: String, bounds: Dictionary, poses: Array[Dictionary], capabilities: Dictionary) -> Dictionary:
 	return {"mode": mode, "direction": direction, "bounds": bounds, "poses": poses, "capabilities": capabilities}
-

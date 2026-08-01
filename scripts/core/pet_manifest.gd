@@ -3,8 +3,8 @@ extends RefCounted
 
 const REQUIRED_ACTIONS := [
 	"boot", "idle", "idle_blink", "react", "turn", "takeoff", "float", "land",
-	"dragged", "notice", "cursor_track", "head_pat", "poke_cheek", "menu_wait",
-	"clock_scare",
+	"drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake", "notice",
+	"cursor_track", "head_pat_accept", "head_pat_refuse", "poke_cheek", "menu_wait", "clock_scare",
 ]
 
 var data: Dictionary = {}

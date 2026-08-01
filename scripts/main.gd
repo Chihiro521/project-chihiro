@@ -1022,16 +1022,12 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		_play_segment_or_clip("land", _facing_segment(facing))
 		sfx_player.play("land")
 	elif to == "dragged":
-		if _has_reactive_drag_family(): _play_drag_visual("grab")
-		else: sprite_player.play_clip("dragged")
+		_play_drag_visual("grab")
 	elif to == "head_pat":
 		if head_pat_refused:
 			sprite_player.play_clip("head_pat_refuse" if manifest.has_clip("head_pat_refuse") else "react")
 		else:
-			if manifest.has_clip("head_pat_accept"):
-				sprite_player.play_clip("head_pat_accept")
-			else:
-				sprite_player.play_clip("head_pat", true, "enter")
+			sprite_player.play_clip("head_pat_accept")
 	elif to == "cursor_track":
 		_play_gaze_clip()
 	elif to == "cursor_startle":
@@ -1048,7 +1044,7 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	if to != "drag_fall": umbrella_visual_phase = ""
 	if to == "idle": _schedule_wander()
 
-func _on_clip_completed(clip_name: String, segment: String) -> void:
+func _on_clip_completed(clip_name: String, _segment: String) -> void:
 	if machine.state == "idle" and not pending_front_intent.is_empty() and clip_name == pending_front_handoff_clip:
 		var intent := pending_front_intent.duplicate(true)
 		pending_front_intent.clear()
@@ -1070,13 +1066,13 @@ func _on_clip_completed(clip_name: String, segment: String) -> void:
 		return
 	if machine.state == "edge_patrol" and not edge_session.is_empty():
 		var pose: Dictionary = edge_session.get("pose", {})
-		if pose.get("kind", "") in ["corner", "door"] and clip_name == str(pose.get("clip_name", "")):
+		if pose.get("kind", "") == "corner" and clip_name == str(pose.get("clip_name", "")):
 			_advance_edge_patrol()
 			return
 	if machine.state == "idle" and clip_name in ["idle_left_enter", "idle_right_enter", "idle_blink", "idle_left_blink", "idle_right_blink"]:
 		_play_idle_pose()
 		return
-	if machine.state == "dragged" and _has_reactive_drag_family():
+	if machine.state == "dragged":
 		if clip_name == "drag_grab" and drag_visual_phase == "grab":
 			if _now_ms() - drag_last_sample_at >= PetDragMotion.IDLE_BRAKE_MS:
 				drag_motion_intent = "hold"
@@ -1088,12 +1084,6 @@ func _on_clip_completed(clip_name: String, segment: String) -> void:
 		if clip_name in ["drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake"]:
 			return
 	if machine.state == "drag_fall" and drag_fall_mode == "umbrella" and clip_name in ["umbrella_open", "umbrella_float", "umbrella_close"]:
-		return
-	if clip_name == "head_pat" and machine.state == "head_pat":
-		if segment == "enter":
-			sprite_player.play_clip("head_pat", true, "hold")
-		elif segment == "exit":
-			machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
 	if machine.state == "poke_cheek" and clip_name in ["poke_cheek", "guard_bag_annoyed"]:
 		poke_visual_clip = "poke_cheek"
@@ -1328,14 +1318,9 @@ func _start_head_pat(resume: String) -> void:
 
 func _end_head_pat() -> void:
 	head_pat_deadline = -1.0
-	if machine.state == "head_pat":
-		if head_pat_refused:
-			head_pat_refused = false
-			machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
-		elif sprite_player.current_clip == "head_pat_accept":
-			return
-		else:
-			sprite_player.play_clip("head_pat", true, "exit")
+	if machine.state == "head_pat" and head_pat_refused:
+		head_pat_refused = false
+		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 
 func _trigger_bag_guard() -> void:
 	if _defer_until_wake("bag"):
@@ -1405,11 +1390,6 @@ func _claim_click() -> bool:
 	last_click_at = now
 	return true
 
-func _has_reactive_drag_family() -> bool:
-	for name in ["drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake"]:
-		if not manifest.has_clip(name): return false
-	return true
-
 func _begin_drag_visual(now: float) -> void:
 	drag_visual_phase = "grab"
 	drag_motion_intent = "hold"
@@ -1417,7 +1397,7 @@ func _begin_drag_visual(now: float) -> void:
 	drag_brake_direction = 1
 	drag_last_horizontal_speed = 0.0
 	drag_last_sample_at = now
-	if _has_reactive_drag_family(): _set_direction(1)
+	_set_direction(1)
 
 func _reset_drag_visual() -> void:
 	drag_visual_phase = ""
@@ -1428,9 +1408,6 @@ func _reset_drag_visual() -> void:
 	drag_last_sample_at = 0.0
 
 func _play_drag_visual(phase: String) -> void:
-	if not _has_reactive_drag_family():
-		sprite_player.play_clip("dragged", false)
-		return
 	drag_visual_phase = phase
 	match phase:
 		"grab": sprite_player.play_clip("drag_grab")
@@ -1441,7 +1418,7 @@ func _play_drag_visual(phase: String) -> void:
 			_play_segment_or_clip("drag_brake", "left" if drag_brake_direction < 0 else "right")
 
 func _update_drag_visual_from_samples(now: float) -> void:
-	if press.is_empty() or str(press.get("intent", "")) != "drag" or machine.state != "dragged" or not _has_reactive_drag_family():
+	if press.is_empty() or str(press.get("intent", "")) != "drag" or machine.state != "dragged":
 		return
 	var velocity := _drag_velocity_px_per_second(press.get("samples", []))
 	var previous_direction := drag_travel_direction
@@ -1462,7 +1439,7 @@ func _update_drag_visual_from_samples(now: float) -> void:
 		_play_drag_visual(next_intent)
 
 func _update_drag_idle(now: float) -> void:
-	if machine.state != "dragged" or not _has_reactive_drag_family() or not PetDragMotion.should_brake(drag_visual_phase, now - drag_last_sample_at):
+	if machine.state != "dragged" or not PetDragMotion.should_brake(drag_visual_phase, now - drag_last_sample_at):
 		return
 	drag_motion_intent = "hold"
 	drag_last_horizontal_speed = 0.0
@@ -1858,10 +1835,8 @@ func _resolve_edge_patrol_box_size() -> Vector2i:
 	var side := maxi(base_window_size.x, base_window_size.y)
 	var route_names := {}
 	for clip_map in [
-		EdgePatrolPlanner.DEFAULT_CLIPS,
 		EdgePatrolPlanner.clips_for_variant("a"),
 		EdgePatrolPlanner.clips_for_variant("b"),
-		EdgePatrolPlanner.DOOR_CLIPS,
 	]:
 		for name in clip_map.values():
 			route_names[str(name)] = true
@@ -1882,16 +1857,12 @@ func _trigger_edge_patrol() -> void:
 	var variant := "b" if randf() < clampf(float(manifest.behavior_value("wallClimbVariantBChance", 0.5)), 0.0, 1.0) else "a"
 	var clips := EdgePatrolPlanner.clips_for_variant(variant)
 	var available := manifest.animation_names()
-	if not _supports_patrol_variant(available, clips):
-		clips = EdgePatrolPlanner.DEFAULT_CLIPS.duplicate()
-		variant = ""
 	var plan := EdgePatrolPlanner.plan({
 		"work_area": work_area,
 		"box_side": float(route_box.x),
 		"start": position,
 		"available_clips": available,
 		"clips": clips,
-		"door_warp_chance": float(manifest.behavior_value("doorWarpChance", 0.0)),
 		"seed": "%d:%f" % [Time.get_unix_time_from_system(), randf()],
 	})
 	var poses: Array = plan.get("poses", [])
@@ -1934,12 +1905,6 @@ func _prepare_edge_patrol(plan: Dictionary, variant: String, route_box: Vector2i
 	if machine.dispatch({"type": "EDGE_PATROL_START"}) != "edge_patrol":
 		edge_session.clear()
 		render_box_lock = null
-
-func _supports_patrol_variant(available_names: Array[String], clips: Dictionary) -> bool:
-	for name in [clips.wall_left, clips.wall_right, clips.floor_to_wall_left, clips.floor_to_wall_right, clips.wall_left_to_floor_right, clips.wall_right_to_floor_left]:
-		if str(name) not in available_names:
-			return false
-	return true
 
 func _advance_edge_patrol() -> void:
 	if edge_session.is_empty():

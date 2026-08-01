@@ -40,10 +40,6 @@ func native_available() -> bool:
 	return _native_bridge != null
 
 
-func self_process_id() -> int:
-	return _self_process_id
-
-
 func enumerate_snapshots(max_count := 0) -> Array:
 	if _native_bridge == null or not _native_bridge.has_method("enumerate_windows"):
 		return []
@@ -60,10 +56,6 @@ func refresh() -> Array[WindowPlatform]:
 		maximum_source_windows,
 	)
 	return _last_platforms.duplicate()
-
-
-func last_snapshots() -> Array:
-	return _last_snapshots.duplicate(true)
 
 
 func last_platforms() -> Array[WindowPlatform]:

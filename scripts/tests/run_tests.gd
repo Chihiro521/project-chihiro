@@ -37,7 +37,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 83, "manifest should contain 83 animations")
+	_expect(manifest.animation_names().size() == 75, "manifest should contain 75 active animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -237,7 +237,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1575, "manifest should expose 1575 runtime frames")
+	_expect(frame_count == 1511, "manifest should expose 1511 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -267,7 +267,7 @@ func _test_render_box() -> void:
 	var route_side := 0
 	var largest_route_clip := ""
 	var route_names := {}
-	for clip_map in [EdgePatrolPlanner.DEFAULT_CLIPS, EdgePatrolPlanner.clips_for_variant("a"), EdgePatrolPlanner.clips_for_variant("b"), EdgePatrolPlanner.DOOR_CLIPS]:
+	for clip_map in [EdgePatrolPlanner.clips_for_variant("a"), EdgePatrolPlanner.clips_for_variant("b")]:
 		for name in clip_map.values(): route_names[str(name)] = true
 	for name in route_names.keys():
 		if manifest.has_clip(str(name)):
@@ -355,7 +355,6 @@ func _test_edge_patrol() -> void:
 		"start": Vector2(1200, 604),
 		"available_clips": manifest.animation_names(),
 		"clips": clips,
-		"door_warp_chance": 0.0,
 		"seed": "test-route",
 	})
 	_expect(str(plan.mode) == "full", "complete skin plans a full edge route")
@@ -628,7 +627,7 @@ func _test_action_catalog() -> void:
 	var coverage := PetActionCatalogPanel.catalog_coverage(catalog, manifest.animation_names())
 	_expect(int(coverage.get("family_count", 0)) == 19, "action catalog contains sixteen life families and three system groups")
 	_expect(int(coverage.get("life_family_count", 0)) == 16, "action catalog preserves the planned sixteen behavior families")
-	_expect(int(coverage.get("classified_count", 0)) == 83, "action catalog classifies all runtime clips")
+	_expect(int(coverage.get("classified_count", 0)) == 75, "action catalog classifies all runtime clips")
 	_expect((coverage.get("missing", []) as Array).is_empty(), "action catalog has no unclassified runtime clips")
 	_expect((coverage.get("unknown", []) as Array).is_empty(), "action catalog references no unknown runtime clips")
 	_expect((coverage.get("duplicates", []) as Array).is_empty(), "every runtime clip belongs to exactly one visual family")

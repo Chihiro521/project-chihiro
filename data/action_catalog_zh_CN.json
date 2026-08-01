@@ -88,8 +88,8 @@
       "index": 11,
       "kind": "life",
       "label": "接受摸头",
-      "description": "接受摸头的一次性动作，以及兼容用的旧分段动作。",
-      "clips": ["head_pat_accept", "head_pat"]
+      "description": "接受摸头的一次性完整动作。",
+      "clips": ["head_pat_accept"]
     },
     {
       "id": "life_12_pat_refuse",
@@ -150,7 +150,7 @@
       "label": "系统 · 拖拽、坠落与雨伞",
       "description": "拖拽姿势反馈、离地、下落和雨伞链。",
       "clips": [
-        "dragged", "drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake", "drag_fall",
+        "drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake", "drag_fall",
         "takeoff", "float", "umbrella_open", "umbrella_float", "umbrella_close"
       ]
     },
@@ -159,12 +159,11 @@
       "index": 103,
       "kind": "system",
       "label": "系统 · 屏幕边缘巡逻",
-      "description": "地面、墙面、天花板、门和气球之间的边缘巡逻过渡。",
+      "description": "地面、墙面和气球飞行之间的边缘巡逻过渡。",
       "clips": [
         "patrol_balloon_arrive_left_a", "patrol_balloon_arrive_left_b", "patrol_balloon_arrive_right", "patrol_balloon_arrive_right_b",
         "patrol_balloon_depart_left", "patrol_balloon_depart_left_b", "patrol_balloon_depart_right", "patrol_balloon_depart_right_b",
-        "patrol_ceiling_left", "patrol_ceiling_right", "patrol_door_enter_left", "patrol_door_enter_right",
-        "patrol_door_exit_left", "patrol_door_exit_right", "patrol_flight_left", "patrol_flight_right",
+        "patrol_flight_left", "patrol_flight_right",
         "patrol_floor_to_wall_left_a", "patrol_floor_to_wall_left_b", "patrol_floor_to_wall_right_a", "patrol_floor_to_wall_right_b",
         "patrol_wall_left_a", "patrol_wall_left_b", "patrol_wall_left_to_floor_right_a", "patrol_wall_left_to_floor_right_b",
         "patrol_wall_right_a", "patrol_wall_right_b", "patrol_wall_right_to_floor_left_a", "patrol_wall_right_to_floor_left_b"
@@ -203,7 +202,6 @@
     "nap_loop": "打盹 · 睡眠循环",
     "nap_wake": "打盹 · 醒来",
     "return_wave": "归来挥手",
-    "head_pat": "摸头 · 旧分段兼容",
     "head_pat_accept": "接受摸头",
     "head_pat_refuse": "拒绝摸头",
     "guard_bag_annoyed": "护包不满",
@@ -215,7 +213,6 @@
     "window_sit_enter": "窗沿坐姿 · 进入",
     "window_sit_loop": "窗沿坐姿 · 循环",
     "window_sit_exit": "窗沿坐姿 · 起身",
-    "dragged": "基础拖拽",
     "drag_grab": "抓起",
     "drag_hold": "悬停抓住",
     "drag_left": "向左拖拽",
@@ -235,12 +232,6 @@
     "patrol_balloon_depart_left_b": "气球离开左侧 B",
     "patrol_balloon_depart_right": "气球离开右侧 A",
     "patrol_balloon_depart_right_b": "气球离开右侧 B",
-    "patrol_ceiling_left": "天花板向左",
-    "patrol_ceiling_right": "天花板向右",
-    "patrol_door_enter_left": "进入左侧门",
-    "patrol_door_enter_right": "进入右侧门",
-    "patrol_door_exit_left": "离开左侧门",
-    "patrol_door_exit_right": "离开右侧门",
     "patrol_flight_left": "向左飞行",
     "patrol_flight_right": "向右飞行",
     "patrol_floor_to_wall_left_a": "地面转左墙 A",
