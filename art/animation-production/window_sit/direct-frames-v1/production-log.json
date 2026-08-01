@@ -17,7 +17,7 @@
     "normalization": "uniform whole-canvas resize plus whole-frame head-center/baseline translation"
   },
   "rejected_artifacts": {
-    "directory": "rejected-candidates",
+    "directory": "git-history://5e67e44/art/animation-production/window_sit/direct-frames-v1/rejected-candidates/",
     "file_count": 211,
     "chroma_count": 118,
     "alpha_count": 79,

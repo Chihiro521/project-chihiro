@@ -36,7 +36,7 @@
     },
     {
       "frame": 1,
-      "source": "direct-frames-v1/alpha/frame_001.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_001.png",
       "uniform_whole_character_scale": 0.53233831,
       "whole_character_translation": [
         -15,
@@ -61,7 +61,7 @@
     },
     {
       "frame": 2,
-      "source": "direct-frames-v1/alpha/frame_002.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_002.png",
       "uniform_whole_character_scale": 0.52970297,
       "whole_character_translation": [
         -14,
@@ -86,7 +86,7 @@
     },
     {
       "frame": 3,
-      "source": "direct-frames-v1/alpha/frame_003.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_003.png",
       "uniform_whole_character_scale": 0.52970297,
       "whole_character_translation": [
         -14,
@@ -111,7 +111,7 @@
     },
     {
       "frame": 4,
-      "source": "key-poses/transition-keys-v1/alpha/frame_004.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/transition-keys-v1/alpha/frame_004.png",
       "uniform_whole_character_scale": 0.48636364,
       "whole_character_translation": [
         5,
@@ -136,7 +136,7 @@
     },
     {
       "frame": 5,
-      "source": "direct-frames-v1/alpha/frame_005.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_005.png",
       "uniform_whole_character_scale": 0.52195122,
       "whole_character_translation": [
         -1,
@@ -161,7 +161,7 @@
     },
     {
       "frame": 6,
-      "source": "direct-frames-v1/alpha/frame_006.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_006.png",
       "uniform_whole_character_scale": 0.5270936,
       "whole_character_translation": [
         -6,
@@ -186,7 +186,7 @@
     },
     {
       "frame": 7,
-      "source": "direct-frames-v1/alpha/frame_007.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_007.png",
       "uniform_whole_character_scale": 0.54040404,
       "whole_character_translation": [
         -29,
@@ -461,7 +461,7 @@
     },
     {
       "frame": 18,
-      "source": "direct-frames-v1/alpha/frame_018.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_018.png",
       "uniform_whole_character_scale": 0.59116022,
       "whole_character_translation": [
         -47,
@@ -486,7 +486,7 @@
     },
     {
       "frame": 19,
-      "source": "key-poses/stand-up-prep-v1/alpha/frame_019.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_019.png",
       "uniform_whole_character_scale": 0.52970297,
       "whole_character_translation": [
         -17,
@@ -511,7 +511,7 @@
     },
     {
       "frame": 20,
-      "source": "key-poses/stand-up-prep-v1/alpha/frame_020.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_020.png",
       "uniform_whole_character_scale": 0.55440415,
       "whole_character_translation": [
         -11,
@@ -536,7 +536,7 @@
     },
     {
       "frame": 21,
-      "source": "key-poses/stand-up-prep-v1/alpha/frame_021.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_021.png",
       "uniform_whole_character_scale": 0.53768844,
       "whole_character_translation": [
         1,
@@ -561,7 +561,7 @@
     },
     {
       "frame": 22,
-      "source": "key-poses/transition-keys-v1/alpha/frame_022.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/transition-keys-v1/alpha/frame_022.png",
       "uniform_whole_character_scale": 0.62209302,
       "whole_character_translation": [
         -45,
@@ -586,7 +586,7 @@
     },
     {
       "frame": 23,
-      "source": "direct-frames-v1/alpha/frame_023.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_023.png",
       "uniform_whole_character_scale": 0.56020942,
       "whole_character_translation": [
         -23,
@@ -611,7 +611,7 @@
     },
     {
       "frame": 24,
-      "source": "direct-frames-v1/alpha/frame_024.png",
+      "source": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/alpha/frame_024.png",
       "uniform_whole_character_scale": 0.56020942,
       "whole_character_translation": [
         -32,

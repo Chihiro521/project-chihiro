@@ -30,8 +30,8 @@
     }
   ],
   "rejected_candidates": [
-    {"file": "rejected-candidates/frame_014_candidate_a_lower_body_drift.png", "reason": "blink edit changed lower-body geometry more than the selected precision edit"},
-    {"file": "rejected-candidates/frame_016_candidate_a_hand_too_high.png", "reason": "release hand lifted too high and read as a claw"}
+    {"file": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v2/rejected-candidates/frame_014_candidate_a_lower_body_drift.png", "reason": "blink edit changed lower-body geometry more than the selected precision edit"},
+    {"file": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v2/rejected-candidates/frame_016_candidate_a_hand_too_high.png", "reason": "release hand lifted too high and read as a claw"}
   ],
   "chroma_removal": {
     "key_color": "#FF00FF",

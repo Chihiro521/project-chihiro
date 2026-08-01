@@ -136,12 +136,12 @@
     "key_manifest": "key-poses/key-manifest.json",
     "background_removal": "Built-in image generation on magenta source backgrounds followed by uniform hard chroma removal, 1px matte contraction and 0.35px alpha feather. The soft-matte v1/v2 attempts were rejected because magenta dominance misclassified pale skin and hair.",
     "rejected_candidates": [
-      "key-poses/rejected-candidates/k19_side_lean_v1_small_scale_chroma.png",
-      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_chroma.png",
-      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_alpha.png",
-      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_normalized.png",
-      "key-poses/alpha-1024/",
-      "key-poses/alpha-1024-v2/"
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/rejected-candidates/k19_side_lean_v1_small_scale_chroma.png",
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_chroma.png",
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_alpha.png",
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_normalized.png",
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024/",
+      "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v2/"
     ],
     "k27_revision": {
       "trigger": "User reported that the original rise pose looked strange.",

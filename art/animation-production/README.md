@@ -2,7 +2,7 @@
 
 This folder holds the compact approval and QA archive for accepted v0.21 frame sequences.
 
-Raw chroma sources, rejected candidates, repair attempts and superseded frame revisions were pruned after integration. Historical metadata uses `git-history://5e67e44/...` references when provenance still points to one of those removed files; the original material remains recoverable from that Git commit.
+Raw chroma sources, rejected candidates, repair attempts and superseded frame revisions were pruned after integration. Historical metadata uses `git-history://<commit>/...` only when the removed target is actually recoverable from that commit. A `pruned-untracked://ed4aa85/...` URI is an explicit tombstone for ignored intermediate material that was removed during cleanup but never entered Git; it records provenance without falsely promising recovery.
 
 - `character-reference/model-sheet.png` is generated from existing approved frames.
 - `character-reference/identity-lock.json` freezes visible character invariants.

@@ -14,7 +14,7 @@
   "frames": [
     {
       "frame": "frame_000.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_000.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_000.png",
       "lower_foot_centroid_x": 256.4545,
       "distance_from_target_px": 0.4545,
       "final_bbox": [
@@ -31,7 +31,7 @@
     },
     {
       "frame": "frame_001.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_001.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_001.png",
       "lower_foot_centroid_x": 255.7705,
       "distance_from_target_px": 0.2295,
       "final_bbox": [
@@ -48,7 +48,7 @@
     },
     {
       "frame": "frame_002.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_002.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_002.png",
       "lower_foot_centroid_x": 255.7682,
       "distance_from_target_px": 0.2318,
       "final_bbox": [
@@ -65,7 +65,7 @@
     },
     {
       "frame": "frame_003.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_003.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_003.png",
       "lower_foot_centroid_x": 256.3028,
       "distance_from_target_px": 0.3028,
       "final_bbox": [
@@ -82,7 +82,7 @@
     },
     {
       "frame": "frame_004.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_004.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_004.png",
       "lower_foot_centroid_x": 255.7316,
       "distance_from_target_px": 0.2684,
       "final_bbox": [
@@ -99,7 +99,7 @@
     },
     {
       "frame": "frame_005.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_005.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_005.png",
       "lower_foot_centroid_x": 256.3138,
       "distance_from_target_px": 0.3138,
       "final_bbox": [
@@ -116,7 +116,7 @@
     },
     {
       "frame": "frame_006.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_006.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_006.png",
       "lower_foot_centroid_x": 255.906,
       "distance_from_target_px": 0.094,
       "final_bbox": [
@@ -133,7 +133,7 @@
     },
     {
       "frame": "frame_007.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_007.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_007.png",
       "lower_foot_centroid_x": 255.6746,
       "distance_from_target_px": 0.3254,
       "final_bbox": [
@@ -150,7 +150,7 @@
     },
     {
       "frame": "frame_008.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_008.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_008.png",
       "lower_foot_centroid_x": 256.1472,
       "distance_from_target_px": 0.1472,
       "final_bbox": [
@@ -167,7 +167,7 @@
     },
     {
       "frame": "frame_009.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_009.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_009.png",
       "lower_foot_centroid_x": 255.7962,
       "distance_from_target_px": 0.2038,
       "final_bbox": [
@@ -184,7 +184,7 @@
     },
     {
       "frame": "frame_010.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_010.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_010.png",
       "lower_foot_centroid_x": 256.2657,
       "distance_from_target_px": 0.2657,
       "final_bbox": [
@@ -201,7 +201,7 @@
     },
     {
       "frame": "frame_011.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_011.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_011.png",
       "lower_foot_centroid_x": 255.6129,
       "distance_from_target_px": 0.3871,
       "final_bbox": [
@@ -218,7 +218,7 @@
     },
     {
       "frame": "frame_012.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_012.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_012.png",
       "lower_foot_centroid_x": 255.5081,
       "distance_from_target_px": 0.4919,
       "final_bbox": [
@@ -235,7 +235,7 @@
     },
     {
       "frame": "frame_013.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_013.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_013.png",
       "lower_foot_centroid_x": 255.6237,
       "distance_from_target_px": 0.3763,
       "final_bbox": [
@@ -252,7 +252,7 @@
     },
     {
       "frame": "frame_014.png",
-      "source": "git-history://5e67e44/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_014.png",
+      "source": "pruned-untracked://ed4aa85/art/animation-production/guard_bag_annoyed/frames-dynamic-v6-source/frame_014.png",
       "lower_foot_centroid_x": 256.4196,
       "distance_from_target_px": 0.4196,
       "final_bbox": [

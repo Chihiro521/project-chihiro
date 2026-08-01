@@ -14,13 +14,13 @@
     {"frame": 24, "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-6bc93156-bace-4cdc-8877-53d7f020f803.png", "chroma_sha256": "6504760F97479C16AAD7F0091D9D41959B7DA2897828C0675E1C3E9957017677", "alpha_sha256": "DFD9A0FF6CC298A4A6CD4313EADB4FFB2EC355E411B8D702486AD22D0600FD13", "final_sha256": "781FFEFBCAD759451C180D1C19DDD9AB0CFB9F4CAFA8532826F535664B6220AE"}
   ],
   "rejected_candidates": [
-    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_a_knee_holes.png", "reason": "separate lace openings around both knees"},
-    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_b_invisible_chair.png", "reason": "vertical shins and invisible-chair silhouette"},
-    {"frame": 6, "file": "rejected-candidates/frame_006_candidate_c_oversized_shoes.png", "reason": "exaggerated foreground shoe scale"},
-    {"frame": 18, "file": "rejected-candidates/frame_018_candidate_a_gradient_background.png", "reason": "nonuniform magenta background caused despill color contamination"},
-    {"frame": 23, "file": "rejected-candidates/frame_023_candidate_a_too_upright.png", "reason": "straight-legged pose would read as global shrinking"},
-    {"frame": 23, "file": "rejected-candidates/frame_023_candidate_b_button_topology.png", "reason": "ambiguous extra garment fastener topology"},
-    {"frame": 24, "file": "rejected-candidates/frame_024_candidate_a_button_count.png", "reason": "extra brass button"}
+    {"frame": 6, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_006_candidate_a_knee_holes.png", "reason": "separate lace openings around both knees"},
+    {"frame": 6, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_006_candidate_b_invisible_chair.png", "reason": "vertical shins and invisible-chair silhouette"},
+    {"frame": 6, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_006_candidate_c_oversized_shoes.png", "reason": "exaggerated foreground shoe scale"},
+    {"frame": 18, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_018_candidate_a_gradient_background.png", "reason": "nonuniform magenta background caused despill color contamination"},
+    {"frame": 23, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_023_candidate_a_too_upright.png", "reason": "straight-legged pose would read as global shrinking"},
+    {"frame": 23, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_023_candidate_b_button_topology.png", "reason": "ambiguous extra garment fastener topology"},
+    {"frame": 24, "file": "git-history://5e67e44/art/animation-production/sit_rest/direct-frames-v1/rejected-candidates/frame_024_candidate_a_button_count.png", "reason": "extra brass button"}
   ],
   "normalization": {
     "method": "uniform whole-character scaling plus whole-character translation only",

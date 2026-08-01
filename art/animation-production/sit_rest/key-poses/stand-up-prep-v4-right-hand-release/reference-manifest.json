@@ -5,10 +5,10 @@
   "pivot": {"x": 256, "y": 492},
   "visible_baseline_y": 472,
   "keys": [
-    {"frame": 19, "pose": "right fingers open and leave strap", "chroma": "chroma/frame_019.png", "alpha": "alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
-    {"frame": 20, "pose": "right palm presses implied ground on viewer-left", "chroma": "chroma/frame_020.png", "alpha": "alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
-    {"frame": 21, "pose": "right hand releases ground and swings forward/up", "chroma": "chroma/frame_021.png", "alpha": "alpha/frame_021.png", "normalized": "normalized/frame_021.png"},
-    {"frame": 22, "pose": "right arm continues outward counterbalance away from strap", "chroma": "chroma/frame_022.png", "alpha": "alpha/frame_022.png", "normalized": "normalized/frame_022.png"}
+    {"frame": 19, "pose": "right fingers open and leave strap", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/chroma/frame_019.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
+    {"frame": 20, "pose": "right palm presses implied ground on viewer-left", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/chroma/frame_020.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
+    {"frame": 21, "pose": "right hand releases ground and swings forward/up", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/chroma/frame_021.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/alpha/frame_021.png", "normalized": "normalized/frame_021.png"},
+    {"frame": 22, "pose": "right arm continues outward counterbalance away from strap", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/chroma/frame_022.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v4-right-hand-release/alpha/frame_022.png", "normalized": "normalized/frame_022.png"}
   ],
   "normalization": {
     "method": "uniform whole-character scaling plus whole-character translation only",

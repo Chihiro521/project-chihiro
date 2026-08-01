@@ -6,13 +6,13 @@
   "visible_baseline_y": 472,
   "bounds": {
     "previous": "git-history://5e67e44/art/animation-production/sit_rest/seated-loop-master-v1/direct-frame-sources/frame_017_chroma.png",
-    "next": "../transition-keys-v1/chroma/frame_022.png",
+    "next": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/transition-keys-v1/chroma/frame_022.png",
     "identity": "../../anchors/model-sheet.png"
   },
   "motion_contract": [
-    {"frame": 19, "role": "key", "pose": "pelvis remains grounded; torso leans forward; both heels draw inward and both shoe soles become fully planted", "chroma": "chroma/frame_019.png", "alpha": "alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
-    {"frame": 20, "role": "key", "pose": "chest shifts above the planted feet; knees remain deeply flexed; both shoes visibly brace and begin accepting weight", "chroma": "chroma/frame_020.png", "alpha": "alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
-    {"frame": 21, "role": "key", "pose": "both planted feet drive against the ground; hips lift slightly while knees remain bent, leading directly into F22", "chroma": "chroma/frame_021.png", "alpha": "alpha/frame_021.png", "normalized": "normalized/frame_021.png"}
+    {"frame": 19, "role": "key", "pose": "pelvis remains grounded; torso leans forward; both heels draw inward and both shoe soles become fully planted", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/chroma/frame_019.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_019.png", "normalized": "normalized/frame_019.png"},
+    {"frame": 20, "role": "key", "pose": "chest shifts above the planted feet; knees remain deeply flexed; both shoes visibly brace and begin accepting weight", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/chroma/frame_020.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_020.png", "normalized": "normalized/frame_020.png"},
+    {"frame": 21, "role": "key", "pose": "both planted feet drive against the ground; hips lift slightly while knees remain bent, leading directly into F22", "chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/chroma/frame_021.png", "alpha": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/stand-up-prep-v1/alpha/frame_021.png", "normalized": "normalized/frame_021.png"}
   ],
   "generation_rule": "Each frame is a separate complete-character built-in imagegen call from the same identity anchor and the F17/F22 temporal bounds. No interpolation, optical flow, local translation, part compositing, deformation, morphing or cross-fade.",
   "contact_lock": "Both Mary Jane shoe soles remain fully visible and planted on one invisible ground baseline. Weight transfer is shown through ankle flexion, shins moving toward vertical, torso pitch and gradual hip lift; never by a floating pelvis or sliding whole character.",

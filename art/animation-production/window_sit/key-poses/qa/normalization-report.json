@@ -37,7 +37,7 @@
     },
     {
       "name": "k04_descent",
-      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k04_descent_alpha.png",
+      "source": "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v3/k04_descent_alpha.png",
       "source_size": [
         1254,
         1254
@@ -64,7 +64,7 @@
     },
     {
       "name": "k08_stable_window_seat",
-      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k08_stable_window_seat_alpha.png",
+      "source": "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v3/k08_stable_window_seat_alpha.png",
       "source_size": [
         1254,
         1254
@@ -91,7 +91,7 @@
     },
     {
       "name": "k12_leg_swing",
-      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k12_leg_swing_alpha.png",
+      "source": "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v3/k12_leg_swing_alpha.png",
       "source_size": [
         1254,
         1254
@@ -118,7 +118,7 @@
     },
     {
       "name": "k19_side_lean",
-      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k19_side_lean_alpha.png",
+      "source": "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v3/k19_side_lean_alpha.png",
       "source_size": [
         1254,
         1254
@@ -145,7 +145,7 @@
     },
     {
       "name": "k27_rise_load",
-      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k27_rise_load_alpha.png",
+      "source": "git-history://5e67e44/art/animation-production/window_sit/key-poses/alpha-1024-v3/k27_rise_load_alpha.png",
       "source_size": [
         1254,
         1254

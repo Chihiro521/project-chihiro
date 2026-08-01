@@ -89,8 +89,8 @@
     "scope": "The original nine independently generated keys were accepted on 2026-07-30. At the user's request, K04 was freshly redrawn on 2026-07-31 so its complete lower body uses the approved F07 paired-leg topology; the other eight keys remain frozen.",
     "normalization": "All built-in outputs were uniformly standardized to 1024x1024, extracted with the fixed #FF00FF chroma workflow, downsampled with LANCZOS to 512x512 and aligned only as complete drawings to baseline y=472. K00 uses 1.039, rebuilt K04 uses 0.98, K21 uses 1.064 and K23 uses 1.125 at the key-source stage. K18/K21/K23 required a stricter two-channel threshold to remove low-alpha magenta border residue. No body part was moved.",
     "rejected_candidates": [
-      {"path": "rejected-candidates/k25-v1-gradient-background", "reason": "Background was measurably non-uniform magenta and therefore excluded from the reference chain."},
-      {"path": "rejected-candidates/k21-v1-gradient-background", "reason": "First yawn candidate had a non-uniform magenta background and was excluded from the reference chain before K23 generation."}
+      {"path": "git-history://5e67e44/art/animation-production/nap/rejected-candidates/k25-v1-gradient-background", "reason": "Background was measurably non-uniform magenta and therefore excluded from the reference chain."},
+      {"path": "git-history://5e67e44/art/animation-production/nap/rejected-candidates/k21-v1-gradient-background", "reason": "First yawn candidate had a non-uniform magenta background and was excluded from the reference chain before K23 generation."}
     ]
   },
   "review_state": {

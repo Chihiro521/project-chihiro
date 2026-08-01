@@ -721,11 +721,32 @@ func _test_action_catalog() -> void:
 	for clip_name in manifest.animation_names():
 		every_clip_has_label = every_clip_has_label and not str(labels.get(clip_name, "")).is_empty()
 	_expect(every_clip_has_label, "every action browser entry has a Chinese display label")
-	var behavior_map := PetActionCatalogPanel.build_behavior_clip_map(profile)
+	var profile_clip_references := {}
+	for behavior_value in profile.get("director", {}).get("behaviors", []):
+		if not behavior_value is Dictionary:
+			continue
+		var behavior: Dictionary = behavior_value
+		for field in ["clip", "fallback_clip"]:
+			var clip_name := str(behavior.get(field, ""))
+			if not clip_name.is_empty():
+				profile_clip_references[clip_name] = true
+		var preconditions: Dictionary = behavior.get("preconditions", {})
+		for field in ["requires_clips", "requires_any_clips"]:
+			for clip_value in preconditions.get(field, []):
+				var clip_name := str(clip_value)
+				if not clip_name.is_empty():
+					profile_clip_references[clip_name] = true
+		var session: Dictionary = behavior.get("session", {})
+		for field in ["enter", "loop", "exit"]:
+			var clip_name := str(session.get(field, ""))
+			if not clip_name.is_empty():
+				profile_clip_references[clip_name] = true
 	var every_behavior_clip_exists := true
-	for clip_name in behavior_map.keys():
+	for clip_name in profile_clip_references.keys():
 		every_behavior_clip_exists = every_behavior_clip_exists and manifest.has_clip(str(clip_name))
+	_expect(profile_clip_references.size() == 28, "behavior profile should expose its complete active clip reference set")
 	_expect(every_behavior_clip_exists, "behavior profile should reference only manifest clips")
+	var behavior_map := PetActionCatalogPanel.build_behavior_clip_map(profile)
 	_expect(behavior_map.has("idle_breathe") and behavior_map.has("window_sit_loop"), "action browser maps one-shots and sequence loops back to behavior intents")
 	var window_sit_loop_mapping := false
 	for mapping in behavior_map.get("window_sit_loop", []):

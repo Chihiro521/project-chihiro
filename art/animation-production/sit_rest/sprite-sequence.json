@@ -168,7 +168,7 @@
       "version": 2,
       "user_rejection": "The first seated rendering made the lace hem wrap separately around both knees, producing two implausible leg holes.",
       "single_targeted_fix": "K04, K06, K09 and K14 now use one connected front skirt panel with gravity folds and one uninterrupted lace edge; seated upper thighs and knees are naturally covered while lower legs and shoes emerge below the common hem.",
-      "rejected_v1_archive": "key-poses/rejected-v1-knee-cutout-skirt/",
+      "rejected_v1_archive": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/rejected-v1-knee-cutout-skirt/",
       "automated_status_after_fix": "PASS",
       "producer_semantic_status_after_fix": "PASS",
       "user_status_after_fix": "rejected_for_flat_lower_body_perspective"

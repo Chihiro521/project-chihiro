@@ -26,8 +26,8 @@
     }
   ],
   "rejected_candidates": [
-    {"file": "rejected-candidates/frame_010_candidate_a_hand_and_body_drift.png", "reason": "oversized high hand and changed body silhouette"},
-    {"file": "rejected-candidates/frame_016_candidate_a_hand_too_far.png", "reason": "withdrawal hand extended too far from the body"}
+    {"file": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v4-rabbit-pat/rejected-candidates/frame_010_candidate_a_hand_and_body_drift.png", "reason": "oversized high hand and changed body silhouette"},
+    {"file": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v4-rabbit-pat/rejected-candidates/frame_016_candidate_a_hand_too_far.png", "reason": "withdrawal hand extended too far from the body"}
   ],
   "chroma_removal": {
     "key_color": "#FF00FF",

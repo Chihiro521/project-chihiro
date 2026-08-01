@@ -9,28 +9,28 @@
       "frame": 10,
       "motion": "quiet inhale: tiny shoulder and upper-chest lift only",
       "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-c4df90b4-d857-400a-8f2d-39338a794d30.png",
-      "standardized_chroma": "chroma/frame_010.png",
+      "standardized_chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v1/chroma/frame_010.png",
       "sha256": "FBFF70890B59F3E15445B34FD977B4D13FC1C0A4B8DC79F92551730971688E16"
     },
     {
       "frame": 12,
       "motion": "relaxed sit: tiny shoulder settle, gaze lower and finger release",
       "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-69de80c3-a9f8-44f4-903d-beb32fa57188.png",
-      "standardized_chroma": "chroma/frame_012.png",
+      "standardized_chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v1/chroma/frame_012.png",
       "sha256": "D39AA63DE7C469F19627CDD5F2E688C6D1C02F8BEF97FF69D96BF0D86915A404"
     },
     {
       "frame": 14,
       "motion": "slow blink: closed eyelids with seated root locked",
       "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-ab63fa38-cbf0-4e86-ba02-5d16c4a94c3f.png",
-      "standardized_chroma": "chroma/frame_014.png",
+      "standardized_chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v1/chroma/frame_014.png",
       "sha256": "F18A458488C33764AA9B13111E6E24315A810957370D07D788AB83B3C0AC8B70"
     },
     {
       "frame": 16,
       "motion": "eyes reopen and tiny exhale/strap settle toward the loop anchor",
       "raw_output": "C:/Users/aa/.codex/generated_images/019fad05-8d1a-75b3-9408-90f030b23409/exec-290ba55a-6e1f-497a-941b-ed82afb314b7.png",
-      "standardized_chroma": "chroma/frame_016.png",
+      "standardized_chroma": "git-history://5e67e44/art/animation-production/sit_rest/key-poses/seated-loop-v1/chroma/frame_016.png",
       "sha256": "3DE8A2175269B17141D2E6D5A8E20116B1257C887E097A84D52D9856C5692044"
     }
   ],

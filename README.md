@@ -44,7 +44,7 @@ Godot 4.7/GDScript 承担。
 & 'D:\godot\引擎版本\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe' --headless --path 'D:\workspace\project-chihiro' --log-file 'D:\workspace\project-chihiro\godot-tests.log' --script res://scripts/tests/run_tests.gd
 ```
 
-当前基线为 `PASS: 360 assertions`，其中包含 75 个 clip / 1511 张 PNG 的
+当前基线为 `PASS: 361 assertions`，其中包含 75 个 clip / 1511 张 PNG 的
 资源闭包、Texture2D 可加载性、import sidecar 一一对应和 A/B 巡逻降级验证。
 
 先构建 Windows GDExtension（详见 `native/windows/README.md`），再安装 Godot
