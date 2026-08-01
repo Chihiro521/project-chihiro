@@ -10,7 +10,7 @@ Godot 4.7/GDScript 承担。
 - 透明、无边框、置顶、不可缩放的 Windows 桌宠窗口
 - Godot `StatusIndicator` 原生托盘菜单
 - 2D 编辑器内显示待机帧预览，运行时再由逐帧播放器接管纹理
-- 原 `pet.json` schema v1，以及 62 组动作、1311 张运行帧
+- 原 `pet.json` schema v1，以及 83 组动作、1575 张运行帧
 - 自定义逐帧播放器：独立帧时长、片段、倒放、循环与确定性循环变体
 - `boot / idle / float / edge_patrol / dragged / drag_fall / land` 等状态机
 - 点击、摸头、戳脸、拖拽、急停/反向、直坠与持伞缓降
@@ -24,6 +24,7 @@ Godot 4.7/GDScript 承担。
 - 9 个 CC0 动作音效与独立音效开关
 - Win32 C++ GDExtension：窗口枚举、Z 序遮挡、窗口顶边行走/乘坐/掉落/换座
 - F10 调试面板：状态、属性、候选分数与当前平台
+- 右键或托盘打开“动作总览”：按 16 个生活行为族浏览、搜索、播放和逐帧检查全部动作
 
 ## 运行
 
@@ -43,7 +44,7 @@ Godot 4.7/GDScript 承担。
 & 'D:\godot\引擎版本\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe' --headless --path 'D:\workspace\project-chihiro' --log-file 'D:\workspace\project-chihiro\godot-tests.log' --script res://scripts/tests/run_tests.gd
 ```
 
-当前基线为 `PASS: 147 assertions`。
+当前基线为 `PASS: 245 assertions`。
 
 先构建 Windows GDExtension（详见 `native/windows/README.md`），再安装 Godot
 4.7.1 export templates 并导出：
@@ -64,7 +65,7 @@ scripts/core/                   # 状态机、动画、注视、拖拽、巡逻
 scripts/platform/               # Godot DisplayServer/Window 平台层
 scripts/tests/run_tests.gd      # 逻辑与资源契约测试
 skins/little-chihiro/           # 原 pet.json 与透明 PNG
-data/                           # 行为参数与 140 条静态台词
+data/                           # 行为参数、动作分类与 140 条静态台词
 native/windows/                 # Win32 GDExtension 与固定 godot-cpp 子模块
 art/animation-production/       # 动画模型锁、动作契约与审核产物
 ```

@@ -18,6 +18,7 @@ func _run() -> void:
 	_test_behavior_director()
 	_test_action_session()
 	_test_state_store_and_dialogue()
+	_test_action_catalog()
 	_test_window_platforms()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
@@ -500,6 +501,35 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(str(direct_intent.get("id", "")) == "window_land_recover", "non-selectable event behavior can be created directly")
 	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
 	if FileAccess.file_exists(previous_path): DirAccess.remove_absolute(previous_path)
+
+func _test_action_catalog() -> void:
+	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
+	var catalog := _load_json("res://data/action_catalog_zh_CN.json")
+	var profile := _load_json("res://data/behavior_profile.json")
+	_expect(int(catalog.get("schema_version", 0)) == 1, "action catalog schema loads")
+	var coverage := PetActionCatalogPanel.catalog_coverage(catalog, manifest.animation_names())
+	_expect(int(coverage.get("family_count", 0)) == 19, "action catalog contains sixteen life families and three system groups")
+	_expect(int(coverage.get("life_family_count", 0)) == 16, "action catalog preserves the planned sixteen behavior families")
+	_expect(int(coverage.get("classified_count", 0)) == 83, "action catalog classifies all runtime clips")
+	_expect((coverage.get("missing", []) as Array).is_empty(), "action catalog has no unclassified runtime clips")
+	_expect((coverage.get("unknown", []) as Array).is_empty(), "action catalog references no unknown runtime clips")
+	_expect((coverage.get("duplicates", []) as Array).is_empty(), "every runtime clip belongs to exactly one visual family")
+	var labels: Dictionary = catalog.get("labels", {})
+	var every_clip_has_label := true
+	for clip_name in manifest.animation_names():
+		every_clip_has_label = every_clip_has_label and not str(labels.get(clip_name, "")).is_empty()
+	_expect(every_clip_has_label, "every action browser entry has a Chinese display label")
+	var behavior_map := PetActionCatalogPanel.build_behavior_clip_map(profile)
+	_expect(behavior_map.has("idle_breathe") and behavior_map.has("window_sit_loop"), "action browser maps one-shots and sequence loops back to behavior intents")
+	var window_sit_loop_mapping := false
+	for mapping in behavior_map.get("window_sit_loop", []):
+		if mapping is Dictionary and str(mapping.get("id", "")) == "window_sit" and str(mapping.get("role", "")) == "loop":
+			window_sit_loop_mapping = true
+	_expect(window_sit_loop_mapping, "window-seat loop is labeled with its exact director role")
+	_expect(is_equal_approx(PetActionCatalogPanel.total_duration_ms(manifest.clip("window_sit_enter")), 1336.0), "action browser reports exact manifest duration")
+	var preview := PetActionPreviewCanvas.new()
+	_expect(preview != null, "action preview canvas can be instantiated headlessly")
+	preview.free()
 
 func _test_window_platforms() -> void:
 	var snapshots := [

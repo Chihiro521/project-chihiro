@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "title": "千寻 v0.21 动作地图",
+  "description": "16 个生活行为族与运行时系统动作的可视化分类。",
+  "families": [
+    {
+      "id": "life_01_breathe",
+      "index": 1,
+      "kind": "life",
+      "label": "呼吸与重心变化",
+      "description": "保持角色有生命感的微幅呼吸和站姿重心变化。",
+      "clips": ["idle_breathe"]
+    },
+    {
+      "id": "life_02_observe",
+      "index": 2,
+      "kind": "life",
+      "label": "环视观察",
+      "description": "被环境或好奇心驱动的主动观察。",
+      "clips": ["look_around"]
+    },
+    {
+      "id": "life_03_bag",
+      "index": 3,
+      "kind": "life",
+      "label": "整理包带",
+      "description": "重新扶正肩带和挎包的日常自理动作。",
+      "clips": ["straighten_bag"]
+    },
+    {
+      "id": "life_04_rabbit",
+      "index": 4,
+      "kind": "life",
+      "label": "检查兔子",
+      "description": "托起兔子、摸一摸，再放回包上。",
+      "clips": ["inspect_rabbit"]
+    },
+    {
+      "id": "life_05_tidy",
+      "index": 5,
+      "kind": "life",
+      "label": "拂衣或整理鞋袜",
+      "description": "整理裙摆、衣物和鞋袜的自理动作。",
+      "clips": ["tidy_clothes"]
+    },
+    {
+      "id": "life_06_stretch",
+      "index": 6,
+      "kind": "life",
+      "label": "伸懒腰",
+      "description": "抬手、短暂握拳，再自然放下。",
+      "clips": ["stretch"]
+    },
+    {
+      "id": "life_07_reason",
+      "index": 7,
+      "kind": "life",
+      "label": "托腮推演",
+      "description": "科学家人格的思考和推演姿势。",
+      "clips": ["reason_pose"]
+    },
+    {
+      "id": "life_08_sit",
+      "index": 8,
+      "kind": "life",
+      "label": "坐下休息",
+      "description": "地面坐姿的进入、呼吸循环和起身。",
+      "clips": ["sit_enter", "sit_loop", "sit_exit"]
+    },
+    {
+      "id": "life_09_nap",
+      "index": 9,
+      "kind": "life",
+      "label": "打盹与醒来",
+      "description": "低能量时坐下入睡，恢复后自然醒来。",
+      "clips": ["nap_enter", "nap_loop", "nap_wake"]
+    },
+    {
+      "id": "life_10_return",
+      "index": 10,
+      "kind": "life",
+      "label": "归来挥手",
+      "description": "长时间未见后主动打招呼。",
+      "clips": ["return_wave"]
+    },
+    {
+      "id": "life_11_pat_accept",
+      "index": 11,
+      "kind": "life",
+      "label": "接受摸头",
+      "description": "接受摸头的一次性动作，以及兼容用的旧分段动作。",
+      "clips": ["head_pat_accept", "head_pat"]
+    },
+    {
+      "id": "life_12_pat_refuse",
+      "index": 12,
+      "kind": "life",
+      "label": "拒绝摸头",
+      "description": "关系或情绪不合适时明确拒绝。",
+      "clips": ["head_pat_refuse"]
+    },
+    {
+      "id": "life_13_annoyed",
+      "index": 13,
+      "kind": "life",
+      "label": "护包与被戳不满",
+      "description": "保护挎包、兔子以及被连续戳刺后的不满。",
+      "clips": ["guard_bag_annoyed", "poke_cheek"]
+    },
+    {
+      "id": "life_14_window_land",
+      "index": 14,
+      "kind": "life",
+      "label": "窗口落地与恢复",
+      "description": "落到平台顶边后稳定身体并恢复站姿。",
+      "clips": ["land", "window_land_recover"]
+    },
+    {
+      "id": "life_15_window_walk",
+      "index": 15,
+      "kind": "life",
+      "label": "窗口行走",
+      "description": "在窗口顶边向左或向右行走。",
+      "clips": ["patrol_floor_left", "patrol_floor_right"]
+    },
+    {
+      "id": "life_16_window_sit",
+      "index": 16,
+      "kind": "life",
+      "label": "窗口坐卧与换座",
+      "description": "从鞋底支撑转移到窗沿坐姿，再重新站起。",
+      "clips": ["window_sit_enter", "window_sit_loop", "window_sit_exit"]
+    },
+    {
+      "id": "system_core",
+      "index": 101,
+      "kind": "system",
+      "label": "系统 · 基础状态与交互",
+      "description": "启动、方向待机、注视、光标反应、菜单和时间交互。",
+      "clips": [
+        "boot", "idle", "idle_blink", "idle_left", "idle_left_blink", "idle_left_enter",
+        "idle_right", "idle_right_blink", "idle_right_enter", "gaze", "notice", "react", "turn",
+        "cursor_track", "cursor_dizzy", "menu_wait", "clock_scare"
+      ]
+    },
+    {
+      "id": "system_drag_fall",
+      "index": 102,
+      "kind": "system",
+      "label": "系统 · 拖拽、坠落与雨伞",
+      "description": "拖拽姿势反馈、离地、下落和雨伞链。",
+      "clips": [
+        "dragged", "drag_grab", "drag_hold", "drag_left", "drag_right", "drag_brake", "drag_fall",
+        "takeoff", "float", "umbrella_open", "umbrella_float", "umbrella_close"
+      ]
+    },
+    {
+      "id": "system_edge_patrol",
+      "index": 103,
+      "kind": "system",
+      "label": "系统 · 屏幕边缘巡逻",
+      "description": "地面、墙面、天花板、门和气球之间的边缘巡逻过渡。",
+      "clips": [
+        "patrol_balloon_arrive_left_a", "patrol_balloon_arrive_left_b", "patrol_balloon_arrive_right", "patrol_balloon_arrive_right_b",
+        "patrol_balloon_depart_left", "patrol_balloon_depart_left_b", "patrol_balloon_depart_right", "patrol_balloon_depart_right_b",
+        "patrol_ceiling_left", "patrol_ceiling_right", "patrol_door_enter_left", "patrol_door_enter_right",
+        "patrol_door_exit_left", "patrol_door_exit_right", "patrol_flight_left", "patrol_flight_right",
+        "patrol_floor_to_wall_left_a", "patrol_floor_to_wall_left_b", "patrol_floor_to_wall_right_a", "patrol_floor_to_wall_right_b",
+        "patrol_wall_left_a", "patrol_wall_left_b", "patrol_wall_left_to_floor_right_a", "patrol_wall_left_to_floor_right_b",
+        "patrol_wall_right_a", "patrol_wall_right_b", "patrol_wall_right_to_floor_left_a", "patrol_wall_right_to_floor_left_b"
+      ]
+    }
+  ],
+  "labels": {
+    "boot": "启动亮相",
+    "idle": "正面待机",
+    "idle_blink": "正面眨眼",
+    "idle_breathe": "呼吸与重心变化",
+    "idle_left": "左向待机",
+    "idle_left_blink": "左向眨眼",
+    "idle_left_enter": "转入左向待机",
+    "idle_right": "右向待机",
+    "idle_right_blink": "右向眨眼",
+    "idle_right_enter": "转入右向待机",
+    "gaze": "注视光标",
+    "notice": "注意到事件",
+    "react": "受惊反应",
+    "turn": "转身",
+    "cursor_track": "主动跟随光标",
+    "cursor_dizzy": "跟随过度眩晕",
+    "menu_wait": "菜单等待",
+    "clock_scare": "查看时间",
+    "look_around": "环视观察",
+    "straighten_bag": "整理包带",
+    "inspect_rabbit": "托起并摸摸兔子",
+    "tidy_clothes": "拂衣与整理鞋袜",
+    "stretch": "伸懒腰",
+    "reason_pose": "托腮推演",
+    "sit_enter": "坐下 · 进入",
+    "sit_loop": "坐下 · 休息循环",
+    "sit_exit": "坐下 · 起身",
+    "nap_enter": "打盹 · 入睡",
+    "nap_loop": "打盹 · 睡眠循环",
+    "nap_wake": "打盹 · 醒来",
+    "return_wave": "归来挥手",
+    "head_pat": "摸头 · 旧分段兼容",
+    "head_pat_accept": "接受摸头",
+    "head_pat_refuse": "拒绝摸头",
+    "guard_bag_annoyed": "护包不满",
+    "poke_cheek": "被戳脸",
+    "land": "基础落地",
+    "window_land_recover": "窗口落地恢复",
+    "patrol_floor_left": "窗口顶边向左走",
+    "patrol_floor_right": "窗口顶边向右走",
+    "window_sit_enter": "窗沿坐姿 · 进入",
+    "window_sit_loop": "窗沿坐姿 · 循环",
+    "window_sit_exit": "窗沿坐姿 · 起身",
+    "dragged": "基础拖拽",
+    "drag_grab": "抓起",
+    "drag_hold": "悬停抓住",
+    "drag_left": "向左拖拽",
+    "drag_right": "向右拖拽",
+    "drag_brake": "拖拽刹停",
+    "drag_fall": "拖拽后坠落",
+    "takeoff": "离地",
+    "float": "空中漂浮",
+    "umbrella_open": "雨伞 · 打开",
+    "umbrella_float": "雨伞 · 缓降",
+    "umbrella_close": "雨伞 · 收起",
+    "patrol_balloon_arrive_left_a": "气球抵达左侧 A",
+    "patrol_balloon_arrive_left_b": "气球抵达左侧 B",
+    "patrol_balloon_arrive_right": "气球抵达右侧 A",
+    "patrol_balloon_arrive_right_b": "气球抵达右侧 B",
+    "patrol_balloon_depart_left": "气球离开左侧 A",
+    "patrol_balloon_depart_left_b": "气球离开左侧 B",
+    "patrol_balloon_depart_right": "气球离开右侧 A",
+    "patrol_balloon_depart_right_b": "气球离开右侧 B",
+    "patrol_ceiling_left": "天花板向左",
+    "patrol_ceiling_right": "天花板向右",
+    "patrol_door_enter_left": "进入左侧门",
+    "patrol_door_enter_right": "进入右侧门",
+    "patrol_door_exit_left": "离开左侧门",
+    "patrol_door_exit_right": "离开右侧门",
+    "patrol_flight_left": "向左飞行",
+    "patrol_flight_right": "向右飞行",
+    "patrol_floor_to_wall_left_a": "地面转左墙 A",
+    "patrol_floor_to_wall_left_b": "地面转左墙 B",
+    "patrol_floor_to_wall_right_a": "地面转右墙 A",
+    "patrol_floor_to_wall_right_b": "地面转右墙 B",
+    "patrol_wall_left_a": "左墙攀行 A",
+    "patrol_wall_left_b": "左墙攀行 B",
+    "patrol_wall_left_to_floor_right_a": "左墙转地面向右 A",
+    "patrol_wall_left_to_floor_right_b": "左墙转地面向右 B",
+    "patrol_wall_right_a": "右墙攀行 A",
+    "patrol_wall_right_b": "右墙攀行 B",
+    "patrol_wall_right_to_floor_left_a": "右墙转地面向左 A",
+    "patrol_wall_right_to_floor_left_b": "右墙转地面向左 B"
+  }
+}

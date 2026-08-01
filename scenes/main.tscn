@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dkvp0hrsi3d6q"]
+[gd_scene load_steps=10 format=3 uid="uid://dkvp0hrsi3d6q"]
 
 [ext_resource type="Script" uid="uid://cbifga6bt5l7e" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" uid="uid://psics7fgg3p3" path="res://scripts/core/sprite_player.gd" id="2_player"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/ui/speech_bubble.gd" id="6_bubble"]
 [ext_resource type="Script" path="res://scripts/ui/debug_overlay.gd" id="7_debug"]
 [ext_resource type="Script" path="res://scripts/core/pet_sfx.gd" id="8_sfx"]
+[ext_resource type="Script" path="res://scripts/ui/action_catalog_panel.gd" id="9_action_catalog"]
 
 [node name="LittleChihiro" type="Node" unique_id=1273643401]
 script = ExtResource("1_main")
@@ -49,6 +50,16 @@ script = ExtResource("8_sfx")
 
 [node name="DesktopWindow" type="Node" parent="." unique_id=684644897]
 script = ExtResource("3_window")
+
+[node name="ActionCatalog" type="Window" parent="."]
+title = "千寻动作总览"
+initial_position = 1
+size = Vector2i(1180, 760)
+min_size = Vector2i(960, 640)
+visible = false
+transient = false
+force_native = true
+script = ExtResource("9_action_catalog")
 
 [node name="Menu" type="PopupMenu" parent="." unique_id=1568697174]
 prefer_native_menu = true

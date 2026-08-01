@@ -26,6 +26,7 @@ const MENU_SPEECH_BUBBLES := 9
 const MENU_TITLE_AWARENESS := 10
 const MENU_ACTION_SOUNDS := 11
 const MENU_DEBUG_OVERLAY := 12
+const MENU_ACTION_CATALOG := 13
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -34,6 +35,7 @@ const TRAY_QUIT := 108
 const TRAY_SPEECH_BUBBLES := 109
 const TRAY_TITLE_AWARENESS := 110
 const TRAY_ACTION_SOUNDS := 111
+const TRAY_ACTION_CATALOG := 112
 
 @onready var sprite_player: PetSpritePlayer = $SpritePlayer
 @onready var desktop: DesktopWindowBridge = $DesktopWindow
@@ -42,6 +44,7 @@ const TRAY_ACTION_SOUNDS := 111
 @onready var speech_bubble: PetSpeechBubble = $SpeechBubble
 @onready var debug_overlay: PetDebugOverlay = $DebugOverlay
 @onready var sfx_player: PetSfxPlayer = $SfxPlayer
+@onready var action_catalog: PetActionCatalogPanel = $ActionCatalog
 
 var manifest: PetManifestData
 var machine := PetStateMachine.new()
@@ -143,6 +146,7 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 	_initialize_life_systems()
+	action_catalog.configure(manifest)
 	machine.transitioned.connect(_on_transition)
 	sprite_player.clip_completed.connect(_on_clip_completed)
 	sprite_player.clip_changed.connect(_on_clip_changed)
@@ -206,6 +210,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
+		if key.pressed and not key.echo and key.keycode == KEY_F9:
+			action_catalog.show_catalog()
+			get_viewport().set_input_as_handled()
+			return
 		if key.pressed and not key.echo and key.keycode == KEY_F10:
 			debug_overlay.toggle()
 			get_viewport().set_input_as_handled()
@@ -246,6 +254,7 @@ func _setup_menus() -> void:
 	menu.add_check_item("气泡台词", MENU_SPEECH_BUBBLES)
 	menu.add_check_item("读取窗口标题", MENU_TITLE_AWARENESS)
 	menu.add_check_item("动作音效", MENU_ACTION_SOUNDS)
+	menu.add_item("动作总览…", MENU_ACTION_CATALOG)
 	menu.add_check_item("调试信息（F10）", MENU_DEBUG_OVERLAY)
 	menu.add_separator()
 	menu.add_item("退出", MENU_QUIT)
@@ -259,6 +268,8 @@ func _setup_menus() -> void:
 	tray_menu.add_check_item("气泡台词", TRAY_SPEECH_BUBBLES)
 	tray_menu.add_check_item("读取窗口标题", TRAY_TITLE_AWARENESS)
 	tray_menu.add_check_item("动作音效", TRAY_ACTION_SOUNDS)
+	tray_menu.add_separator()
+	tray_menu.add_item("动作总览", TRAY_ACTION_CATALOG)
 	tray_menu.add_separator()
 	tray_menu.add_item("退出", TRAY_QUIT)
 	tray_menu.id_pressed.connect(_on_menu_id_pressed)
@@ -346,6 +357,8 @@ func _on_menu_id_pressed(id: int) -> void:
 		MENU_DEBUG_OVERLAY:
 			debug_overlay.toggle()
 			_sync_menu_checks()
+		MENU_ACTION_CATALOG, TRAY_ACTION_CATALOG:
+			action_catalog.show_catalog()
 		MENU_QUIT, TRAY_QUIT:
 			_save_position()
 			_save_user_settings()
