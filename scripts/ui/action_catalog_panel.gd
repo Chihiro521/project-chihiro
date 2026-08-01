@@ -25,7 +25,7 @@ var _frame_index := 0
 var _elapsed_in_frame_ms := 0.0
 var _playing := true
 var _speed := 1.0
-var _preview_loop := true
+var _repeat_one_shot := false
 var _updating_timeline := false
 var _textures: Dictionary = {}
 
@@ -252,9 +252,10 @@ func _build_ui() -> void:
 	_guides_toggle.toggled.connect(func(value: bool) -> void: _preview.set_guides_visible(value))
 	playback.add_child(_guides_toggle)
 	_loop_toggle = CheckButton.new()
-	_loop_toggle.text = "循环预览"
-	_loop_toggle.button_pressed = true
-	_loop_toggle.toggled.connect(func(value: bool) -> void: _preview_loop = value)
+	_loop_toggle.text = "重复一次性动作"
+	_loop_toggle.tooltip_text = "关闭时，一次性动作会停在末帧；素材本身声明为循环的动作仍会正常循环。"
+	_loop_toggle.button_pressed = false
+	_loop_toggle.toggled.connect(func(value: bool) -> void: _repeat_one_shot = value)
 	playback.add_child(_loop_toggle)
 
 	var footer := Label.new()
@@ -277,7 +278,7 @@ func _process(delta: float) -> void:
 		if _frame_index + 1 < frames.size():
 			_frame_index += 1
 			advanced = true
-		elif bool(clip.get("loop", false)) or _preview_loop:
+		elif preview_should_wrap(clip, _repeat_one_shot):
 			_frame_index = 0
 			advanced = true
 		else:
@@ -516,6 +517,7 @@ func _update_metadata() -> void:
 	lines.append("总时长：%s" % _format_duration(duration_ms))
 	lines.append("平均速率：%.1f FPS" % average_fps)
 	lines.append("类型：%s" % ("循环" if bool(clip.get("loop", false)) else "一次性"))
+	lines.append("预览：%s" % ("自动循环" if bool(clip.get("loop", false)) else "默认停在末帧"))
 	var segments: Dictionary = clip.get("segments", {})
 	if not segments.is_empty():
 		var segment_names: Array[String] = []
@@ -617,6 +619,9 @@ static func total_duration_ms(clip: Dictionary) -> float:
 	for duration in clip.get("frameDurationsMs", []):
 		total += maxf(0.0, float(duration))
 	return total
+
+static func preview_should_wrap(clip: Dictionary, repeat_one_shot := false) -> bool:
+	return bool(clip.get("loop", false)) or repeat_one_shot
 
 static func catalog_coverage(catalog_data: Dictionary, animation_names: Array[String]) -> Dictionary:
 	var animation_set: Dictionary = {}

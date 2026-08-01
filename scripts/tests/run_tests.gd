@@ -622,6 +622,9 @@ func _test_action_catalog() -> void:
 			window_sit_loop_mapping = true
 	_expect(window_sit_loop_mapping, "window-seat loop is labeled with its exact director role")
 	_expect(is_equal_approx(PetActionCatalogPanel.total_duration_ms(manifest.clip("window_sit_enter")), 1336.0), "action browser reports exact manifest duration")
+	_expect(not PetActionCatalogPanel.preview_should_wrap(manifest.clip("window_sit_enter")), "one-shot previews stop at their final frame instead of flashing back to frame zero")
+	_expect(PetActionCatalogPanel.preview_should_wrap(manifest.clip("window_sit_loop")), "declared loop previews continue wrapping at their authored seam")
+	_expect(PetActionCatalogPanel.preview_should_wrap(manifest.clip("window_sit_enter"), true), "the explicit repeat toggle can replay a one-shot when requested")
 	var preview := PetActionPreviewCanvas.new()
 	_expect(preview != null, "action preview canvas can be instantiated headlessly")
 	preview.free()
