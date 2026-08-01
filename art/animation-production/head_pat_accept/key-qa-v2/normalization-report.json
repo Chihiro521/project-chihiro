@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "policy": "All raw built-in outputs are uniformly resized to the 1024 production canvas, then one identical whole-drawing scale is used for every key. Only whole-sprite root translation aligns planted feet and baseline; no part transforms or per-frame scaling are used.",
+  "target_visible_height": 453,
+  "uniform_whole_drawing_scale": 1.07346,
+  "frames": [
+    {
+      "name": "k07_accept",
+      "source": "k07_accept",
+      "label": "K07  轻倾迎合",
+      "whole_drawing_scale": 1.07346,
+      "whole_sprite_translation": [
+        2,
+        -6
+      ],
+      "alpha_bbox": [
+        180,
+        20,
+        329,
+        473
+      ],
+      "visible_height": 453,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 254.5,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k09_hold",
+      "source": "k09_hold",
+      "label": "K09  闭眼停留",
+      "whole_drawing_scale": 1.07346,
+      "whole_sprite_translation": [
+        2,
+        -6
+      ],
+      "alpha_bbox": [
+        180,
+        19,
+        330,
+        473
+      ],
+      "visible_height": 454,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 254.5,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

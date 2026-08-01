@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "reference": "animation-production\\return_wave\\frames\\frame_000.png",
+  "reference_metrics": {
+    "alpha_bbox": [
+      185,
+      19,
+      332,
+      472
+    ],
+    "visible_height": 453,
+    "head_silhouette_width": 110,
+    "face_color_bbox_width": 88,
+    "face_color_bbox_height": 114,
+    "hair_luma_median": 189.0,
+    "navy_luma_median": 62.0,
+    "hem_row_width_y330": 112,
+    "leg_band_width_y385": 64,
+    "sock_band_width_y425": 57,
+    "shoe_band_width_y455": 64
+  },
+  "limits": {
+    "head_silhouette_width": 0.09,
+    "face_color_bbox_width": 0.12,
+    "face_color_bbox_height": 0.12,
+    "hair_luma_median": 0.12,
+    "navy_luma_median": 0.14,
+    "leg_band_width_y385": 0.16,
+    "sock_band_width_y425": 0.16,
+    "shoe_band_width_y455": 0.16
+  },
+  "frames": [
+    {
+      "name": "k07_accept",
+      "source": "k07_accept",
+      "label": "K07  轻倾迎合",
+      "metrics": {
+        "alpha_bbox": [
+          180,
+          20,
+          329,
+          473
+        ],
+        "visible_height": 453,
+        "head_silhouette_width": 109,
+        "face_color_bbox_width": 85,
+        "face_color_bbox_height": 112,
+        "hair_luma_median": 189.0,
+        "navy_luma_median": 65.0,
+        "hem_row_width_y330": 105,
+        "leg_band_width_y385": 65,
+        "sock_band_width_y425": 58,
+        "shoe_band_width_y455": 64
+      },
+      "relative_delta_vs_approved_idle": {
+        "head_silhouette_width": 0.009091,
+        "face_color_bbox_width": 0.034091,
+        "face_color_bbox_height": 0.017544,
+        "hair_luma_median": 0.0,
+        "navy_luma_median": 0.048387,
+        "leg_band_width_y385": 0.015625,
+        "sock_band_width_y425": 0.017544,
+        "shoe_band_width_y455": 0.0
+      },
+      "violations": []
+    },
+    {
+      "name": "k09_hold",
+      "source": "k09_hold",
+      "label": "K09  闭眼停留",
+      "metrics": {
+        "alpha_bbox": [
+          180,
+          19,
+          330,
+          473
+        ],
+        "visible_height": 454,
+        "head_silhouette_width": 109,
+        "face_color_bbox_width": 84,
+        "face_color_bbox_height": 114,
+        "hair_luma_median": 191,
+        "navy_luma_median": 65.0,
+        "hem_row_width_y330": 111,
+        "leg_band_width_y385": 65,
+        "sock_band_width_y425": 58,
+        "shoe_band_width_y455": 64
+      },
+      "relative_delta_vs_approved_idle": {
+        "head_silhouette_width": 0.009091,
+        "face_color_bbox_width": 0.045455,
+        "face_color_bbox_height": 0.0,
+        "hair_luma_median": 0.010582,
+        "navy_luma_median": 0.048387,
+        "leg_band_width_y385": 0.015625,
+        "sock_band_width_y425": 0.017544,
+        "shoe_band_width_y455": 0.0
+      },
+      "violations": []
+    }
+  ],
+  "semantic_note": "Numeric proxies cannot approve facial identity, anatomy, accessory topology, motion intent or material quality. Inspect both review sheets before user acceptance."
+}

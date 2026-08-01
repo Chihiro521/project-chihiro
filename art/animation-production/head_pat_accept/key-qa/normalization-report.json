@@ -1,0 +1,100 @@
+{
+  "status": "PASS",
+  "policy": "All raw built-in outputs are uniformly resized to the 1024 production canvas, then one identical whole-drawing scale is used for every key. Only whole-sprite root translation aligns planted feet and baseline; no part transforms or per-frame scaling are used.",
+  "target_visible_height": 453,
+  "uniform_whole_drawing_scale": 1.06338,
+  "frames": [
+    {
+      "name": "k03_notice",
+      "source": "k03_notice",
+      "label": "K03  察觉触碰",
+      "whole_drawing_scale": 1.06338,
+      "whole_sprite_translation": [
+        4,
+        -15
+      ],
+      "alpha_bbox": [
+        178,
+        12,
+        330,
+        473
+      ],
+      "visible_height": 461,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 252.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k07_accept",
+      "source": "k07_accept",
+      "label": "K07  轻倾迎合",
+      "whole_drawing_scale": 1.06338,
+      "whole_sprite_translation": [
+        2,
+        -4
+      ],
+      "alpha_bbox": [
+        181,
+        24,
+        329,
+        473
+      ],
+      "visible_height": 449,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 254.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k09_hold",
+      "source": "k09_hold",
+      "label": "K09  闭眼停留",
+      "whole_drawing_scale": 1.06338,
+      "whole_sprite_translation": [
+        1,
+        -4
+      ],
+      "alpha_bbox": [
+        180,
+        23,
+        328,
+        473
+      ],
+      "visible_height": 450,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 255.0,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k13_release",
+      "source": "k13_release_v3",
+      "label": "K13  迟疑恢复",
+      "whole_drawing_scale": 1.06338,
+      "whole_sprite_translation": [
+        0,
+        -13
+      ],
+      "alpha_bbox": [
+        182,
+        16,
+        328,
+        473
+      ],
+      "visible_height": 457,
+      "visible_baseline_y": 472,
+      "foot_center_x_before_translation": 256.5,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

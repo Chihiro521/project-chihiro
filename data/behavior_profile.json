@@ -118,7 +118,7 @@
         "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
       },
       {
-        "id": "head_pat_accept", "clip": "head_pat", "fallback_clip": "react", "state": "direct_interaction",
+        "id": "head_pat_accept", "clip": "head_pat_accept", "fallback_clip": "head_pat", "state": "direct_interaction",
         "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
         "preconditions": {}, "score_weights": {"base": 0}, "effects": {"affection": 0.08}, "session": {"type": "one_shot"}
       },

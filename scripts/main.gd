@@ -875,7 +875,10 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		if head_pat_refused:
 			sprite_player.play_clip("head_pat_refuse" if manifest.has_clip("head_pat_refuse") else "react")
 		else:
-			sprite_player.play_clip("head_pat", true, "enter")
+			if manifest.has_clip("head_pat_accept"):
+				sprite_player.play_clip("head_pat_accept")
+			else:
+				sprite_player.play_clip("head_pat", true, "enter")
 	elif to == "cursor_track":
 		_play_gaze_clip()
 	elif to == "cursor_startle":
@@ -900,6 +903,9 @@ func _on_clip_completed(clip_name: String, segment: String) -> void:
 		return
 	if head_pat_refused and machine.state == "head_pat" and clip_name in ["head_pat_refuse", "react"]:
 		head_pat_refused = false
+		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+		return
+	if clip_name == "head_pat_accept" and machine.state == "head_pat":
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
 	if machine.state == "edge_patrol" and not edge_session.is_empty():
@@ -1159,6 +1165,8 @@ func _end_head_pat() -> void:
 		if head_pat_refused:
 			head_pat_refused = false
 			machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+		elif sprite_player.current_clip == "head_pat_accept":
+			return
 		else:
 			sprite_player.play_clip("head_pat", true, "exit")
 

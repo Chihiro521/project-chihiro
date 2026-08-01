@@ -1,0 +1,47 @@
+{
+  "name": "head_pat_accept_sparse_keys",
+  "frame_count": 6,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Approved neutral endpoint plus four independently generated standing reaction keys preserve the broad head, compact body, planted feet, strap, satchel and one rabbit.",
+    "proportions": "A single whole-drawing normalization scale is applied to every generated key; only full-sprite translation aligns the feet and y=472 baseline.",
+    "costume": "Beret, rear bow, collar, orange ribbon, three buttons, navy dress, lace hem, socks, shoes, continuous strap, one satchel and one rabbit stay fixed.",
+    "rendering": "Fine dark outlines, subdued ash-beige hair, smooth navy fabric, restrained warm shading and fixed front camera."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.12,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.3,
+    "max_bbox_aspect_drift": 0.24,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 18.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.3,
+    "max_motion_energy_delta": 0.2,
+    "max_centroid_acceleration_px": 16.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_center_range_px": "The head inclines a few degrees while both feet and the root remain fixed.",
+    "max_area_drift": "Sparse key spacing changes the top silhouette modestly but cannot change the body family."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "planned_frame_index": 0, "role": "key", "pose": "approved neutral start authority"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.1875, "planned_frame_index": 3, "role": "key", "pose": "notices invisible touch"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.4375, "planned_frame_index": 7, "role": "key", "pose": "gently inclines to accept"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.5625, "planned_frame_index": 9, "role": "key", "pose": "closed-eye accepted hold"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.8125, "planned_frame_index": 13, "role": "key", "pose": "restrained reluctant release"},
+    {"index": 5, "file": "frame_005.png", "phase": 1.0, "planned_frame_index": 16, "role": "key", "pose": "approved neutral return authority"}
+  ]
+}

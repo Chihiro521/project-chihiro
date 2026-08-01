@@ -1,0 +1,45 @@
+{
+  "name": "head_pat_accept_core_sparse_keys_v2",
+  "frame_count": 4,
+  "fps": 3,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {"x": 256, "y": 492},
+  "identity_lock": {
+    "silhouette": "Approved neutral endpoints and the two stable action keys preserve one standing proportion family with a broad head, compact body, planted feet, strap, satchel and one rabbit.",
+    "proportions": "K07 and K09 are the action-family mother pair. Their full-body height, head/face dimensions, hem, legs and footwear must remain continuous with the neutral endpoints.",
+    "costume": "Beret, rear bow, collar, ribbon, three buttons, navy dress, lace hem, socks, shoes, continuous strap, one satchel and one rabbit stay fixed.",
+    "rendering": "Fine dark outlines, subdued ash-beige hair, smooth navy fabric, restrained warm shading and fixed front camera."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.12,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.12,
+    "max_bbox_aspect_drift": 0.12,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 12.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.25,
+    "max_motion_energy_delta": 0.16,
+    "max_centroid_acceleration_px": 12.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_center_range_px": "The head inclines a few degrees while feet and root remain fixed.",
+    "max_area_drift": "Only the small head inclination changes silhouette area; no body-family change is allowed."
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "planned_frame_index": 0, "role": "key", "pose": "approved neutral start authority"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.4375, "planned_frame_index": 7, "role": "key", "pose": "gently inclines to accept"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.5625, "planned_frame_index": 9, "role": "key", "pose": "closed-eye accepted hold"},
+    {"index": 3, "file": "frame_003.png", "phase": 1.0, "planned_frame_index": 16, "role": "key", "pose": "approved neutral return authority"}
+  ]
+}

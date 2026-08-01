@@ -1,0 +1,173 @@
+{
+  "status": "PASS",
+  "summary": {
+    "frame_count": 6,
+    "dimensions": [
+      512,
+      512
+    ],
+    "anchor_index": 0,
+    "baseline_range_px": 1.0,
+    "center_range_x_px": 4.5,
+    "center_range_y_px": 6.0,
+    "max_motion_energy_delta": 0.011303,
+    "max_centroid_acceleration_px": 10.547512,
+    "loop_seam_diff": null,
+    "loop_seam_ratio": null
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.12,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.3,
+    "max_bbox_aspect_drift": 0.24,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 18.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.3,
+    "max_motion_energy_delta": 0.2,
+    "max_centroid_acceleration_px": 16.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "failures": [],
+  "warnings": [],
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_000.png",
+      "bbox_left": 185.0,
+      "bbox_top": 19.0,
+      "bbox_right": 332.0,
+      "bbox_bottom": 472.0,
+      "bbox_width": 147.0,
+      "bbox_height": 453.0,
+      "bbox_area": 66591.0,
+      "bbox_aspect": 0.324503,
+      "centroid_x": 258.5,
+      "centroid_y": 245.5,
+      "alpha_coverage": 0.155563,
+      "color_jsd_vs_anchor": 0.0,
+      "area_drift_vs_anchor": 0.0,
+      "bbox_aspect_drift_vs_anchor": 0.0
+    },
+    {
+      "index": 1,
+      "file": "frame_001.png",
+      "bbox_left": 178.0,
+      "bbox_top": 12.0,
+      "bbox_right": 330.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 152.0,
+      "bbox_height": 461.0,
+      "bbox_area": 70072.0,
+      "bbox_aspect": 0.329718,
+      "centroid_x": 254.0,
+      "centroid_y": 242.5,
+      "alpha_coverage": 0.1591,
+      "color_jsd_vs_anchor": 0.033024,
+      "area_drift_vs_anchor": 0.052274,
+      "bbox_aspect_drift_vs_anchor": 0.01607
+    },
+    {
+      "index": 2,
+      "file": "frame_002.png",
+      "bbox_left": 181.0,
+      "bbox_top": 24.0,
+      "bbox_right": 329.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 148.0,
+      "bbox_height": 449.0,
+      "bbox_area": 66452.0,
+      "bbox_aspect": 0.329621,
+      "centroid_x": 255.0,
+      "centroid_y": 248.5,
+      "alpha_coverage": 0.152134,
+      "color_jsd_vs_anchor": 0.043722,
+      "area_drift_vs_anchor": 0.002087,
+      "bbox_aspect_drift_vs_anchor": 0.015772
+    },
+    {
+      "index": 3,
+      "file": "frame_003.png",
+      "bbox_left": 180.0,
+      "bbox_top": 23.0,
+      "bbox_right": 328.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 148.0,
+      "bbox_height": 450.0,
+      "bbox_area": 66600.0,
+      "bbox_aspect": 0.328889,
+      "centroid_x": 254.0,
+      "centroid_y": 248.0,
+      "alpha_coverage": 0.152878,
+      "color_jsd_vs_anchor": 0.043791,
+      "area_drift_vs_anchor": 0.000135,
+      "bbox_aspect_drift_vs_anchor": 0.013515
+    },
+    {
+      "index": 4,
+      "file": "frame_004.png",
+      "bbox_left": 182.0,
+      "bbox_top": 16.0,
+      "bbox_right": 328.0,
+      "bbox_bottom": 473.0,
+      "bbox_width": 146.0,
+      "bbox_height": 457.0,
+      "bbox_area": 66722.0,
+      "bbox_aspect": 0.319475,
+      "centroid_x": 255.0,
+      "centroid_y": 244.5,
+      "alpha_coverage": 0.15329,
+      "color_jsd_vs_anchor": 0.102506,
+      "area_drift_vs_anchor": 0.001967,
+      "bbox_aspect_drift_vs_anchor": 0.015496
+    },
+    {
+      "index": 5,
+      "file": "frame_005.png",
+      "bbox_left": 185.0,
+      "bbox_top": 19.0,
+      "bbox_right": 332.0,
+      "bbox_bottom": 472.0,
+      "bbox_width": 147.0,
+      "bbox_height": 453.0,
+      "bbox_area": 66591.0,
+      "bbox_aspect": 0.324503,
+      "centroid_x": 258.5,
+      "centroid_y": 245.5,
+      "alpha_coverage": 0.155563,
+      "color_jsd_vs_anchor": 0.0,
+      "area_drift_vs_anchor": 0.0,
+      "bbox_aspect_drift_vs_anchor": 0.0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "frame_000.png",
+      "to": "frame_001.png",
+      "adjacent_diff": 0.020335
+    },
+    {
+      "from": "frame_001.png",
+      "to": "frame_002.png",
+      "adjacent_diff": 0.015455
+    },
+    {
+      "from": "frame_002.png",
+      "to": "frame_003.png",
+      "adjacent_diff": 0.004152
+    },
+    {
+      "from": "frame_003.png",
+      "to": "frame_004.png",
+      "adjacent_diff": 0.011478
+    },
+    {
+      "from": "frame_004.png",
+      "to": "frame_005.png",
+      "adjacent_diff": 0.016865
+    }
+  ],
+  "semantic_review_required": true
+}

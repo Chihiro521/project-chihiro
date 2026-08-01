@@ -1,0 +1,155 @@
+{
+  "name": "head_pat_accept",
+  "frame_count": 17,
+  "fps": 8,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {"x": 256, "y": 492},
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "pose_family_authorities": {
+      "standing": "../return_wave/anchors/reason_pose_frame_000_chroma.png"
+    },
+    "neutral_temporal_endpoint": "../return_wave/frames/frame_000.png",
+    "rule": "Temporal neighbors control motion and contacts only and never replace design or proportion authority. Legacy head_pat frames are rhythm-only references."
+  },
+  "identity_lock": {
+    "silhouette": "Large rounded navy beret, broad ash-beige bob and face, compact four-head-tall navy A-line body, sturdy short legs, fixed tan strap, viewer-right satchel and one rabbit remain unmistakable.",
+    "proportions": "Preserve the standing authority's head and face width, body volume, shoulder and hem width, limb thickness, shoe size, full-body scale, margins, planted-foot spacing and baseline.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and hair part; only gaze, eyelids, a tiny closed-mouth smile and up to four degrees of head tilt may change.",
+    "costume": "Navy beret with dark green rear bow, navy long-sleeve dress, cream Peter Pan collar, orange ribbon, three brass buttons, cream lace hem, knee socks, Mary Jane shoes, tan strap, one satchel and one rabbit keep exact topology and side.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Soft polished miniature anime sprite, fine dark outlines, restrained warm cel shading, matte subdued ash-beige hair highlights, smooth navy fabric, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She notices an invisible cursor pat, gives a restrained slight head tilt into it, closes her eyes for a brief comfortable hold, then reluctantly but composedly returns to neutral.",
+    "allowed_motion": "Gaze, eyelids, brows, tiny closed-mouth smile, slight chin tuck, viewer-left head tilt up to four degrees, minimal shoulder and accessory response.",
+    "forbidden_changes": "No visible external hand, large cute bounce, step, knee bend, open-mouth smile, exaggerated blush, both-hands gesture, body slimming, smaller face, brighter hair, costume or accessory drift, scenery, shadow, text or effects.",
+    "contact_ledger": [
+      {
+        "object": "invisible cursor pat",
+        "count": 0,
+        "side": "imagined contact at top of beret",
+        "owner": "desktop input only; never rendered",
+        "contact_points": "beret crown drives head tilt and eyelid response",
+        "occlusion_order": "none"
+      },
+      {
+        "object": "satchel and rabbit",
+        "count": 1,
+        "side": "viewer-right",
+        "owner": "continuous cross-body strap and satchel attachment",
+        "contact_points": "bag remains beside skirt; rabbit remains fixed to bag front",
+        "occlusion_order": "strap and rabbit remain in front of dress and bag respectively"
+      }
+    ]
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.14,
+    "max_alpha_coverage": 0.42,
+    "max_color_jsd": 0.16,
+    "max_area_drift": 0.24,
+    "max_bbox_aspect_drift": 0.2,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 12.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.2,
+    "max_motion_energy_delta": 0.1,
+    "max_centroid_acceleration_px": 10.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "Only a small head tilt and sleeve/hair secondary response are legitimate; the standing body volume must remain stable.",
+    "max_center_range_px": "Both feet and root are fixed; only the head and upper silhouette may shift slightly."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "standing",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": [
+      "head_width_and_face_width_height",
+      "hair_luminance_and_highlight_level",
+      "shoulder_hem_knee_sock_and_shoe_landmarks",
+      "leg_thickness_and_foot_spacing",
+      "navy_fabric_high_frequency_energy",
+      "strap_satchel_and_single_rabbit_topology"
+    ]
+  },
+  "key_pose_plan": [
+    {"label": "AUTH", "frame": 0, "pose": "neutral standing endpoint from the approved authority; reference only at key gate"},
+    {"label": "K07", "frame": 7, "pose": "chin tucks and head inclines gently viewer-left to accept the pat; eyes soften"},
+    {"label": "K09", "frame": 9, "pose": "peak accepted hold with softly closed eyes and a minute composed smile"},
+    {"label": "AUTH", "frame": 16, "pose": "same neutral endpoint; reference only at key gate"}
+  ],
+  "deferred_direct_slots": [
+    {"frame": 3, "pose": "calm notice between AUTH and K07; generate only after core-key approval"},
+    {"frame": 13, "pose": "restrained release between K09 and AUTH; generate only after core-key approval"}
+  ],
+  "key_pose_review": {
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-07-30_core_keys",
+    "selected_sources": {
+      "K07": "key-poses/k07_accept_chroma.png",
+      "K09": "key-poses/k09_hold_chroma.png"
+    },
+    "contact_sheet": "key-poses/head_pat_accept-key-contact-sheet-v2.png",
+    "identity_closeup": "key-poses/head_pat_accept-key-identity-closeup-v2.png",
+    "generic_qa": "key-qa-v2/automated/qa-report.json",
+    "local_identity_qa": "key-qa-v2/local-identity-report.json",
+    "normalization_report": "key-qa-v2/normalization-report.json",
+    "source_policy": "Built-in outputs were complete 1254x1254 drawings. Each complete canvas was uniformly standardized to 1024x1024, and one identical whole-drawing scale was used for every selected key before root-only placement into 512x512.",
+    "revision_notes": "After user reported visible proportion jumps, every K03 and K13 candidate was removed from the approved key chain. K07 and K09 are now the only generated core keys; notice and release remain deferred direct slots bounded by approved endpoints."
+  },
+  "full_sequence_review": {
+    "automated_status": "PASS",
+    "agent_semantic_status": "PASS",
+    "user_semantic_status": "PENDING",
+    "generic_qa": "qa/qa-report.json",
+    "local_identity_qa": "qa/local-identity-report.json",
+    "contact_sheet": "qa/contact-sheet.png",
+    "local_identity_contact_sheet": "qa/local-identity-contact-sheet.png",
+    "target_fps_preview": "qa/preview.gif",
+    "slow_preview": "qa/preview-slow.gif",
+    "source_policy": "Every selected source is an independently generated complete drawing. All sources use the one frozen whole-drawing scale; only root translation aligns planted feet and baseline.",
+    "revision_notes": "Full-sequence semantic inspection rejected the first F06 because its eyelids closed before F07 and caused a visible reopen. Selected frame_006_v4 restores a monotonic F05-F09 eyelid arc while preserving the accepted proportion family."
+  },
+  "review_state": {
+    "status": "packaged_ready_for_engine",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-08-01",
+    "user_approval_artifact": "qa/contact-sheet.png",
+    "controller_qa_report": "qa/controller-recheck/qa-report.json",
+    "user_approval": {
+      "date": "2026-08-01",
+      "verdict": "应该已经完成了，可以验收并且接入godot 并分阶段提交了。"
+    }
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "endpoint", "segment": "notice", "pose": "neutral endpoint"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.0625, "role": "direct", "segment": "notice", "pose": "attention begins to move upward"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.125, "role": "direct", "segment": "notice", "pose": "eyes acknowledge touch; chin barely lowers"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.1875, "role": "direct", "segment": "notice", "pose": "restrained attentive touch recognition"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.25, "role": "direct", "segment": "accept", "pose": "head starts viewer-left inclination"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.3125, "role": "direct", "segment": "accept", "pose": "eyelids soften as inclination develops"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.375, "role": "direct", "segment": "accept", "pose": "chin tucks and expression relaxes"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.4375, "role": "key", "segment": "accept", "pose": "gentle accepted lean with softened eyes"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.5, "role": "direct", "segment": "hold", "pose": "eyes close into the comfortable hold"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.5625, "role": "key", "segment": "hold", "pose": "closed-eye peak hold with minute composed smile"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.625, "role": "direct", "segment": "hold", "pose": "same peak pose begins releasing through timing, not duplicate art"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.6875, "role": "direct", "segment": "release", "pose": "eyelids start reopening; head begins upright return"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.75, "role": "direct", "segment": "release", "pose": "half-open eyes and diminishing tilt"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.8125, "role": "direct", "segment": "release", "pose": "restrained reluctant afterglance while nearly upright"},
+    {"index": 14, "file": "frame_014.png", "phase": 0.875, "role": "direct", "segment": "recover", "pose": "expression and gaze settle toward neutral"},
+    {"index": 15, "file": "frame_015.png", "phase": 0.9375, "role": "direct", "segment": "recover", "pose": "head and shoulders finish neutral alignment"},
+    {"index": 16, "file": "frame_016.png", "phase": 1.0, "role": "endpoint", "segment": "recover", "pose": "independently rendered neutral return matching the start"}
+  ]
+}
