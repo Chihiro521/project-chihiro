@@ -3,11 +3,16 @@ extends PanelContainer
 
 signal message_finished(id: String)
 
+const MIN_WINDOW_SIZE := Vector2i(520, 480)
+const TOP_RESERVE_PX := 104
+
 @export var label_path := NodePath("Text")
 
 var current_id := ""
 var _generation := 0
 var _label: Label
+var _hiding := false
+var _transition_tween: Tween
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -34,38 +39,56 @@ func _ready() -> void:
 	visible = false
 
 func show_message(id: String, text: String, duration_seconds := -1.0) -> void:
+	if text.strip_edges().is_empty():
+		hide_message()
+		return
 	_generation += 1
 	var generation := _generation
+	_kill_transition_tween()
+	_hiding = false
 	current_id = id
 	_label.text = text
 	visible = true
 	modulate.a = 0.0
 	scale = Vector2(0.94, 0.94)
 	await get_tree().process_frame
+	if generation != _generation:
+		return
 	pivot_offset = size / 2.0
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "modulate:a", 1.0, 0.16)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_transition_tween = create_tween().set_parallel(true)
+	_transition_tween.tween_property(self, "modulate:a", 1.0, 0.16)
+	_transition_tween.tween_property(self, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	var seconds := duration_seconds if duration_seconds > 0.0 else suggested_duration(text)
 	await get_tree().create_timer(seconds).timeout
 	if generation == _generation:
 		hide_message()
 
 func hide_message() -> void:
-	if not visible:
+	if not visible or _hiding:
 		return
 	_generation += 1
+	var generation := _generation
 	var completed_id := current_id
-	current_id = ""
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "modulate:a", 0.0, 0.14)
-	tween.tween_property(self, "scale", Vector2(0.97, 0.97), 0.14)
-	await tween.finished
+	_hiding = true
+	_kill_transition_tween()
+	_transition_tween = create_tween().set_parallel(true)
+	_transition_tween.tween_property(self, "modulate:a", 0.0, 0.14)
+	_transition_tween.tween_property(self, "scale", Vector2(0.97, 0.97), 0.14)
+	_transition_tween.finished.connect(_finish_hide.bind(generation, completed_id), CONNECT_ONE_SHOT)
+
+func _finish_hide(generation: int, completed_id: String) -> void:
+	if generation != _generation:
+		return
+	_transition_tween = null
 	visible = false
+	_hiding = false
+	current_id = ""
+	_label.text = ""
 	message_finished.emit(completed_id)
 
 func is_showing() -> bool:
-	return visible and not current_id.is_empty()
+	# Keep the expanded transparent host until the panel has fully faded out.
+	return visible
 
 func snapshot() -> Dictionary:
 	return {
@@ -73,6 +96,17 @@ func snapshot() -> Dictionary:
 		"id": current_id,
 		"text": _label.text if _label != null else "",
 	}
+
+static func required_window_size(content_size: Vector2i) -> Vector2i:
+	return Vector2i(
+		maxi(content_size.x, MIN_WINDOW_SIZE.x),
+		maxi(MIN_WINDOW_SIZE.y, content_size.y + TOP_RESERVE_PX),
+	)
+
+func _kill_transition_tween() -> void:
+	if _transition_tween != null and _transition_tween.is_valid():
+		_transition_tween.kill()
+	_transition_tween = null
 
 static func suggested_duration(text: String) -> float:
 	return clampf(2.8 + text.length() * 0.085, 3.2, 7.0)

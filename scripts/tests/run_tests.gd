@@ -18,6 +18,7 @@ func _run() -> void:
 	_test_behavior_director()
 	_test_action_session()
 	_test_state_store_and_dialogue()
+	await _test_speech_bubble()
 	_test_action_catalog()
 	_test_mechanism_dashboard()
 	_test_window_platforms()
@@ -553,6 +554,29 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(str(direct_intent.get("id", "")) == "window_land_recover", "non-selectable event behavior can be created directly")
 	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
 	if FileAccess.file_exists(previous_path): DirAccess.remove_absolute(previous_path)
+
+func _test_speech_bubble() -> void:
+	_expect(PetSpeechBubble.required_window_size(Vector2i(360, 360)) == Vector2i(520, 480), "normal actions keep the compact speech host")
+	_expect(PetSpeechBubble.required_window_size(Vector2i(436, 436)) == Vector2i(520, 540), "tall umbrella actions reserve a separate speech row")
+	var bubble := PetSpeechBubble.new()
+	var label := Label.new()
+	label.name = "Text"
+	bubble.add_child(label)
+	root.add_child(bubble)
+	await process_frame
+	bubble.show_message("first", "第一条", 10.0)
+	await process_frame
+	bubble.hide_message()
+	_expect(bubble.is_showing() and bubble.current_id == "first", "speech host stays reserved throughout fade-out")
+	await create_timer(0.04).timeout
+	bubble.show_message("second", "第二条", 10.0)
+	await create_timer(0.18).timeout
+	_expect(bubble.is_showing() and bubble.current_id == "second" and label.text == "第二条", "a new message cancels a stale fade without leaving an empty panel")
+	bubble.hide_message()
+	await create_timer(0.18).timeout
+	_expect(not bubble.is_showing() and bubble.current_id.is_empty() and label.text.is_empty(), "speech panel hides atomically with its text")
+	bubble.queue_free()
+	await process_frame
 
 func _test_action_catalog() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")

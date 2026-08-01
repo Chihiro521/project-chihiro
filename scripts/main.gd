@@ -9,7 +9,6 @@ const AUTO_HEAD_PAT_MS := 900.0
 const FAST_MOVE_REACTION_DISTANCE := 220.0
 const TRAVEL_FACING_DEAD_ZONE := 18.0
 const MIN_EDGE_TRAVERSE_DISTANCE := 12.0
-const BUBBLE_WINDOW_SIZE := Vector2i(520, 480)
 const LIFE_SAVE_INTERVAL_MS := 30000.0
 const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
 const RAPID_POKE_WINDOW_MS := 10000.0
@@ -1137,8 +1136,7 @@ func _on_speech_finished(_id: String) -> void:
 func _desired_window_size(clip: Dictionary, force_bubble := false) -> Vector2i:
 	var result: Vector2i = render_box_lock if render_box_lock is Vector2i else PetRenderBox.resolve_size(manifest, clip)
 	if force_bubble or (speech_bubble != null and speech_bubble.is_showing()):
-		result.x = maxi(result.x, BUBBLE_WINDOW_SIZE.x)
-		result.y = maxi(result.y, BUBBLE_WINDOW_SIZE.y)
+		result = PetSpeechBubble.required_window_size(result)
 	return result
 
 func _begin_press(local_point: Vector2) -> void:
