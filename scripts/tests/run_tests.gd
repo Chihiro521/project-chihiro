@@ -574,8 +574,10 @@ func _test_speech_bubble() -> void:
 	_expect(bubble.force_native and bubble.transparent and bubble.mouse_passthrough, "speech uses a transparent native click-through window without changing the pet host geometry")
 	bubble.show_message("first", "第一条", 10.0, top_pet, work)
 	await process_frame
+	await process_frame
 	_expect(bubble.placement() == "below", "the live bubble applies the resolved screen-edge placement")
-	_expect(bubble.text_layout_size().x >= 300.0 and bubble.text_layout_size().y >= 60.0, "speech body keeps a visible text layout area after the native window is shown")
+	_expect(bubble.card_layout_size().is_equal_approx(Vector2(372.0, 112.0)), "the native show layout pass cannot stretch the speech card below its viewport")
+	_expect(bubble.text_layout_size().x >= 300.0 and bubble.text_layout_size().y >= 60.0 and bubble.text_layout_size().y <= 70.0, "speech body stays inside the visible card after the native window is shown")
 	var stable_revision := bubble.layout_revision()
 	for _index in range(120):
 		bubble.update_anchor(top_pet, work)
@@ -594,6 +596,11 @@ func _test_speech_bubble() -> void:
 	bubble.hide_message()
 	await create_timer(0.18).timeout
 	_expect(not bubble.is_showing() and bubble.current_id.is_empty() and str(bubble.snapshot().get("text", "")).is_empty(), "speech panel hides atomically with its text")
+	bubble.show_message("third", "重新出现也必须有正文", 10.0, top_pet, work)
+	await process_frame
+	await process_frame
+	_expect(bubble.card_layout_size().is_equal_approx(Vector2(372.0, 112.0)) and bubble.text_layout_size().y <= 70.0, "a cold speech-window reopen restores the compact body layout")
+	bubble.hide_message(true)
 	bubble.queue_free()
 	await process_frame
 

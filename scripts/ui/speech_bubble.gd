@@ -89,6 +89,10 @@ func show_message(
 		await get_tree().process_frame
 		if generation != _generation:
 			return
+		# A native child Window runs a second Container layout pass when it first
+		# becomes visible. Re-assert the fixed card geometry after that pass;
+		# otherwise the body Label can be stretched far below the 146px viewport.
+		_layout_surface(_tail_anchor_x)
 		_transition_tween = create_tween().set_parallel(true)
 		_transition_tween.tween_property(_surface, "modulate:a", 1.0, 0.14)
 		_transition_tween.tween_property(_surface, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -136,6 +140,9 @@ func layout_revision() -> int:
 
 func text_layout_size() -> Vector2:
 	return _label.size if _label != null else Vector2.ZERO
+
+func card_layout_size() -> Vector2:
+	return _card.size if _card != null else Vector2.ZERO
 
 func snapshot() -> Dictionary:
 	return {
@@ -247,7 +254,7 @@ func _build_surface() -> void:
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_label.add_theme_font_size_override("font_size", 17)
 	_label.add_theme_color_override("font_color", COLOR_INK)
 	column.add_child(_label)
