@@ -1,0 +1,52 @@
+{
+  "status": "motion_smoothing_repair_generated_pending_user",
+  "frame_count": 23,
+  "fps": 10,
+  "user_accepted_keys": [
+    4,
+    8,
+    13,
+    18
+  ],
+  "new_complete_drawings": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    21,
+    22
+  ],
+  "production_method": "one built-in image generation call per complete character frame; midpoint-first temporal bounding",
+  "forbidden_methods_used": [],
+  "whole_frame_redraw_repairs": {
+    "5": "reduced premature head turn and restored head/body continuity",
+    "7": "replaced the one-frame strap-to-ear leap with a shoulder-height rise midpoint",
+    "9": "placed the hand at the lower ear as a strict midpoint between neck and temple",
+    "11": "made the first third of the outward wrist rotation monotonic",
+    "12": "made the second third of the outward wrist rotation monotonic",
+    "14": "kept the refusal press beside the brim and restored the muted palette",
+    "15": "released the stop beside the ear without snapping frontal",
+    "16": "placed the descending hand beside the lower cheek and shoulder",
+    "17": "continued the hand downward to the collarbone without reversing",
+    "19": "kept the open hand in the strap-height band for a horizontal approach",
+    "20": "added a partial strap grip without a vertical rebound"
+  },
+  "user_feedback": {
+    "date": "2026-07-30",
+    "verdict": "rejected_first_full_sequence_as_overly_jittery",
+    "repair_goal": "single-direction hand arc, stable head pose, intentional one-shot timing"
+  }
+}

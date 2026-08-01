@@ -1,0 +1,2365 @@
+{
+  "status": "PASS",
+  "frame_count": 23,
+  "reference_indices": [
+    0,
+    4,
+    8,
+    13,
+    18,
+    22
+  ],
+  "reference_medians": {
+    "height": 453.5,
+    "head_core_width": 98.25,
+    "face_core_width": 84.75,
+    "torso_core_width": 120.0,
+    "dress_hem_width": 139.25,
+    "hair_neutral_luma": 190.117,
+    "dark_fabric_fraction": 0.70459,
+    "tan_accessory_fraction": 0.26565,
+    "rabbit_light_fraction": 0.12918,
+    "left_leg_area_fraction": 0.49508,
+    "right_leg_area_fraction": 0.50492
+  },
+  "method": "central alpha-run geometry plus palette and accessory ROI proxies; automated checks supplement, not replace, semantic review",
+  "non_gating_measurements": {
+    "face_core_width": "Reported for inspection only. The raised hand joins the head silhouette and the approved head turn changes the central alpha run, so this proxy is not a reliable pass/fail gate for F11-F15. Head-core width and the close-up sheet remain the automated and visual face-size checks."
+  },
+  "flagged": [],
+  "frames": [
+    {
+      "index": 0,
+      "metrics": {
+        "alpha_bbox": [
+          181,
+          14,
+          332,
+          473
+        ],
+        "height": 459,
+        "width": 151,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 96.0,
+        "face_core_width": 82.0,
+        "torso_core_width": 123.0,
+        "dress_hem_width": 143.0,
+        "hair_neutral_luma": 190.376,
+        "dark_fabric_fraction": 0.71453,
+        "tan_accessory_fraction": 0.26182,
+        "rabbit_light_fraction": 0.12719,
+        "left_leg_area_fraction": 0.49978,
+        "right_leg_area_fraction": 0.50022
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.01213,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.9771,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.025,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 1.02693,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.9856,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.9846,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.00948,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.9907,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 0.259,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00994,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 1,
+      "metrics": {
+        "alpha_bbox": [
+          184,
+          18,
+          330,
+          473
+        ],
+        "height": 455,
+        "width": 146,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 96.0,
+        "face_core_width": 82.0,
+        "torso_core_width": 120.0,
+        "dress_hem_width": 138.5,
+        "hair_neutral_luma": 190.001,
+        "dark_fabric_fraction": 0.70132,
+        "tan_accessory_fraction": 0.26692,
+        "rabbit_light_fraction": 0.12826,
+        "left_leg_area_fraction": 0.4983,
+        "right_leg_area_fraction": 0.5017
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.00331,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.9771,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.0,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.99461,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.0048,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.99288,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.00649,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99363,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -0.116,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00326,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          16,
+          330,
+          473
+        ],
+        "height": 457,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 97.0,
+        "face_core_width": 82.0,
+        "torso_core_width": 120.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 191.149,
+        "dark_fabric_fraction": 0.70375,
+        "tan_accessory_fraction": 0.26619,
+        "rabbit_light_fraction": 0.13026,
+        "left_leg_area_fraction": 0.49583,
+        "right_leg_area_fraction": 0.50417
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.00772,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.98728,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.0,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00205,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.00836,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.0015,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99852,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 1.032,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00084,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 3,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          19,
+          329,
+          473
+        ],
+        "height": 454,
+        "width": 146,
+        "baseline_y": 472,
+        "center_x": 255.5,
+        "head_core_width": 98.0,
+        "face_core_width": 82.0,
+        "torso_core_width": 119.0,
+        "dress_hem_width": 138.0,
+        "hair_neutral_luma": 189.724,
+        "dark_fabric_fraction": 0.70994,
+        "tan_accessory_fraction": 0.26019,
+        "rabbit_light_fraction": 0.13268,
+        "left_leg_area_fraction": 0.49445,
+        "right_leg_area_fraction": 0.50555
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.0011,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99746,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.99167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.99102,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.97947,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.02709,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99872,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00126,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -0.393,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00535,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 4,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          19,
+          329,
+          473
+        ],
+        "height": 454,
+        "width": 146,
+        "baseline_y": 472,
+        "center_x": 255.5,
+        "head_core_width": 98.0,
+        "face_core_width": 82.5,
+        "torso_core_width": 120.0,
+        "dress_hem_width": 138.0,
+        "hair_neutral_luma": 190.7,
+        "dark_fabric_fraction": 0.70437,
+        "tan_accessory_fraction": 0.25883,
+        "rabbit_light_fraction": 0.13546,
+        "left_leg_area_fraction": 0.49573,
+        "right_leg_area_fraction": 0.50427
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.0011,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99746,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.0,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.99102,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.97435,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.04861,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.0013,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99872,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 0.583,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00021,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 5,
+      "metrics": {
+        "alpha_bbox": [
+          185,
+          26,
+          328,
+          473
+        ],
+        "height": 447,
+        "width": 143,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 94.0,
+        "face_core_width": 81.0,
+        "torso_core_width": 116.0,
+        "dress_hem_width": 136.0,
+        "hair_neutral_luma": 193.448,
+        "dark_fabric_fraction": 0.69156,
+        "tan_accessory_fraction": 0.26657,
+        "rabbit_light_fraction": 0.13727,
+        "left_leg_area_fraction": 0.49183,
+        "right_leg_area_fraction": 0.50817
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.98567,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.95674,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.96667,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.97666,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00348,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.06263,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99343,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00645,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 3.331,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.01303,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 6,
+      "metrics": {
+        "alpha_bbox": [
+          185,
+          28,
+          328,
+          473
+        ],
+        "height": 445,
+        "width": 143,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 95.0,
+        "face_core_width": 81.0,
+        "torso_core_width": 115.0,
+        "dress_hem_width": 135.0,
+        "hair_neutral_luma": 190.379,
+        "dark_fabric_fraction": 0.69503,
+        "tan_accessory_fraction": 0.24661,
+        "rabbit_light_fraction": 0.1363,
+        "left_leg_area_fraction": 0.49194,
+        "right_leg_area_fraction": 0.50806
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.98126,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.96692,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.95833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.96948,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.92834,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.05512,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99365,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00623,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 0.262,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00955,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 7,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          20,
+          330,
+          473
+        ],
+        "height": 453,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 98.0,
+        "face_core_width": 91.0,
+        "torso_core_width": 119.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 191.803,
+        "dark_fabric_fraction": 0.70693,
+        "tan_accessory_fraction": 0.26246,
+        "rabbit_light_fraction": 0.13272,
+        "left_leg_area_fraction": 0.49504,
+        "right_leg_area_fraction": 0.50496
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99746,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.99167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.98801,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.0274,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99991,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00009,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 1.686,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00234,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 8,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          20,
+          330,
+          473
+        ],
+        "height": 453,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 98.0,
+        "face_core_width": 95.0,
+        "torso_core_width": 116.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 189.858,
+        "dark_fabric_fraction": 0.71329,
+        "tan_accessory_fraction": 0.2669,
+        "rabbit_light_fraction": 0.13019,
+        "left_leg_area_fraction": 0.49442,
+        "right_leg_area_fraction": 0.50558
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99746,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.96667,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00472,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.00782,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99866,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00132,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -0.259,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.0087,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 9,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          22,
+          330,
+          473
+        ],
+        "height": 451,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 97.5,
+        "face_core_width": 93.0,
+        "torso_core_width": 115.0,
+        "dress_hem_width": 138.5,
+        "hair_neutral_luma": 192.198,
+        "dark_fabric_fraction": 0.70858,
+        "tan_accessory_fraction": 0.26687,
+        "rabbit_light_fraction": 0.13196,
+        "left_leg_area_fraction": 0.4928,
+        "right_leg_area_fraction": 0.5072
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.99449,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99237,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.95833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.99461,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00461,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.02152,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99538,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00453,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 2.081,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00399,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 10,
+      "metrics": {
+        "alpha_bbox": [
+          181,
+          20,
+          332,
+          473
+        ],
+        "height": 453,
+        "width": 151,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 99.0,
+        "face_core_width": 96.0,
+        "torso_core_width": 113.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 191.022,
+        "dark_fabric_fraction": 0.70646,
+        "tan_accessory_fraction": 0.26578,
+        "rabbit_light_fraction": 0.12571,
+        "left_leg_area_fraction": 0.49334,
+        "right_leg_area_fraction": 0.50666
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.00763,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.94167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00051,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.97314,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99648,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00346,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 0.905,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00187,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 11,
+      "metrics": {
+        "alpha_bbox": [
+          181,
+          20,
+          332,
+          473
+        ],
+        "height": 453,
+        "width": 151,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 100.0,
+        "face_core_width": 99.0,
+        "torso_core_width": 113.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 188.66,
+        "dark_fabric_fraction": 0.70675,
+        "tan_accessory_fraction": 0.27388,
+        "rabbit_light_fraction": 0.11932,
+        "left_leg_area_fraction": 0.49303,
+        "right_leg_area_fraction": 0.50697
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.94167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.031,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.92367,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99585,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00407,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -1.457,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00216,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 12,
+      "metrics": {
+        "alpha_bbox": [
+          181,
+          20,
+          332,
+          473
+        ],
+        "height": 453,
+        "width": 151,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 100.0,
+        "face_core_width": 100.0,
+        "torso_core_width": 113.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 189.704,
+        "dark_fabric_fraction": 0.70468,
+        "tan_accessory_fraction": 0.27029,
+        "rabbit_light_fraction": 0.12314,
+        "left_leg_area_fraction": 0.49292,
+        "right_leg_area_fraction": 0.50708
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.94167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.01749,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.95324,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99563,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00429,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -0.413,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 9e-05,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 13,
+      "metrics": {
+        "alpha_bbox": [
+          181,
+          20,
+          333,
+          473
+        ],
+        "height": 453,
+        "width": 152,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 100.0,
+        "face_core_width": 100.0,
+        "torso_core_width": 113.0,
+        "dress_hem_width": 139.5,
+        "hair_neutral_luma": 191.305,
+        "dark_fabric_fraction": 0.7048,
+        "tan_accessory_fraction": 0.26439,
+        "rabbit_light_fraction": 0.12485,
+        "left_leg_area_fraction": 0.49507,
+        "right_leg_area_fraction": 0.50493
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.94167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 1.0018,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.99528,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.96648,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99997,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00003,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 1.188,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00021,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 14,
+      "metrics": {
+        "alpha_bbox": [
+          179,
+          24,
+          333,
+          473
+        ],
+        "height": 449,
+        "width": 154,
+        "baseline_y": 472,
+        "center_x": 255.5,
+        "head_core_width": 98.0,
+        "face_core_width": 100.0,
+        "torso_core_width": 109.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 186.023,
+        "dark_fabric_fraction": 0.70137,
+        "tan_accessory_fraction": 0.25511,
+        "rabbit_light_fraction": 0.1361,
+        "left_leg_area_fraction": 0.49517,
+        "right_leg_area_fraction": 0.50483
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.99008,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.99746,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.90833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.96034,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.05357,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.00017,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99983,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -4.094,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00321,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 15,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          23,
+          330,
+          473
+        ],
+        "height": 450,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 93.0,
+        "face_core_width": 87.0,
+        "torso_core_width": 118.0,
+        "dress_hem_width": 140.0,
+        "hair_neutral_luma": 191.764,
+        "dark_fabric_fraction": 0.70945,
+        "tan_accessory_fraction": 0.25441,
+        "rabbit_light_fraction": 0.14646,
+        "left_leg_area_fraction": 0.48855,
+        "right_leg_area_fraction": 0.51145
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.99228,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.94656,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.98333,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 1.00539,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.95771,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.13377,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.9868,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.01294,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 1.647,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00487,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 16,
+      "metrics": {
+        "alpha_bbox": [
+          184,
+          19,
+          330,
+          473
+        ],
+        "height": 454,
+        "width": 146,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 93.5,
+        "face_core_width": 80.5,
+        "torso_core_width": 118.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 193.075,
+        "dark_fabric_fraction": 0.70592,
+        "tan_accessory_fraction": 0.25747,
+        "rabbit_light_fraction": 0.14391,
+        "left_leg_area_fraction": 0.48933,
+        "right_leg_area_fraction": 0.51067
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.0011,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 0.95165,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.98333,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 0.96923,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.11403,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.98838,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.0114,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 2.958,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": 0.00133,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 17,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          21,
+          330,
+          473
+        ],
+        "height": 452,
+        "width": 147,
+        "baseline_y": 472,
+        "center_x": 256.0,
+        "head_core_width": 99.0,
+        "face_core_width": 85.0,
+        "torso_core_width": 119.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 188.447,
+        "dark_fabric_fraction": 0.69258,
+        "tan_accessory_fraction": 0.2748,
+        "rabbit_light_fraction": 0.13262,
+        "left_leg_area_fraction": 0.49475,
+        "right_leg_area_fraction": 0.50525
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.99669,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.00763,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 0.99167,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.03446,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.02663,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99932,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00066,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -1.67,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.01201,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 18,
+      "metrics": {
+        "alpha_bbox": [
+          182,
+          20,
+          330,
+          473
+        ],
+        "height": 453,
+        "width": 148,
+        "baseline_y": 472,
+        "center_x": 255.5,
+        "head_core_width": 98.5,
+        "face_core_width": 84.5,
+        "torso_core_width": 120.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 188.166,
+        "dark_fabric_fraction": 0.69358,
+        "tan_accessory_fraction": 0.26709,
+        "rabbit_light_fraction": 0.13677,
+        "left_leg_area_fraction": 0.4951,
+        "right_leg_area_fraction": 0.5049
+      },
+      "checks": {
+        "height": {
+          "ratio": 0.9989,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.00254,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.0,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.00544,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.05876,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.00003,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99997,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -1.951,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.01101,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 19,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          18,
+          329,
+          473
+        ],
+        "height": 455,
+        "width": 146,
+        "baseline_y": 472,
+        "center_x": 255.5,
+        "head_core_width": 99.0,
+        "face_core_width": 84.5,
+        "torso_core_width": 120.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 192.09,
+        "dark_fabric_fraction": 0.68471,
+        "tan_accessory_fraction": 0.26976,
+        "rabbit_light_fraction": 0.1402,
+        "left_leg_area_fraction": 0.49543,
+        "right_leg_area_fraction": 0.50457
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.00331,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.00763,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.0,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.01549,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.08531,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 1.0007,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 0.99932,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": 1.973,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.01987,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 20,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          15,
+          331,
+          473
+        ],
+        "height": 458,
+        "width": 148,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 100.0,
+        "face_core_width": 83.0,
+        "torso_core_width": 121.0,
+        "dress_hem_width": 139.0,
+        "hair_neutral_luma": 187.413,
+        "dark_fabric_fraction": 0.69401,
+        "tan_accessory_fraction": 0.27034,
+        "rabbit_light_fraction": 0.13579,
+        "left_leg_area_fraction": 0.49103,
+        "right_leg_area_fraction": 0.50897
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.00992,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.00833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 0.9982,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.01767,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.05117,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99181,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00803,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -2.704,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.01058,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 21,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          14,
+          331,
+          473
+        ],
+        "height": 459,
+        "width": 148,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 100.0,
+        "face_core_width": 84.0,
+        "torso_core_width": 121.0,
+        "dress_hem_width": 140.0,
+        "hair_neutral_luma": 188.801,
+        "dark_fabric_fraction": 0.69692,
+        "tan_accessory_fraction": 0.27726,
+        "rabbit_light_fraction": 0.13541,
+        "left_leg_area_fraction": 0.49213,
+        "right_leg_area_fraction": 0.50787
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.01213,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.00833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 1.00539,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.04372,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 1.04823,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99403,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00585,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -1.316,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00767,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    },
+    {
+      "index": 22,
+      "metrics": {
+        "alpha_bbox": [
+          183,
+          15,
+          331,
+          473
+        ],
+        "height": 458,
+        "width": 148,
+        "baseline_y": 472,
+        "center_x": 256.5,
+        "head_core_width": 100.0,
+        "face_core_width": 85.0,
+        "torso_core_width": 121.0,
+        "dress_hem_width": 140.0,
+        "hair_neutral_luma": 187.089,
+        "dark_fabric_fraction": 0.69683,
+        "tan_accessory_fraction": 0.28058,
+        "rabbit_light_fraction": 0.12817,
+        "left_leg_area_fraction": 0.49163,
+        "right_leg_area_fraction": 0.50837
+      },
+      "checks": {
+        "height": {
+          "ratio": 1.00992,
+          "limits": [
+            0.96,
+            1.04
+          ],
+          "pass": true
+        },
+        "head_core_width": {
+          "ratio": 1.01781,
+          "limits": [
+            0.88,
+            1.12
+          ],
+          "pass": true
+        },
+        "torso_core_width": {
+          "ratio": 1.00833,
+          "limits": [
+            0.84,
+            1.18
+          ],
+          "pass": true
+        },
+        "dress_hem_width": {
+          "ratio": 1.00539,
+          "limits": [
+            0.86,
+            1.14
+          ],
+          "pass": true
+        },
+        "tan_accessory_fraction": {
+          "ratio": 1.05622,
+          "limits": [
+            0.68,
+            1.38
+          ],
+          "pass": true
+        },
+        "rabbit_light_fraction": {
+          "ratio": 0.99218,
+          "limits": [
+            0.62,
+            1.42
+          ],
+          "pass": true
+        },
+        "left_leg_area_fraction": {
+          "ratio": 0.99302,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "right_leg_area_fraction": {
+          "ratio": 1.00684,
+          "limits": [
+            0.78,
+            1.22
+          ],
+          "pass": true
+        },
+        "hair_neutral_luma": {
+          "delta": -3.028,
+          "tolerance": 18.0,
+          "pass": true
+        },
+        "dark_fabric_fraction": {
+          "delta": -0.00776,
+          "tolerance": 0.13,
+          "pass": true
+        }
+      }
+    }
+  ],
+  "manual_semantic_checks": {
+    "single_rabbit_and_fixed_satchel_topology": "PASS: one viewer-right rabbit and one satchel remain present in all 23 frames",
+    "raised_hand_reads_as_restrained_refusal_not_greeting": "PASS: hand remains beside the temple/brim through F08-F15 and performs one small outward stop press",
+    "no_external_hand_or_bag_contact": "PASS: no external hand appears and the raised hand never touches the bag or rabbit",
+    "head_face_and_body_volume_continuity": "PASS: transition and close-up sheets show stable large head, compact torso, broad hem and sturdy legs after F05/F14/F19 redraws"
+  },
+  "manual_review_artifacts": [
+    "qa/motion-transition-sheet.png",
+    "qa/local-identity-contact-sheet.png"
+  ]
+}

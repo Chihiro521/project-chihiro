@@ -2274,6 +2274,43 @@
         "height": 454
       }
     },
+    "head_pat_refuse": {
+      "frames": [
+        "animations/head_pat_refuse/frame_000.png",
+        "animations/head_pat_refuse/frame_001.png",
+        "animations/head_pat_refuse/frame_002.png",
+        "animations/head_pat_refuse/frame_003.png",
+        "animations/head_pat_refuse/frame_004.png",
+        "animations/head_pat_refuse/frame_005.png",
+        "animations/head_pat_refuse/frame_006.png",
+        "animations/head_pat_refuse/frame_007.png",
+        "animations/head_pat_refuse/frame_008.png",
+        "animations/head_pat_refuse/frame_009.png",
+        "animations/head_pat_refuse/frame_010.png",
+        "animations/head_pat_refuse/frame_011.png",
+        "animations/head_pat_refuse/frame_012.png",
+        "animations/head_pat_refuse/frame_013.png",
+        "animations/head_pat_refuse/frame_014.png",
+        "animations/head_pat_refuse/frame_015.png",
+        "animations/head_pat_refuse/frame_016.png",
+        "animations/head_pat_refuse/frame_017.png",
+        "animations/head_pat_refuse/frame_018.png",
+        "animations/head_pat_refuse/frame_019.png",
+        "animations/head_pat_refuse/frame_020.png",
+        "animations/head_pat_refuse/frame_021.png",
+        "animations/head_pat_refuse/frame_022.png"
+      ],
+      "frameDurationsMs": [100, 120, 120, 120, 180, 120, 120, 120, 140, 100, 100, 100, 100, 220, 120, 120, 130, 140, 160, 140, 140, 160, 100],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 179, "y": 14, "width": 154, "height": 459}
+    },
     "head_pat_accept": {
       "frames": [
         "animations/head_pat_accept/frame_000.png",

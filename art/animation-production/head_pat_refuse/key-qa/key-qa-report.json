@@ -1,0 +1,82 @@
+{
+  "status": "PASS",
+  "scope": "preliminary sparse-key structural and standing-scale gate; user semantic review remains mandatory",
+  "reference": "return_wave\\frames\\frame_000.png",
+  "reference_bbox": [
+    185,
+    19,
+    332,
+    472
+  ],
+  "frames": [
+    {
+      "name": "k03_notice",
+      "label": "K03 察觉触碰",
+      "alpha_bbox": [
+        183,
+        19,
+        329,
+        473
+      ],
+      "visible_width": 146,
+      "visible_height": 454,
+      "width_ratio_vs_reference": 0.9932,
+      "height_ratio_vs_reference": 1.0022,
+      "alpha_coverage": 0.151894,
+      "baseline_y": 472,
+      "failures": []
+    },
+    {
+      "name": "k06_avoid",
+      "label": "K06 避头抬手",
+      "alpha_bbox": [
+        183,
+        20,
+        330,
+        473
+      ],
+      "visible_width": 147,
+      "visible_height": 453,
+      "width_ratio_vs_reference": 1.0,
+      "height_ratio_vs_reference": 1.0,
+      "alpha_coverage": 0.154629,
+      "baseline_y": 472,
+      "failures": []
+    },
+    {
+      "name": "k09_block_peak",
+      "label": "K09 帽檐侧阻止",
+      "alpha_bbox": [
+        181,
+        20,
+        333,
+        473
+      ],
+      "visible_width": 152,
+      "visible_height": 453,
+      "width_ratio_vs_reference": 1.034,
+      "height_ratio_vs_reference": 1.0,
+      "alpha_coverage": 0.155827,
+      "baseline_y": 472,
+      "failures": []
+    },
+    {
+      "name": "k12_lower",
+      "label": "K12 放下恢复",
+      "alpha_bbox": [
+        182,
+        20,
+        330,
+        473
+      ],
+      "visible_width": 148,
+      "visible_height": 453,
+      "width_ratio_vs_reference": 1.0068,
+      "height_ratio_vs_reference": 1.0,
+      "alpha_coverage": 0.153744,
+      "baseline_y": 472,
+      "failures": []
+    }
+  ],
+  "failures": []
+}

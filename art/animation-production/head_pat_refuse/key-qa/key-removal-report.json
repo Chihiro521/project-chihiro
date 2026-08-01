@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "frames": [
+    {
+      "name": "k03_notice",
+      "sampled_key_rgb": [
+        239,
+        6,
+        207
+      ],
+      "transparent_pixels": 904951,
+      "partially_transparent_pixels": 964,
+      "total_pixels": 1048576,
+      "matte": "two-channel magenta dominance; opaque<=45, transparent>=120"
+    },
+    {
+      "name": "k06_avoid",
+      "sampled_key_rgb": [
+        231,
+        4,
+        192
+      ],
+      "transparent_pixels": 902365,
+      "partially_transparent_pixels": 1058,
+      "total_pixels": 1048576,
+      "matte": "two-channel magenta dominance; opaque<=45, transparent>=120"
+    },
+    {
+      "name": "k09_block_peak",
+      "sampled_key_rgb": [
+        240,
+        7,
+        205
+      ],
+      "transparent_pixels": 901132,
+      "partially_transparent_pixels": 1039,
+      "total_pixels": 1048576,
+      "matte": "two-channel magenta dominance; opaque<=45, transparent>=120"
+    },
+    {
+      "name": "k12_lower",
+      "sampled_key_rgb": [
+        234,
+        6,
+        204
+      ],
+      "transparent_pixels": 903191,
+      "partially_transparent_pixels": 1061,
+      "total_pixels": 1048576,
+      "matte": "two-channel magenta dominance; opaque<=45, transparent>=120"
+    }
+  ]
+}

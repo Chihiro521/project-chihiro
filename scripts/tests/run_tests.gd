@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 78, "manifest should contain 78 animations")
+	_expect(manifest.animation_names().size() == 79, "manifest should contain 79 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -185,6 +185,16 @@ func _test_manifest() -> void:
 		accept_textures_load = accept_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(accept_at_eight_fps, "accepted head pat should play at eight FPS")
 	_expect(accept_textures_load, "accepted head-pat runtime frames should import as Texture2D resources")
+	var head_pat_refuse := manifest.clip("head_pat_refuse")
+	_expect((head_pat_refuse.get("frames", []) as Array).size() == 23, "refused head pat should contain twenty-three direct poses")
+	_expect(not bool(head_pat_refuse.get("loop", true)), "refused head pat should complete as a one-shot")
+	var refuse_durations: Array = head_pat_refuse.get("frameDurationsMs", [])
+	_expect(refuse_durations.size() == 23 and is_equal_approx(float(refuse_durations[13]), 220.0), "refused head pat should preserve its peak blocking hold")
+	var refuse_textures_load := true
+	for frame in head_pat_refuse.get("frames", []):
+		var resource_path := manifest.frame_resource_path(str(frame))
+		refuse_textures_load = refuse_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(refuse_textures_load, "refused head-pat runtime frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -193,7 +203,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1505, "manifest should expose 1505 runtime frames")
+	_expect(frame_count == 1528, "manifest should expose 1528 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -331,6 +341,8 @@ func _test_behavior_director() -> void:
 	_expect(str(guard_intent.get("clip", "")) == "guard_bag_annoyed", "guard-bag behavior uses the approved direct animation")
 	var accepted_pat_intent := director.create_intent("head_pat_accept", needs, context, 99850)
 	_expect(str(accepted_pat_intent.get("clip", "")) == "head_pat_accept", "accepted head-pat behavior uses the approved direct animation")
+	var refused_pat_intent := director.create_intent("head_pat_refuse", needs, context, 99875)
+	_expect(str(refused_pat_intent.get("clip", "")) == "head_pat_refuse", "refused head-pat behavior uses the approved direct animation")
 	needs.set_need("energy", 50.0)
 	var sit_intent := director.create_intent("sit_rest", needs, context, 99900)
 	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")

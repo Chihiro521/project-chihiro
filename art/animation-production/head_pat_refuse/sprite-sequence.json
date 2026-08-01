@@ -1,0 +1,157 @@
+{
+  "name": "head_pat_refuse",
+  "frame_count": 23,
+  "fps": 10,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": true,
+  "pivot": {"x": 256, "y": 492},
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "pose_family_authorities": {
+      "standing": "../return_wave/anchors/reason_pose_frame_000_chroma.png"
+    },
+    "rule": "Temporal neighbors control motion and contacts only and never replace design or proportion authority."
+  },
+  "identity_lock": {
+    "silhouette": "Large rounded navy beret, broad ash-beige bob and face, compact four-head-tall body, deep navy A-line dress, fixed viewer-right satchel and one rabbit.",
+    "proportions": "Standing authority owns head and face width, body volume, short sturdy legs, garment length, shoe size, fixed scale, foot spacing and baseline.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and matte dark ash-beige hair; only gaze, eyelids, brows and a 5-7 degree head avoidance may change.",
+    "costume": "Navy beret, cream Peter Pan collar, orange ribbon, three brass buttons, loose sleeves, lace hem, cream socks, black Mary Jane shoes, tan strap, compact satchel and one rabbit retain exact topology.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Soft polished miniature anime sprite, fine dark outlines, restrained warm cel shading, subdued original hair highlights, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She detects an unwanted head pat, angles her head slightly away, releases the strap with the viewer-left hand, raises that hand beside the hat brim/face as a restrained stop, then lowers it and returns to neutral.",
+    "allowed_motion": "Gaze, eyelids, brows, 5-7 degree head turn, chin tuck, viewer-left shoulder/elbow/wrist/fingers and minimal sleeve response.",
+    "forbidden_changes": "No external hand, hit, jump, bag/rabbit contact, chest-level guard-bag gesture, foot/root motion, body slimming, face-size drift, brightened hair, costume or strap redesign, extra anatomy, scenery, shadow, gradient, text or watermark.",
+    "contact_ledger": [
+      {
+        "object": "navy beret",
+        "count": 1,
+        "side": "head; viewer-left front brim is the optional contact point",
+        "owner": "viewer-left raised hand at block peak",
+        "contact_points": "fingertips may barely touch the front brim or stop just before it",
+        "occlusion_order": "hand and sleeve in front of brim/face without covering the full face"
+      },
+      {
+        "object": "tan strap and viewer-right satchel with one rabbit",
+        "count": 1,
+        "side": "strap crosses to the viewer-right satchel",
+        "owner": "strap remains attached; viewer-left hand releases and later re-grips it",
+        "contact_points": "no contact with satchel or rabbit at any time",
+        "occlusion_order": "strap in front of dress; rabbit in front of satchel"
+      }
+    ]
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.13,
+    "max_alpha_coverage": 0.44,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.55,
+    "max_bbox_aspect_drift": 0.55,
+    "max_baseline_jitter_px": 3.0,
+    "max_center_range_px": 22.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.28,
+    "max_motion_energy_delta": 0.15,
+    "max_centroid_acceleration_px": 18.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "Raised forearm adds upper-body silhouette area while feet, torso scale and baseline remain fixed.",
+    "max_bbox_aspect_drift": "The face-side blocking hand temporarily widens the upper silhouette without changing identity proportions."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "standing",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": [
+      "head_and_face_width",
+      "garment_landmarks_and_body_volume",
+      "leg_thickness_and_shoe_baseline",
+      "hair_luminance_and_dark_fabric_frequency",
+      "strap_satchel_rabbit_topology",
+      "raised_hand_hat_brim_contact"
+    ]
+  },
+  "key_pose_review": {
+    "production_state": "keys_user_accepted",
+    "keys": {
+      "k03_notice": "key-poses/k03_notice.png",
+      "k06_avoid": "key-poses/k06_avoid.png",
+      "k09_block_peak": "key-poses/k09_block_peak.png",
+      "k12_lower": "key-poses/k12_lower.png"
+    },
+    "contact_sheet": "key-qa/head_pat_refuse-key-contact-sheet.png",
+    "closeup_sheet": "key-qa/head_pat_refuse-key-closeups.png",
+    "automated_report": "key-qa/key-qa-report.json",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-07-30",
+    "notes": "Every key is a separately generated complete full-character drawing. No direct transition frames, interpolation, compositing, warping, engine integration or packaging have been performed."
+  },
+  "one_shot_timing": {
+    "nominal_motion_fps": 10,
+    "context_preview_durations_ms": [450, 120, 120, 120, 180, 120, 120, 120, 140, 100, 100, 100, 100, 220, 120, 120, 130, 140, 160, 140, 140, 160, 700],
+    "intentional_peak_hold_frame": 13,
+    "context_idle_owned_by_state_machine": true,
+    "notes": "The sequence is a non-looping one-shot. Timing metadata supplies the peak hold and review context; no near-duplicate drifting drawings are used as holds."
+  },
+  "review_state": {
+    "status": "packaged_ready_for_engine",
+    "automated_status": "PASS",
+    "local_identity_status": "PASS",
+    "semantic_status": "accepted_2026-08-01",
+    "user_approval_artifact": "qa/preview-one-shot-context.gif",
+    "controller_qa_report": "qa/controller-recheck/qa-report.json",
+    "user_approval": {
+      "date": "2026-08-01",
+      "verdict": "应该已经完成了，可以验收并且接入godot 并分阶段提交了。"
+    },
+    "artifacts": {
+      "generic_report": "qa/qa-report.json",
+      "local_identity_report": "qa/local-identity-report.json",
+      "contact_sheet": "qa/contact-sheet.png",
+      "motion_transition_sheet": "qa/motion-transition-sheet.png",
+      "local_identity_contact_sheet": "qa/local-identity-contact-sheet.png",
+      "target_fps_preview": "qa/preview-target-10fps.gif",
+      "slow_preview": "qa/preview-slow-5fps.gif",
+      "one_shot_context_preview": "qa/preview-one-shot-context.gif",
+      "one_shot_context_slow_preview": "qa/preview-one-shot-context-slow.gif",
+      "timing_report": "qa/timing-report.json"
+    }
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "segment": "one_shot", "pose": "independently drawn neutral standing start"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.0455, "role": "direct", "segment": "one_shot", "pose": "eyes begin detecting contact above"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.0909, "role": "direct", "segment": "one_shot", "pose": "gaze lifts while body remains neutral"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.1364, "role": "direct", "segment": "one_shot", "pose": "eyelids cool and brows gather"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.1818, "role": "key", "segment": "one_shot", "pose": "approved notice key"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.2273, "role": "direct", "segment": "one_shot", "pose": "head begins the small screen-right avoidance"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.2727, "role": "direct", "segment": "one_shot", "pose": "viewer-left fingers loosen from the strap"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.3182, "role": "direct", "segment": "one_shot", "pose": "released hand rises only to upper-chest and shoulder height"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.3636, "role": "key", "segment": "one_shot", "pose": "approved avoidance and hand-rise key"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.4091, "role": "direct", "segment": "one_shot", "pose": "hand clears the ear-side hair"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.4545, "role": "direct", "segment": "one_shot", "pose": "wrist rises beside the temple"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.5, "role": "direct", "segment": "one_shot", "pose": "wrist rotates one third outward without reversing"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.5455, "role": "direct", "segment": "one_shot", "pose": "wrist rotates two thirds outward toward the stop peak"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.5909, "role": "key", "segment": "one_shot", "pose": "approved restrained block peak"},
+    {"index": 14, "file": "frame_014.png", "phase": 0.6364, "role": "direct", "segment": "one_shot", "pose": "tiny outward wrist press reinforces no"},
+    {"index": 15, "file": "frame_015.png", "phase": 0.6818, "role": "direct", "segment": "one_shot", "pose": "hand releases the stop and descends beside the ear"},
+    {"index": 16, "file": "frame_016.png", "phase": 0.7273, "role": "direct", "segment": "one_shot", "pose": "hand continues down beside the lower cheek and shoulder"},
+    {"index": 17, "file": "frame_017.png", "phase": 0.7727, "role": "direct", "segment": "one_shot", "pose": "hand continues monotonically to collarbone height"},
+    {"index": 18, "file": "frame_018.png", "phase": 0.8182, "role": "key", "segment": "one_shot", "pose": "approved lowering key"},
+    {"index": 19, "file": "frame_019.png", "phase": 0.8636, "role": "direct", "segment": "one_shot", "pose": "open fingertips approach the strap without dropping below it"},
+    {"index": 20, "file": "frame_020.png", "phase": 0.9091, "role": "direct", "segment": "one_shot", "pose": "fingers make contact and begin a partial strap grip"},
+    {"index": 21, "file": "frame_021.png", "phase": 0.9545, "role": "direct", "segment": "one_shot", "pose": "strap grip and gaze settle"},
+    {"index": 22, "file": "frame_022.png", "phase": 1.0, "role": "key", "segment": "one_shot", "pose": "independently drawn neutral standing return"}
+  ]
+}

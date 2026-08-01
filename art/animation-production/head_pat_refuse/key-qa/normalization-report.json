@@ -1,0 +1,124 @@
+{
+  "status": "PASS",
+  "shared_scale_source": "median key height to approved standing height",
+  "target_visible_height": 453,
+  "target_baseline_y": 472,
+  "frames": [
+    {
+      "name": "k03_notice",
+      "label": "K03 察觉触碰",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        0,
+        -2
+      ],
+      "alpha_bbox": [
+        183,
+        19,
+        329,
+        473
+      ],
+      "visible_height": 454,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k06_avoid",
+      "label": "K06 避头抬手",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        -1,
+        -5
+      ],
+      "alpha_bbox": [
+        183,
+        20,
+        330,
+        473
+      ],
+      "visible_height": 453,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k09_block_peak",
+      "label": "K09 帽檐侧阻止",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -5
+      ],
+      "alpha_bbox": [
+        181,
+        20,
+        333,
+        473
+      ],
+      "visible_height": 453,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "name": "k12_lower",
+      "label": "K12 放下恢复",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        0,
+        -5
+      ],
+      "alpha_bbox": [
+        182,
+        20,
+        330,
+        473
+      ],
+      "visible_height": 453,
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}

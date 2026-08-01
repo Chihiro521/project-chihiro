@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "frame_count": 23,
+  "nominal_motion_fps": 10,
+  "context_preview_duration_ms": 3920,
+  "durations_ms": [
+    450,
+    120,
+    120,
+    120,
+    180,
+    120,
+    120,
+    120,
+    140,
+    100,
+    100,
+    100,
+    100,
+    220,
+    120,
+    120,
+    130,
+    140,
+    160,
+    140,
+    140,
+    160,
+    700
+  ],
+  "notes": "The runtime action is one-shot. Longer first/last durations represent surrounding idle context; F13 receives the intentional refusal hold. Holds use timing metadata, not drifting redraws."
+}

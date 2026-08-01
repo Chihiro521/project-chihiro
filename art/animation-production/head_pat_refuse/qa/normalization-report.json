@@ -1,0 +1,606 @@
+{
+  "status": "PASS",
+  "frame_count": 23,
+  "frozen_user_accepted_keys": [
+    4,
+    8,
+    13,
+    18
+  ],
+  "shared_whole_drawing_scale": 1.042578,
+  "target_baseline_y": 472,
+  "frames": [
+    {
+      "index": 0,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        1,
+        -7
+      ],
+      "alpha_bbox": [
+        181,
+        14,
+        332,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 1,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -4
+      ],
+      "alpha_bbox": [
+        184,
+        18,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 2,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        1,
+        -4
+      ],
+      "alpha_bbox": [
+        183,
+        16,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 3,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        0,
+        -2
+      ],
+      "alpha_bbox": [
+        183,
+        19,
+        329,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 4,
+      "source": "frozen_user_accepted_key",
+      "alpha_bbox": [
+        183,
+        19,
+        329,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 5,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        1,
+        2
+      ],
+      "alpha_bbox": [
+        185,
+        26,
+        328,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 6,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        -3,
+        2
+      ],
+      "alpha_bbox": [
+        185,
+        28,
+        328,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 7,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        -1,
+        -5
+      ],
+      "alpha_bbox": [
+        183,
+        20,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 8,
+      "source": "frozen_user_accepted_key",
+      "alpha_bbox": [
+        183,
+        20,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 9,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        -1,
+        -2
+      ],
+      "alpha_bbox": [
+        183,
+        22,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 10,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -5
+      ],
+      "alpha_bbox": [
+        181,
+        20,
+        332,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 11,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -5
+      ],
+      "alpha_bbox": [
+        181,
+        20,
+        332,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 12,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -5
+      ],
+      "alpha_bbox": [
+        181,
+        20,
+        332,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 13,
+      "source": "frozen_user_accepted_key",
+      "alpha_bbox": [
+        181,
+        20,
+        333,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 14,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        0
+      ],
+      "alpha_bbox": [
+        179,
+        24,
+        333,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 15,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        4,
+        -5
+      ],
+      "alpha_bbox": [
+        183,
+        23,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 16,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        4,
+        -6
+      ],
+      "alpha_bbox": [
+        184,
+        19,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 17,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        0,
+        -5
+      ],
+      "alpha_bbox": [
+        183,
+        21,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 18,
+      "source": "frozen_user_accepted_key",
+      "alpha_bbox": [
+        182,
+        20,
+        330,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 19,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        0,
+        -6
+      ],
+      "alpha_bbox": [
+        183,
+        18,
+        329,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 20,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -8
+      ],
+      "alpha_bbox": [
+        183,
+        15,
+        331,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 21,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -8
+      ],
+      "alpha_bbox": [
+        183,
+        14,
+        331,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 22,
+      "source": "independently_generated_complete_character",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "final_size": [
+        512,
+        512
+      ],
+      "shared_whole_drawing_scale": 1.042578,
+      "whole_sprite_translation": [
+        2,
+        -7
+      ],
+      "alpha_bbox": [
+        183,
+        15,
+        331,
+        473
+      ],
+      "visible_baseline_y": 472,
+      "pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}
