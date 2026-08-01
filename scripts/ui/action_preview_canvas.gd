@@ -8,7 +8,7 @@ var _show_guides := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(420.0, 420.0)
+	custom_minimum_size = Vector2(340.0, 340.0)
 	resized.connect(queue_redraw)
 
 func set_preview(texture: Texture2D, clip: Dictionary, frame_index: int) -> void:

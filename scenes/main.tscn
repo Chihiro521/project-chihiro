@@ -54,9 +54,10 @@ script = ExtResource("3_window")
 [node name="ActionCatalog" type="Window" parent="."]
 title = "千寻动作总览"
 initial_position = 1
-size = Vector2i(1240, 840)
-min_size = Vector2i(1000, 700)
+size = Vector2i(1360, 900)
+min_size = Vector2i(960, 640)
 visible = false
+always_on_top = true
 transient = false
 force_native = true
 script = ExtResource("9_action_catalog")

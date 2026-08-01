@@ -112,12 +112,12 @@ func _build_ui() -> void:
 
 	var body := HSplitContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.split_offset = 350
+	body.split_offset = 310
 	body.add_theme_constant_override("separation", 14)
 	root_column.add_child(body)
 
 	var browser_panel := PanelContainer.new()
-	browser_panel.custom_minimum_size = Vector2(330.0, 0.0)
+	browser_panel.custom_minimum_size = Vector2(300.0, 0.0)
 	browser_panel.add_theme_stylebox_override("panel", _panel_style(Color("#121923"), Color("#253344"), 10))
 	body.add_child(browser_panel)
 	var browser_margin := MarginContainer.new()
@@ -155,7 +155,7 @@ func _build_ui() -> void:
 	_tree.set_column_title(1, "运行类型")
 	_tree.set_column_expand(0, true)
 	_tree.set_column_expand(1, false)
-	_tree.set_column_custom_minimum_width(1, 92)
+	_tree.set_column_custom_minimum_width(1, 82)
 	_tree.item_selected.connect(_on_tree_item_selected)
 	browser_column.add_child(_tree)
 
@@ -179,19 +179,19 @@ func _build_ui() -> void:
 
 	var preview_and_info := HSplitContainer.new()
 	preview_and_info.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview_and_info.split_offset = 480
+	preview_and_info.split_offset = 390
 	preview_and_info.add_theme_constant_override("separation", 12)
 	detail_column.add_child(preview_and_info)
 
 	var preview_panel := PanelContainer.new()
-	preview_panel.custom_minimum_size = Vector2(420.0, 420.0)
+	preview_panel.custom_minimum_size = Vector2(340.0, 340.0)
 	preview_panel.add_theme_stylebox_override("panel", _panel_style(Color("#11161d"), Color("#2c3b4c"), 10))
 	preview_and_info.add_child(preview_panel)
 	_preview = PetActionPreviewCanvas.new()
 	preview_panel.add_child(_preview)
 
 	var info_panel := PanelContainer.new()
-	info_panel.custom_minimum_size = Vector2(285.0, 0.0)
+	info_panel.custom_minimum_size = Vector2(240.0, 0.0)
 	info_panel.add_theme_stylebox_override("panel", _panel_style(Color("#121923"), Color("#253344"), 10))
 	preview_and_info.add_child(info_panel)
 	var info_margin := MarginContainer.new()
