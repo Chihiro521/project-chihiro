@@ -24,6 +24,9 @@ var _transition_tween: Tween
 var _placement := "above"
 var _anchor_rect := Rect2()
 var _work_area := Rect2()
+var _has_layout := false
+var _tail_anchor_x := -1000000.0
+var _layout_revision := 0
 
 var _surface: Control
 var _shadow: PanelContainer
@@ -97,9 +100,13 @@ func show_message(
 func update_anchor(anchor_rect: Rect2, available_work_area: Rect2) -> void:
 	if not is_showing():
 		return
-	_anchor_rect = anchor_rect
+	var next_work_area := _work_area
 	if available_work_area.size.x > 0.0 and available_work_area.size.y > 0.0:
-		_work_area = available_work_area
+		next_work_area = available_work_area
+	if _rect_is_equal_approx(anchor_rect, _anchor_rect) and _rect_is_equal_approx(next_work_area, _work_area):
+		return
+	_anchor_rect = anchor_rect
+	_work_area = next_work_area
 	_place_window()
 
 func hide_message(immediate := false) -> void:
@@ -124,12 +131,16 @@ func is_showing() -> bool:
 func placement() -> String:
 	return _placement
 
+func layout_revision() -> int:
+	return _layout_revision
+
 func snapshot() -> Dictionary:
 	return {
 		"visible": is_showing(),
 		"id": current_id,
 		"text": _label.text if _label != null else "",
 		"placement": _placement,
+		"layout_revision": _layout_revision,
 	}
 
 static func resolve_placement(anchor_rect: Rect2, work_area: Rect2, bubble_size := Vector2(WINDOW_SIZE)) -> String:
@@ -234,12 +245,29 @@ func _build_surface() -> void:
 	column.add_child(_label)
 
 func _place_window() -> void:
-	_placement = resolve_placement(_anchor_rect, _work_area)
-	var resolved := resolve_position(_anchor_rect, _work_area, _placement)
-	position = Vector2i(roundi(resolved.x), roundi(resolved.y))
-	_layout_surface()
+	var next_placement := resolve_placement(_anchor_rect, _work_area)
+	var resolved := resolve_position(_anchor_rect, _work_area, next_placement)
+	var next_position := Vector2i(roundi(resolved.x), roundi(resolved.y))
+	var next_tail_anchor_x := clampf(
+		roundf(_anchor_rect.position.x + _anchor_rect.size.x / 2.0 - float(next_position.x)),
+		38.0,
+		float(WINDOW_SIZE.x) - 38.0,
+	)
+	var placement_changed := not _has_layout or next_placement != _placement
+	var position_changed := not _has_layout or next_position != position
+	var tail_changed := not _has_layout or not is_equal_approx(next_tail_anchor_x, _tail_anchor_x)
+	if not placement_changed and not position_changed and not tail_changed:
+		return
+	_placement = next_placement
+	if position_changed:
+		position = next_position
+	if placement_changed or tail_changed:
+		_tail_anchor_x = next_tail_anchor_x
+		_layout_surface(next_tail_anchor_x)
+	_has_layout = true
+	_layout_revision += 1
 
-func _layout_surface() -> void:
+func _layout_surface(anchor_x: float) -> void:
 	var card_y := CARD_MARGIN if _placement == "above" else TAIL_DEPTH
 	var card_position := Vector2(CARD_MARGIN, card_y)
 	var card_size := Vector2(float(WINDOW_SIZE.x) - CARD_MARGIN * 2.0, CARD_HEIGHT)
@@ -247,11 +275,6 @@ func _layout_surface() -> void:
 	_shadow.size = card_size
 	_card.position = card_position
 	_card.size = card_size
-	var anchor_x := clampf(
-		_anchor_rect.position.x + _anchor_rect.size.x / 2.0 - float(position.x),
-		38.0,
-		float(WINDOW_SIZE.x) - 38.0,
-	)
 	if _placement == "above":
 		_tail_border.polygon = PackedVector2Array([
 			Vector2(anchor_x - 18.0, card_position.y + card_size.y - 7.0),
@@ -293,6 +316,9 @@ func _kill_transition_tween() -> void:
 
 func _default_work_area() -> Rect2:
 	return Rect2(DisplayServer.screen_get_usable_rect(current_screen))
+
+func _rect_is_equal_approx(left: Rect2, right: Rect2) -> bool:
+	return left.position.is_equal_approx(right.position) and left.size.is_equal_approx(right.size)
 
 func _panel_style(fill: Color, border: Color, radius: int, border_width: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()

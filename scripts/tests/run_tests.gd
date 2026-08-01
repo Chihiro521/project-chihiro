@@ -575,6 +575,14 @@ func _test_speech_bubble() -> void:
 	bubble.show_message("first", "第一条", 10.0, top_pet, work)
 	await process_frame
 	_expect(bubble.placement() == "below", "the live bubble applies the resolved screen-edge placement")
+	var stable_revision := bubble.layout_revision()
+	for _index in range(120):
+		bubble.update_anchor(top_pet, work)
+	_expect(bubble.layout_revision() == stable_revision, "an unchanged anchor does not repeatedly reposition the native speech window")
+	bubble.update_anchor(Rect2(top_pet.position + Vector2(0.1, 0.0), top_pet.size), work)
+	_expect(bubble.layout_revision() == stable_revision, "subpixel pet motion does not churn native speech-window geometry")
+	bubble.update_anchor(Rect2(top_pet.position + Vector2(3.0, 0.0), top_pet.size), work)
+	_expect(bubble.layout_revision() == stable_revision + 1, "visible speech follows meaningful pet movement once")
 	bubble.hide_message()
 	_expect(bubble.is_showing() and bubble.current_id == "first", "speech host stays reserved throughout fade-out")
 	await create_timer(0.04).timeout

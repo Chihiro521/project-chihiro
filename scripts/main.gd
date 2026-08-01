@@ -12,6 +12,7 @@ const TRAVEL_FACING_DEAD_ZONE := 18.0
 const MIN_EDGE_TRAVERSE_DISTANCE := 12.0
 const LIFE_SAVE_INTERVAL_MS := 30000.0
 const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
+const SPEECH_FOLLOW_INTERVAL_MS := 33.0
 const RAPID_POKE_WINDOW_MS := 10000.0
 const ROUGH_DRAG_SPEED_PX_PER_SECOND := 1200.0
 
@@ -133,6 +134,7 @@ var next_window_refresh := 0.0
 var next_platform_track := 0.0
 var next_platform_swap := 0.0
 var next_mechanism_dashboard_update := 0.0
+var next_speech_follow := 0.0
 var life_session_started_at_ms := 0.0
 var last_click_at := -INF
 
@@ -221,7 +223,8 @@ func _process(delta: float) -> void:
 	if mechanism_dashboard.visible and now >= next_mechanism_dashboard_update:
 		next_mechanism_dashboard_update = now + MECHANISM_DASHBOARD_REFRESH_MS
 		mechanism_dashboard.set_snapshot(_mechanism_snapshot(now))
-	if speech_bubble.is_showing():
+	if speech_bubble.is_showing() and now >= next_speech_follow:
+		next_speech_follow = now + SPEECH_FOLLOW_INTERVAL_MS
 		speech_bubble.update_anchor(_speech_anchor_rect(), work_area)
 
 func _input(event: InputEvent) -> void:
@@ -1136,6 +1139,7 @@ func _show_speech(id: String, text: String, duration_seconds := -1.0) -> void:
 	if not speech_bubbles_enabled or text.strip_edges().is_empty():
 		return
 	speech_bubble.show_message(id, text, duration_seconds, _speech_anchor_rect(), work_area)
+	next_speech_follow = _now_ms() + SPEECH_FOLLOW_INTERVAL_MS
 	sfx_player.play("bubble", 0.02)
 
 func _speech_anchor_rect() -> Rect2:
