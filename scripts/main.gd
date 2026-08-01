@@ -11,6 +11,7 @@ const TRAVEL_FACING_DEAD_ZONE := 18.0
 const MIN_EDGE_TRAVERSE_DISTANCE := 12.0
 const BUBBLE_WINDOW_SIZE := Vector2i(520, 480)
 const LIFE_SAVE_INTERVAL_MS := 30000.0
+const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
 const RAPID_POKE_WINDOW_MS := 10000.0
 const ROUGH_DRAG_SPEED_PX_PER_SECOND := 1200.0
 
@@ -27,6 +28,7 @@ const MENU_TITLE_AWARENESS := 10
 const MENU_ACTION_SOUNDS := 11
 const MENU_DEBUG_OVERLAY := 12
 const MENU_ACTION_CATALOG := 13
+const MENU_MECHANISM_DASHBOARD := 14
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -36,6 +38,7 @@ const TRAY_SPEECH_BUBBLES := 109
 const TRAY_TITLE_AWARENESS := 110
 const TRAY_ACTION_SOUNDS := 111
 const TRAY_ACTION_CATALOG := 112
+const TRAY_MECHANISM_DASHBOARD := 113
 
 @onready var sprite_player: PetSpritePlayer = $SpritePlayer
 @onready var desktop: DesktopWindowBridge = $DesktopWindow
@@ -45,6 +48,7 @@ const TRAY_ACTION_CATALOG := 112
 @onready var debug_overlay: PetDebugOverlay = $DebugOverlay
 @onready var sfx_player: PetSfxPlayer = $SfxPlayer
 @onready var action_catalog: PetActionCatalogPanel = $ActionCatalog
+@onready var mechanism_dashboard: PetMechanismDashboard = $MechanismDashboard
 
 var manifest: PetManifestData
 var machine := PetStateMachine.new()
@@ -126,6 +130,8 @@ var next_ambient_dialogue_check := 0.0
 var next_window_refresh := 0.0
 var next_platform_track := 0.0
 var next_platform_swap := 0.0
+var next_mechanism_dashboard_update := 0.0
+var life_session_started_at_ms := 0.0
 var last_click_at := -INF
 
 func _ready() -> void:
@@ -204,12 +210,19 @@ func _process(delta: float) -> void:
 			"scores": behavior_director.last_candidates if behavior_director != null else [],
 			"platform": active_platform.stable_id() if active_platform != null else "",
 		})
+	if mechanism_dashboard.visible and now >= next_mechanism_dashboard_update:
+		next_mechanism_dashboard_update = now + MECHANISM_DASHBOARD_REFRESH_MS
+		mechanism_dashboard.set_snapshot(_mechanism_snapshot(now))
 
 func _input(event: InputEvent) -> void:
 	if not started:
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
+		if key.pressed and not key.echo and key.keycode == KEY_F8:
+			_show_mechanism_dashboard()
+			get_viewport().set_input_as_handled()
+			return
 		if key.pressed and not key.echo and key.keycode == KEY_F9:
 			action_catalog.show_catalog()
 			get_viewport().set_input_as_handled()
@@ -254,6 +267,7 @@ func _setup_menus() -> void:
 	menu.add_check_item("气泡台词", MENU_SPEECH_BUBBLES)
 	menu.add_check_item("读取窗口标题", MENU_TITLE_AWARENESS)
 	menu.add_check_item("动作音效", MENU_ACTION_SOUNDS)
+	menu.add_item("人格机制…（F8）", MENU_MECHANISM_DASHBOARD)
 	menu.add_item("动作总览…", MENU_ACTION_CATALOG)
 	menu.add_check_item("调试信息（F10）", MENU_DEBUG_OVERLAY)
 	menu.add_separator()
@@ -269,6 +283,7 @@ func _setup_menus() -> void:
 	tray_menu.add_check_item("读取窗口标题", TRAY_TITLE_AWARENESS)
 	tray_menu.add_check_item("动作音效", TRAY_ACTION_SOUNDS)
 	tray_menu.add_separator()
+	tray_menu.add_item("人格机制", TRAY_MECHANISM_DASHBOARD)
 	tray_menu.add_item("动作总览", TRAY_ACTION_CATALOG)
 	tray_menu.add_separator()
 	tray_menu.add_item("退出", TRAY_QUIT)
@@ -359,6 +374,8 @@ func _on_menu_id_pressed(id: int) -> void:
 			_sync_menu_checks()
 		MENU_ACTION_CATALOG, TRAY_ACTION_CATALOG:
 			action_catalog.show_catalog()
+		MENU_MECHANISM_DASHBOARD, TRAY_MECHANISM_DASHBOARD:
+			_show_mechanism_dashboard()
 		MENU_QUIT, TRAY_QUIT:
 			_save_position()
 			_save_user_settings()
@@ -382,6 +399,7 @@ func _save_user_settings() -> void:
 		push_warning("无法保存桌宠设置：%s" % error_string(save_error))
 
 func _initialize_life_systems() -> void:
+	life_session_started_at_ms = _now_ms()
 	var profile := _load_json_dictionary(BEHAVIOR_PROFILE)
 	needs_model = PetNeedsModel.new(profile)
 	persistent_state = state_store.load_state()
@@ -513,6 +531,76 @@ func _behavior_context() -> Dictionary:
 		"dragging": machine.state == "dragged",
 		"menu_open": menu.visible,
 		"direct_interaction": machine.state in ["head_pat", "poke_cheek", "clock_scare"],
+	}
+
+func _show_mechanism_dashboard() -> void:
+	next_mechanism_dashboard_update = _now_ms() + MECHANISM_DASHBOARD_REFRESH_MS
+	mechanism_dashboard.show_dashboard(_mechanism_snapshot(_now_ms()))
+
+func _mechanism_snapshot(now: float) -> Dictionary:
+	var foreground := window_platform_service.foreground_snapshot()
+	var foreground_app := str(foreground.get("process_name", ""))
+	if foreground_app.is_empty():
+		foreground_app = last_foreground_app
+	var safe_title := ""
+	if title_awareness:
+		safe_title = dialogue_director.sanitize_window_title(str(foreground.get("title", "")))
+	var needs_snapshot := needs_model.snapshot() if needs_model != null else {}
+	var relationship_tier := needs_model.relationship_tier() if needs_model != null else "familiar"
+	var context := _behavior_context() if needs_model != null and manifest != null else {}
+	var candidates := behavior_director.diagnostic_candidates(needs_model, context, int(now)) if behavior_director != null else []
+	var state_stats_value: Variant = persistent_state.get("interaction_stats", {})
+	var state_stats: Dictionary = state_stats_value if state_stats_value is Dictionary else {}
+	var merged_stats := PetMechanismDashboard.merge_interaction_stats(state_stats, interaction_delta)
+	var ambient_target := next_ambient_dialogue_check
+	if dialogue_director.next_ambient_at_ms > 0.0:
+		ambient_target = maxf(ambient_target, dialogue_director.next_ambient_at_ms)
+	var event_cooldown_seconds := 0.0
+	if dialogue_director.next_event_at_ms > now:
+		event_cooldown_seconds = (dialogue_director.next_event_at_ms - now) / 1000.0
+	return {
+		"now_ms": int(now),
+		"state": machine.state,
+		"intent": str(current_intent.get("id", "")),
+		"clip": sprite_player.current_clip,
+		"session": action_session.snapshot(),
+		"needs": needs_snapshot,
+		"relationship_tier": relationship_tier,
+		"mood": _current_mood(),
+		"candidates": candidates,
+		"recent_intents": behavior_director.recent_intents() if behavior_director != null else [],
+		"bubble": speech_bubble.snapshot(),
+		"environment": {
+			"app": foreground_app,
+			"category": dialogue_director.classify_application(foreground_app, safe_title),
+			"title": safe_title,
+			"stable_title": last_novel_window_title if title_awareness else "",
+			"title_awareness": title_awareness,
+			"platform_count": platforms.size(),
+			"active_platform": active_platform.stable_id() if active_platform != null else "",
+		},
+		"dialogue": {
+			"event_cooldown_seconds": event_cooldown_seconds,
+			"ambient_seconds": maxf(0.0, (ambient_target - now) / 1000.0),
+			"recent_ids": dialogue_director.recent_dialogue_ids(),
+		},
+		"persistence": {
+			"stats": merged_stats,
+			"total_companion_seconds": float(persistent_state.get("total_companion_seconds", 0.0)) + session_unrecorded_seconds,
+			"session_seconds": maxf(0.0, (now - life_session_started_at_ms) / 1000.0),
+			"pending_seconds": session_unrecorded_seconds,
+			"last_saved_unix": int(persistent_state.get("last_seen_unix", 0)),
+			"next_save_seconds": maxf(0.0, (next_life_save - now) / 1000.0),
+			"path": ProjectSettings.globalize_path(state_store.save_path),
+			"last_error": state_store.last_error,
+		},
+		"settings": {
+			"auto_wander": auto_wander,
+			"cursor_tracking": cursor_tracking,
+			"speech_bubbles": speech_bubbles_enabled,
+			"title_awareness": title_awareness,
+			"action_sounds": action_sounds,
+		},
 	}
 
 func _start_autonomous_intent(intent: Dictionary) -> bool:

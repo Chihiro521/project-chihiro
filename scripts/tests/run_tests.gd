@@ -19,6 +19,7 @@ func _run() -> void:
 	_test_action_session()
 	_test_state_store_and_dialogue()
 	_test_action_catalog()
+	_test_mechanism_dashboard()
 	_test_window_platforms()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
@@ -356,6 +357,16 @@ func _test_behavior_director() -> void:
 		"time_period": "afternoon",
 		"returned_after_seconds": 3600.0,
 	}
+	var diagnostics := director.diagnostic_candidates(needs, context, 89000)
+	_expect(diagnostics.size() == 16, "behavior diagnostics expose all sixteen configured intents")
+	var eligible_diagnostic := false
+	var event_diagnostic := false
+	for diagnostic in diagnostics:
+		if diagnostic is Dictionary:
+			eligible_diagnostic = eligible_diagnostic or bool(diagnostic.get("eligible", false))
+			event_diagnostic = event_diagnostic or str(diagnostic.get("status", "")) == "事件触发"
+	_expect(eligible_diagnostic, "behavior diagnostics mark currently selectable candidates")
+	_expect(event_diagnostic, "behavior diagnostics distinguish direct event behaviors")
 	var breathe_intent := director.create_intent("breathe_shift", needs, context, 90000)
 	_expect(str(breathe_intent.get("clip", "")) == "idle_breathe", "breathing behavior uses the approved animation")
 	_expect(int((breathe_intent.get("session", {}) as Dictionary).get("max_duration_ms", 0)) == 2000, "breathing session ends on the two-second loop seam")
@@ -530,6 +541,28 @@ func _test_action_catalog() -> void:
 	var preview := PetActionPreviewCanvas.new()
 	_expect(preview != null, "action preview canvas can be instantiated headlessly")
 	preview.free()
+
+func _test_mechanism_dashboard() -> void:
+	_expect(PetMechanismDashboard.relationship_label("distant") == "疏远", "mechanism dashboard localizes relationship tiers")
+	_expect(PetMechanismDashboard.relationship_label("trusted") == "信任", "mechanism dashboard accepts the profile relationship ids")
+	_expect(is_equal_approx(PetMechanismDashboard.next_relationship_threshold(41.0), 60.0), "mechanism dashboard reports the next relationship threshold")
+	var merged := PetMechanismDashboard.merge_interaction_stats(
+		{"head_pats": 3, "pokes": 4, "rough_drags": 1, "positive": 3, "total": 8},
+		{"head_pats": 2, "pokes": 1, "rough_drags": 0, "positive": 2, "total": 3},
+	)
+	_expect(int(merged.head_pats) == 5 and int(merged.total) == 11, "mechanism dashboard merges persisted and pending interaction counters")
+	var previous := {"state": "idle", "environment": {"title": "private A", "stable_title": "private A", "app": "code.exe"}}
+	var title_only := {"state": "idle", "environment": {"title": "private B", "stable_title": "private B", "app": "code.exe"}}
+	_expect(PetMechanismDashboard.describe_snapshot_changes(previous, title_only).is_empty(), "mechanism timeline never records window title changes")
+	var safe_history := PetMechanismDashboard.history_safe_snapshot(title_only)
+	var safe_environment: Dictionary = safe_history.get("environment", {})
+	_expect(not safe_environment.has("title") and not safe_environment.has("stable_title"), "mechanism history snapshot redacts ephemeral titles")
+	var state_change := title_only.duplicate(true)
+	state_change.state = "ambient_action"
+	_expect(PetMechanismDashboard.describe_snapshot_changes(title_only, state_change).size() == 1, "mechanism timeline reports state-machine changes")
+	var dashboard := PetMechanismDashboard.new()
+	_expect(dashboard != null, "mechanism dashboard can be instantiated headlessly")
+	dashboard.free()
 
 func _test_window_platforms() -> void:
 	var snapshots := [

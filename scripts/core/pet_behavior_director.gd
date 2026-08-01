@@ -107,6 +107,47 @@ func candidate_scores(needs: PetNeedsModel, context: Dictionary = {}, now_ms: in
 	last_candidates = result.duplicate(true)
 	return result
 
+func diagnostic_candidates(needs: PetNeedsModel, context: Dictionary = {}, now_ms: int = -1) -> Array[Dictionary]:
+	var resolved_now := _resolve_now(now_ms, context)
+	var globally_blocked := _is_globally_blocked(context)
+	var result: Array[Dictionary] = []
+	if needs == null:
+		return result
+	for value in _definitions:
+		if not value is Dictionary:
+			continue
+		var definition: Dictionary = value
+		var intent_id := str(definition.get("id", ""))
+		var selectable := bool(definition.get("selectable", true))
+		var cooldown_ms := cooldown_remaining_ms(intent_id, resolved_now)
+		var passes_gates := selectable and _passes_gates(definition, needs, context, resolved_now)
+		var status := "可选"
+		if not selectable:
+			status = "事件触发"
+		elif globally_blocked:
+			status = "全局暂停"
+		elif cooldown_ms > 0:
+			status = "冷却 %.1fs" % (cooldown_ms / 1000.0)
+		elif not passes_gates:
+			status = "条件未满足"
+		result.append({
+			"id": intent_id,
+			"clip": _resolved_clip(definition, context),
+			"score": _score_definition(definition, needs, context),
+			"eligible": passes_gates and not globally_blocked,
+			"selectable": selectable,
+			"cooldown_ms": cooldown_ms,
+			"status": status,
+		})
+	result.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		if bool(left.get("eligible", false)) != bool(right.get("eligible", false)):
+			return bool(left.get("eligible", false))
+		if bool(left.get("selectable", false)) != bool(right.get("selectable", false)):
+			return bool(left.get("selectable", false))
+		return float(left.get("score", 0.0)) > float(right.get("score", 0.0))
+	)
+	return result
+
 func select_intent(needs: PetNeedsModel, context: Dictionary = {}, now_ms: int = -1, commit: bool = true) -> Dictionary:
 	var resolved_now := _resolve_now(now_ms, context)
 	var candidates := candidate_scores(needs, context, resolved_now)

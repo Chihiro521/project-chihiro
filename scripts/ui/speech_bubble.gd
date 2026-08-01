@@ -67,5 +67,12 @@ func hide_message() -> void:
 func is_showing() -> bool:
 	return visible and not current_id.is_empty()
 
+func snapshot() -> Dictionary:
+	return {
+		"visible": is_showing(),
+		"id": current_id,
+		"text": _label.text if _label != null else "",
+	}
+
 static func suggested_duration(text: String) -> float:
 	return clampf(2.8 + text.length() * 0.085, 3.2, 7.0)
