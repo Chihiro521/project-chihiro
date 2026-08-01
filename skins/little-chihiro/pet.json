@@ -1897,6 +1897,35 @@
         "height": 354
       }
     },
+    "window_land_recover": {
+      "frames": [
+        "animations/window_land_recover/frame_000.png",
+        "animations/window_land_recover/frame_001.png",
+        "animations/window_land_recover/frame_002.png",
+        "animations/window_land_recover/frame_003.png",
+        "animations/window_land_recover/frame_004.png",
+        "animations/window_land_recover/frame_005.png",
+        "animations/window_land_recover/frame_006.png",
+        "animations/window_land_recover/frame_007.png",
+        "animations/window_land_recover/frame_008.png",
+        "animations/window_land_recover/frame_009.png",
+        "animations/window_land_recover/frame_010.png",
+        "animations/window_land_recover/frame_011.png",
+        "animations/window_land_recover/frame_012.png",
+        "animations/window_land_recover/frame_013.png",
+        "animations/window_land_recover/frame_014.png"
+      ],
+      "frameDurationsMs": [125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 171, "y": 31, "width": 209, "height": 442}
+    },
     "land": {
       "frames": [
         "animations/land/frame_00.png",

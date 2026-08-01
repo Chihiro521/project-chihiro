@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 79, "manifest should contain 79 animations")
+	_expect(manifest.animation_names().size() == 80, "manifest should contain 80 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -195,6 +195,19 @@ func _test_manifest() -> void:
 		var resource_path := manifest.frame_resource_path(str(frame))
 		refuse_textures_load = refuse_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(refuse_textures_load, "refused head-pat runtime frames should import as Texture2D resources")
+	var window_land := manifest.clip("window_land_recover")
+	_expect((window_land.get("frames", []) as Array).size() == 15, "window landing recovery should contain fifteen direct poses")
+	_expect(not bool(window_land.get("loop", true)), "window landing recovery should complete as a one-shot")
+	var window_land_durations: Array = window_land.get("frameDurationsMs", [])
+	var window_land_at_eight_fps := window_land_durations.size() == 15
+	var window_land_textures_load := true
+	for duration in window_land_durations:
+		window_land_at_eight_fps = window_land_at_eight_fps and is_equal_approx(float(duration), 125.0)
+	for frame in window_land.get("frames", []):
+		var resource_path := manifest.frame_resource_path(str(frame))
+		window_land_textures_load = window_land_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(window_land_at_eight_fps, "window landing recovery should play at eight FPS")
+	_expect(window_land_textures_load, "window landing recovery frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -203,7 +216,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1528, "manifest should expose 1528 runtime frames")
+	_expect(frame_count == 1543, "manifest should expose 1543 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -343,6 +356,8 @@ func _test_behavior_director() -> void:
 	_expect(str(accepted_pat_intent.get("clip", "")) == "head_pat_accept", "accepted head-pat behavior uses the approved direct animation")
 	var refused_pat_intent := director.create_intent("head_pat_refuse", needs, context, 99875)
 	_expect(str(refused_pat_intent.get("clip", "")) == "head_pat_refuse", "refused head-pat behavior uses the approved direct animation")
+	var window_land_intent := director.create_intent("window_land_recover", needs, context, 99890)
+	_expect(str(window_land_intent.get("clip", "")) == "window_land_recover", "window landing behavior uses the approved recovery animation")
 	needs.set_need("energy", 50.0)
 	var sit_intent := director.create_intent("sit_rest", needs, context, 99900)
 	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")

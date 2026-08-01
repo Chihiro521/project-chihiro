@@ -1,0 +1,134 @@
+{
+  "name": "window_land_recover",
+  "frame_count": 15,
+  "fps": 8,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 14,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "travel",
+  "baseline_lock": false,
+  "center_lock": false,
+  "pivot": {
+    "x": 256,
+    "y": 492
+  },
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "pose_family_authorities": {
+      "standing": "../return_wave/frames/frame_000.png",
+      "airborne": "key-temporal/k00_descent_chroma.png (user accepted 2026-07-30)",
+      "compression": "key-temporal/k06_absorb_chroma.png (user accepted 2026-07-30)"
+    },
+    "rule": "Temporal neighbors control motion and contacts only and never replace design or proportion authority."
+  },
+  "identity_lock": {
+    "silhouette": "Large rounded navy beret, matte ash-beige bob, compact navy A-line dress, short sturdy legs, one canonical tan satchel and one small rabbit retain the approved silhouette through vertical landing compression.",
+    "proportions": "Preserve the broad face and head, approximately four-head-tall compact body, torso thickness, limb volume, garment length, sock cylinders, shoe size and final foot spacing of the standing authority.",
+    "face_and_markings": "Soft rounded pale face, muted blue-gray eyes and fixed fringe; only a restrained impact blink and recovery gaze may change.",
+    "costume": "Deep navy beret and dress, cream collar and lace hem, orange ribbon, three brass buttons, canonical strap route, viewer-right satchel, one rabbit, cream socks and black Mary Jane shoes keep exact topology.",
+    "palette": [
+      "#202330",
+      "#d8c9b9",
+      "#eee9dc",
+      "#c87539",
+      "#b78a55",
+      "#747f83",
+      "#292326"
+    ],
+    "rendering": "Soft polished anime game sprite with fine dark outlines, restrained warm cel shading, matte subdued hair highlights, smooth navy fabric, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She descends slightly, contacts an invisible window top with both shoes, absorbs the landing through knees and hips, steadies her weight and returns to the approved neutral stance.",
+    "allowed_motion": "Vertical root travel inside the cell; ankle, knee and hip flexion; small torso counter-tilt; restrained balancing arms and eyelid reaction; plausible hair, hem, strap, satchel and rabbit follow-through.",
+    "forbidden_changes": "No horizontal travel, step, visible platform, umbrella, scenery, shadow, interpolation, morph, warp, part composite, body slimming, face-size drift, brighter hair, thinner legs, shorter dress, rerouted strap, detached or duplicated bag/rabbit, crop, text or watermark.",
+    "contact_ledger": [
+      {
+        "object": "invisible horizontal window top",
+        "count": 1,
+        "side": "under both shoes; never drawn",
+        "owner": "both shoe soles",
+        "contact_points": "first sole contact at frame 3; both planted through frame 10; one sole may briefly unweight at a time during the tiny inward stance adjustment at frames 11-13; both planted again at frame 14",
+        "occlusion_order": "not rendered; character only"
+      },
+      {
+        "object": "satchel and rabbit",
+        "count": 1,
+        "side": "canonical viewer-right",
+        "owner": "connected cross-body strap",
+        "contact_points": "never contacts the platform",
+        "occlusion_order": "rabbit in front of satchel; satchel in front of viewer-right skirt/leg where canonical"
+      }
+    ]
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.1,
+    "max_alpha_coverage": 0.5,
+    "max_color_jsd": 0.22,
+    "max_area_drift": 0.7,
+    "max_bbox_aspect_drift": 0.85,
+    "max_baseline_jitter_px": 90.0,
+    "max_center_range_px": 90.0,
+    "min_adjacent_diff": 0.001,
+    "max_adjacent_diff": 0.38,
+    "max_motion_energy_delta": 0.2,
+    "max_centroid_acceleration_px": 30.0,
+    "min_loop_seam_ratio": 0.0,
+    "max_loop_seam_ratio": 99.0
+  },
+  "threshold_notes": {
+    "baseline_lock": "Disabled because the airborne root descends and the impact pose compresses vertically inside the fixed cell.",
+    "max_area_drift": "Deep but controlled foreshortening changes the visible silhouette; local head, face, limb and costume checks remain mandatory.",
+    "max_bbox_aspect_drift": "Raised narrowly from 0.80 to 0.85 for the declared F05 deep impact-compression silhouette, where bent knees, a widened hem and the balancing forearm legitimately widen the figure; local proportion QA remains mandatory.",
+    "max_center_range_px": "The character moves vertically inside the cell while the pivot remains fixed."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "standing plus accepted airborne/compression masters",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": [
+      "head_and_face_width_height_by_pose_family",
+      "torso_and_skirt_volume",
+      "thigh_calf_and_shoe_thickness",
+      "hair_luminance_and_navy_fabric_frequency",
+      "strap_route_satchel_and_single_rabbit_topology",
+      "shoe_contact_plane_and_final_baseline"
+    ]
+  },
+  "review_state": {
+    "status": "packaged_ready_for_engine",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-08-01",
+    "key_user_approval_artifact": "key-poses/window_land_recover-key-contact-sheet.png",
+    "controller_qa_report": "qa/controller-recheck/qa-report.json",
+    "user_approval": {
+      "date": "2026-08-01",
+      "verdict": "应该已经完成了，可以验收并且接入godot 并分阶段提交了。"
+    },
+    "full_sequence_artifacts": [
+      "qa/local-identity-contact-sheet.png",
+      "qa/preview.gif",
+      "qa/preview-slow.gif"
+    ]
+  },
+  "frames": [
+    {"index": 0, "file": "frame_000.png", "phase": 0.0, "role": "key", "segment": "descent", "pose": "slight airborne descent above the final contact plane"},
+    {"index": 1, "file": "frame_001.png", "phase": 0.0714, "role": "direct", "segment": "descent", "pose": "continues downward with knees preparing"},
+    {"index": 2, "file": "frame_002.png", "phase": 0.1429, "role": "direct", "segment": "descent", "pose": "soles approach the invisible edge"},
+    {"index": 3, "file": "frame_003.png", "phase": 0.2143, "role": "key", "segment": "contact", "pose": "both shoe soles first contact the same invisible horizontal plane"},
+    {"index": 4, "file": "frame_004.png", "phase": 0.2857, "role": "direct", "segment": "contact", "pose": "knees begin absorbing impact"},
+    {"index": 5, "file": "frame_005.png", "phase": 0.3571, "role": "direct", "segment": "compression", "pose": "root lowers and skirt begins to widen"},
+    {"index": 6, "file": "frame_006.png", "phase": 0.4286, "role": "key", "segment": "compression", "pose": "deepest controlled impact absorption with both soles planted"},
+    {"index": 7, "file": "frame_007.png", "phase": 0.5, "role": "direct", "segment": "compression", "pose": "compression holds only through timing while secondary motion overtakes"},
+    {"index": 8, "file": "frame_008.png", "phase": 0.5714, "role": "direct", "segment": "recovery", "pose": "hips and knees begin rising"},
+    {"index": 9, "file": "frame_009.png", "phase": 0.6429, "role": "direct", "segment": "recovery", "pose": "torso re-centers over both feet"},
+    {"index": 10, "file": "frame_010.png", "phase": 0.7143, "role": "key", "segment": "stabilize", "pose": "half-rise stabilized pose with eyes reopened"},
+    {"index": 11, "file": "frame_011.png", "phase": 0.7857, "role": "direct", "segment": "stabilize", "pose": "viewer-left shoe unweights slightly and begins a tiny inward stance adjustment"},
+    {"index": 12, "file": "frame_012.png", "phase": 0.8571, "role": "direct", "segment": "stabilize", "pose": "viewer-left shoe replants while the opposite shoe begins closing inward"},
+    {"index": 13, "file": "frame_013.png", "phase": 0.9286, "role": "direct", "segment": "recovery", "pose": "both shoes settle at canonical spacing while the restrained rebound reaches its final tiny peak"},
+    {"index": 14, "file": "frame_014.png", "phase": 1.0, "role": "key", "segment": "recovery", "pose": "independently redrawn approved neutral standing endpoint"}
+  ]
+}

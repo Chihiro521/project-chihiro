@@ -1,0 +1,81 @@
+{
+  "name": "window_land_recover_keys",
+  "frame_count": 5,
+  "fps": 2,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 4,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "travel",
+  "baseline_lock": false,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "pose_family_authorities": {
+      "airborne_candidate": "key-poses/k00.png",
+      "compression_candidate": "key-poses/k06.png",
+      "standing": "key-poses/k14.png"
+    },
+    "rule": "Key candidates are pending user acceptance and may control motion only until accepted."
+  },
+  "identity_lock": {
+    "silhouette": "Approved large rounded head, compact navy dress, sturdy legs, canonical viewer-right satchel and one rabbit.",
+    "proportions": "Local head widths must remain within four pixels after complete-drawing normalization; crouch changes joint angles and root height, not identity scale.",
+    "face_and_markings": "Muted blue-gray eyes, matte ash-beige bob and broad rounded face remain fixed.",
+    "costume": "Navy beret and dress, cream collar and lace, orange ribbon, three buttons, canonical strap, satchel, rabbit, socks and Mary Jane shoes remain topologically intact.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Fine dark outlines, restrained warm cel shading, subdued hair highlights, smooth navy fabric and fixed front orthographic camera."
+  },
+  "action_contract": {
+    "intent": "Sparse landing keys descend, contact, compress, stabilize and recover on an invisible horizontal edge.",
+    "allowed_motion": "Vertical root travel, lower-body impact flexion, restrained balance gesture, eyelids and connected secondary motion.",
+    "forbidden_changes": "No identity, scale, topology, palette, material or camera drift; no platform artwork; no interpolation or part compositing.",
+    "contact_ledger": [
+      {"object": "invisible window top", "count": 1, "side": "under the shoes", "owner": "shoe soles", "contact_points": "none at K00; both soles from K03 onward", "occlusion_order": "not drawn"}
+    ]
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.08,
+    "max_alpha_coverage": 0.45,
+    "max_color_jsd": 0.25,
+    "max_area_drift": 0.75,
+    "max_bbox_aspect_drift": 0.85,
+    "max_baseline_jitter_px": 80.0,
+    "max_center_range_px": 90.0,
+    "min_adjacent_diff": 0.003,
+    "max_adjacent_diff": 0.62,
+    "max_motion_energy_delta": 0.4,
+    "max_centroid_acceleration_px": 85.0,
+    "min_loop_seam_ratio": 0.0,
+    "max_loop_seam_ratio": 99.0
+  },
+  "threshold_notes": {
+    "baseline_lock": "Disabled for airborne descent and legitimate vertical landing compression.",
+    "max_area_drift": "Sparse keys include a deeply flexed but user-reviewable compression family; local head and material checks remain mandatory.",
+    "adjacent_diff": "These are sparse semantic keys, not final adjacent runtime frames.",
+    "max_centroid_acceleration_px": "The K06 compression and K10 stabilized-rise poses bracket a deliberately large recovery interval that will be subdivided midpoint-first with four independently drawn direct frames. The final sequence does not inherit this sparse-key allowance."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "per-key landing family",
+    "report": "key-qa/normalization-report.json",
+    "contact_sheet": "key-poses/window_land_recover-key-contact-sheet.png",
+    "measurements": ["head_width", "face_size", "body_and_limb_volume", "hair_luminance", "fabric_frequency", "satchel_and_single_rabbit_topology"]
+  },
+  "review_state": {
+    "status": "keys_user_accepted",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-07-30",
+    "user_approval_artifact": "key-poses/window_land_recover-key-contact-sheet.png"
+  },
+  "frames": [
+    {"index": 0, "file": "k00.png", "phase": 0.0, "role": "key", "segment": "descent", "pose": "slight descent, no contact"},
+    {"index": 1, "file": "k03.png", "phase": 0.2143, "role": "key", "segment": "contact", "pose": "first sole contact"},
+    {"index": 2, "file": "k06.png", "phase": 0.4286, "role": "key", "segment": "compression", "pose": "deepest controlled absorption"},
+    {"index": 3, "file": "k10.png", "phase": 0.7143, "role": "key", "segment": "stabilize", "pose": "stabilized wide landing stance"},
+    {"index": 4, "file": "k14.png", "phase": 1.0, "role": "key", "segment": "recovery", "pose": "canonical recovered standing"}
+  ]
+}

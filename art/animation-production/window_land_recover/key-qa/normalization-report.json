@@ -1,0 +1,224 @@
+{
+  "status": "PASS",
+  "target_head_width_1024": 202,
+  "head_width_range_512": 1,
+  "complete_drawing_only": true,
+  "local_part_operations": false,
+  "frames": [
+    {
+      "index": 0,
+      "label": "K00 slight descent",
+      "source_file": "key-sources/k00_descent_chroma.png",
+      "source_canvas": [
+        1024,
+        1024
+      ],
+      "whole_drawing_scale": 0.96650718,
+      "whole_drawing_translation": [
+        21,
+        70
+      ],
+      "target_visible_bottom_1024": 888,
+      "normalized_bbox_1024": [
+        360,
+        151,
+        690,
+        889
+      ],
+      "normalized_head_bbox_1024": [
+        410,
+        151,
+        615,
+        376
+      ],
+      "final_bbox_512": [
+        180,
+        75,
+        345,
+        445
+      ],
+      "final_head_bbox_512": [
+        205,
+        75,
+        307,
+        187
+      ],
+      "final_pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 3,
+      "label": "K03 first sole contact",
+      "source_file": "key-sources/k03_contact_chroma.png",
+      "source_canvas": [
+        1024,
+        1024
+      ],
+      "whole_drawing_scale": 1.0,
+      "whole_drawing_translation": [
+        0,
+        31
+      ],
+      "target_visible_bottom_1024": 944,
+      "normalized_bbox_1024": [
+        363,
+        158,
+        695,
+        945
+      ],
+      "normalized_head_bbox_1024": [
+        411,
+        158,
+        613,
+        383
+      ],
+      "final_bbox_512": [
+        181,
+        78,
+        348,
+        473
+      ],
+      "final_head_bbox_512": [
+        205,
+        78,
+        307,
+        190
+      ],
+      "final_pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 6,
+      "label": "K06 deepest absorption",
+      "source_file": "key-sources/k06_absorb_chroma.png",
+      "source_canvas": [
+        1024,
+        1024
+      ],
+      "whole_drawing_scale": 0.93087558,
+      "whole_drawing_translation": [
+        42,
+        125
+      ],
+      "target_visible_bottom_1024": 944,
+      "normalized_bbox_1024": [
+        354,
+        286,
+        720,
+        945
+      ],
+      "normalized_head_bbox_1024": [
+        410,
+        286,
+        614,
+        511
+      ],
+      "final_bbox_512": [
+        177,
+        143,
+        360,
+        473
+      ],
+      "final_head_bbox_512": [
+        205,
+        143,
+        307,
+        255
+      ],
+      "final_pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 10,
+      "label": "K10 stabilized rise",
+      "source_file": "key-sources/k10_stabilize_chroma.png",
+      "source_canvas": [
+        1024,
+        1024
+      ],
+      "whole_drawing_scale": 0.97584541,
+      "whole_drawing_translation": [
+        19,
+        39
+      ],
+      "target_visible_bottom_1024": 944,
+      "normalized_bbox_1024": [
+        362,
+        109,
+        691,
+        945
+      ],
+      "normalized_head_bbox_1024": [
+        411,
+        109,
+        614,
+        334
+      ],
+      "final_bbox_512": [
+        182,
+        54,
+        346,
+        473
+      ],
+      "final_head_bbox_512": [
+        205,
+        54,
+        307,
+        166
+      ],
+      "final_pivot": [
+        256,
+        492
+      ]
+    },
+    {
+      "index": 14,
+      "label": "K14 recovered standing",
+      "source_file": "key-sources/k14_recovered_chroma.png",
+      "source_canvas": [
+        1024,
+        1024
+      ],
+      "whole_drawing_scale": 1.0,
+      "whole_drawing_translation": [
+        -8,
+        14
+      ],
+      "target_visible_bottom_1024": 944,
+      "normalized_bbox_1024": [
+        372,
+        80,
+        647,
+        945
+      ],
+      "normalized_head_bbox_1024": [
+        412,
+        80,
+        614,
+        305
+      ],
+      "final_bbox_512": [
+        186,
+        39,
+        324,
+        473
+      ],
+      "final_head_bbox_512": [
+        206,
+        39,
+        307,
+        151
+      ],
+      "final_pivot": [
+        256,
+        492
+      ]
+    }
+  ]
+}
