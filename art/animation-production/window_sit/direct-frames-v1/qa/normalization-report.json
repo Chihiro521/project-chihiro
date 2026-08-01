@@ -1,0 +1,856 @@
+{
+  "status": "PASS",
+  "method": "Uniform whole-canvas resize plus whole-frame head-center/baseline translation; no per-part operations.",
+  "available_direct_indices": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    28,
+    29,
+    30
+  ],
+  "missing_direct_indices": [],
+  "records": [
+    {
+      "index": 0,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k00_stand.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        181,
+        20,
+        328,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 1,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_001.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        180,
+        20,
+        328,
+        474
+      ],
+      "translation": [
+        0,
+        -1
+      ],
+      "bbox_final": [
+        180,
+        19,
+        328,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 2,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_002.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        183,
+        32,
+        328,
+        474
+      ],
+      "translation": [
+        0,
+        -1
+      ],
+      "bbox_final": [
+        183,
+        31,
+        328,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 3,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_003.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        178,
+        48,
+        355,
+        443
+      ],
+      "translation": [
+        0,
+        30
+      ],
+      "bbox_final": [
+        178,
+        78,
+        355,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 4,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k04_descent.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        173,
+        72,
+        366,
+        471
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 470
+    },
+    {
+      "index": 5,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_005.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        49,
+        355,
+        460
+      ],
+      "translation": [
+        0,
+        13
+      ],
+      "bbox_final": [
+        166,
+        62,
+        355,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 6,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_006.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        169,
+        47,
+        349,
+        479
+      ],
+      "translation": [
+        -2,
+        -6
+      ],
+      "bbox_final": [
+        167,
+        41,
+        347,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 7,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_007.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        53,
+        353,
+        456
+      ],
+      "translation": [
+        -2,
+        17
+      ],
+      "bbox_final": [
+        164,
+        70,
+        351,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 8,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k08_stable_window_seat.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        164,
+        60,
+        353,
+        471
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 470
+    },
+    {
+      "index": 9,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_009.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        47,
+        355,
+        458
+      ],
+      "translation": [
+        -3,
+        15
+      ],
+      "bbox_final": [
+        163,
+        62,
+        352,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 10,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_010.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        47,
+        355,
+        457
+      ],
+      "translation": [
+        -3,
+        16
+      ],
+      "bbox_final": [
+        163,
+        63,
+        352,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 11,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_011.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        48,
+        355,
+        456
+      ],
+      "translation": [
+        -3,
+        17
+      ],
+      "bbox_final": [
+        163,
+        65,
+        352,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 12,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k12_leg_swing.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        163,
+        63,
+        352,
+        471
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 470
+    },
+    {
+      "index": 13,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_013.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        168,
+        50,
+        352,
+        464
+      ],
+      "translation": [
+        -2,
+        9
+      ],
+      "bbox_final": [
+        166,
+        59,
+        350,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 14,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_014.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        169,
+        47,
+        352,
+        458
+      ],
+      "translation": [
+        -1,
+        15
+      ],
+      "bbox_final": [
+        168,
+        62,
+        351,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 15,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_015.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        171,
+        49,
+        352,
+        459
+      ],
+      "translation": [
+        0,
+        14
+      ],
+      "bbox_final": [
+        171,
+        63,
+        352,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 16,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_016.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        175,
+        49,
+        351,
+        457
+      ],
+      "translation": [
+        0,
+        16
+      ],
+      "bbox_final": [
+        175,
+        65,
+        351,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 17,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_017.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        164,
+        47,
+        346,
+        455
+      ],
+      "translation": [
+        2,
+        18
+      ],
+      "bbox_final": [
+        166,
+        65,
+        348,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 18,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_018.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        167,
+        48,
+        355,
+        457
+      ],
+      "translation": [
+        -1,
+        16
+      ],
+      "bbox_final": [
+        166,
+        64,
+        354,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 19,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k19_side_lean.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        150,
+        62,
+        332,
+        471
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 470
+    },
+    {
+      "index": 20,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_020.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        165,
+        54,
+        350,
+        461
+      ],
+      "translation": [
+        1,
+        12
+      ],
+      "bbox_final": [
+        166,
+        66,
+        351,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 21,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_021.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        159,
+        62,
+        348,
+        468
+      ],
+      "translation": [
+        8,
+        5
+      ],
+      "bbox_final": [
+        167,
+        67,
+        356,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 22,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_022.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        166,
+        57,
+        356,
+        463
+      ],
+      "translation": [
+        -4,
+        10
+      ],
+      "bbox_final": [
+        162,
+        67,
+        352,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 23,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_023.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        165,
+        58,
+        353,
+        474
+      ],
+      "translation": [
+        0,
+        -1
+      ],
+      "bbox_final": [
+        165,
+        57,
+        353,
+        473
+      ],
+      "head_center_final": 256.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 24,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_024.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        177,
+        64,
+        350,
+        440
+      ],
+      "translation": [
+        4,
+        33
+      ],
+      "bbox_final": [
+        181,
+        97,
+        354,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 25,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_025.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        179,
+        78,
+        357,
+        440
+      ],
+      "translation": [
+        12,
+        33
+      ],
+      "bbox_final": [
+        191,
+        111,
+        369,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 26,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_026.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        182,
+        73,
+        350,
+        446
+      ],
+      "translation": [
+        13,
+        27
+      ],
+      "bbox_final": [
+        195,
+        100,
+        363,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 27,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k27_rise_load.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        200,
+        106,
+        369,
+        471
+      ],
+      "head_center_final": 261.0,
+      "visible_bottom_final": 470
+    },
+    {
+      "index": 28,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_028.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        191,
+        59,
+        352,
+        433
+      ],
+      "translation": [
+        4,
+        40
+      ],
+      "bbox_final": [
+        195,
+        99,
+        356,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 29,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_029.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        187,
+        57,
+        325,
+        455
+      ],
+      "translation": [
+        1,
+        18
+      ],
+      "bbox_final": [
+        188,
+        75,
+        326,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 30,
+      "kind": "direct",
+      "source": "art/animation-production/window_sit/direct-frames-v1/alpha-1254/frame_030.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        182,
+        35,
+        325,
+        474
+      ],
+      "translation": [
+        2,
+        -1
+      ],
+      "bbox_final": [
+        184,
+        34,
+        327,
+        473
+      ],
+      "head_center_final": 255.5,
+      "visible_bottom_final": 472
+    },
+    {
+      "index": 31,
+      "kind": "approved_key",
+      "source": "art/animation-production/window_sit/key-poses/normalized/k31_stand_return.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "translation": [
+        0,
+        0
+      ],
+      "bbox_final": [
+        181,
+        20,
+        328,
+        473
+      ],
+      "head_center_final": 256.0,
+      "visible_bottom_final": 472
+    }
+  ]
+}

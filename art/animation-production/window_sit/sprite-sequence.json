@@ -1,0 +1,213 @@
+{
+  "name": "window_sit",
+  "frame_count": 32,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "segments": {
+    "enter": {"start": 0, "end": 7, "loop": false},
+    "loop": {"start": 8, "end": 23, "loop": true},
+    "exit": {"start": 24, "end": 31, "loop": false}
+  },
+  "authority_hierarchy": {
+    "design_authority": "../character-reference/model-sheet.png",
+    "standing_proportion_authority": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "standing_runtime_authority": "../return_wave/frames/frame_000.png",
+    "seated_motion_guide_only": "../sit_rest/direct-frames-v1/scale-stabilized-v2/frames/frame_008.png",
+    "pose_family_authorities": {
+      "standing": "../return_wave/anchors/reason_pose_frame_000_chroma.png",
+      "window_edge_seated": "key-poses/k08_stable_window_seat_chroma.png"
+    },
+    "rule": "The original model sheet always owns identity and rendering. The standing authority owns standing proportions. K08 may own only window-edge seated geometry after explicit user approval. Temporal neighbors control motion and contacts only."
+  },
+  "identity_lock": {
+    "silhouette": "Large rounded navy beret, muted ash-beige bob, broad rounded face, compact deep-navy dress, sturdy short legs, viewer-right tan satchel and exactly one attached rabbit remain unmistakable.",
+    "proportions": "Preserve the approved broad head and face, approximately four-head-tall compact body, torso and dress volume, limb thickness, sock cylinders, shoe size and hand size. Sitting changes joints and depth only.",
+    "face_and_markings": "Pale rounded face, muted blue-gray eyes, fixed fringe and subtle cheeks; only eyelids, gaze, tiny mouth and restrained head angle may change.",
+    "costume": "Deep navy beret and one continuous A-line dress, cream Peter Pan collar, orange ribbon, three brass-button layout, loose sleeves, uninterrupted cream lace hem, tan cross-body strap, compact satchel, one white rabbit with orange bow, cream socks and black Mary Jane shoes.",
+    "palette": ["#202330", "#d8c9b9", "#eee9dc", "#c87539", "#b78a55", "#747f83", "#292326"],
+    "rendering": "Soft polished anime game sprite, fine dark outlines, restrained warm cel shading, low-frequency navy fabric, subdued original hair highlights, fixed orthographic camera and neutral light."
+  },
+  "action_contract": {
+    "intent": "She transfers support from both feet to an invisible window top edge, settles into a compact dangling-leg seat, makes one small leg swing and one restrained side-lean observation, returns to the stable seat, then stands and recovers to neutral.",
+    "structure": "Enter F00-F07, repeatable seated loop F08-F23, exit F24-F31.",
+    "allowed_motion": "Vertical contact transfer, hip/knee/ankle articulation, small leg pendulum, restrained torso lean, hand brace/release, tiny head/gaze change and gravity-correct cloth/bag/rabbit response.",
+    "forbidden_changes": "No visible platform, horizontal root drift, floor sit, body slimming, face-size drift, bright hair, garment split, knee holes, fused legs, missing shoes, detached or mirrored bag, duplicate rabbit, rerouted strap, extra anatomy, scenery, shadow, text, watermark, interpolation, morphing, warping or part compositing.",
+    "contact_ledger": [
+      {
+        "object": "invisible window top edge",
+        "count": 1,
+        "side": "horizontal support through the centered character",
+        "owner": "both shoe soles in standing, seated pelvis/skirt compression in loop",
+        "contact_points": "standing near y472; stable seated near x256 y330; ownership transfers during enter and exit",
+        "occlusion_order": "edge is never drawn; implied support passes behind skirt and in front of the dangling upper legs"
+      },
+      {
+        "object": "satchel and rabbit",
+        "count": 1,
+        "side": "viewer-right",
+        "owner": "continuous tan strap and strap hand",
+        "contact_points": "bag hangs beside right thigh; rabbit stays attached to bag front",
+        "occlusion_order": "dress behind bag, bag behind rabbit; all remain gravity-down"
+      }
+    ]
+  },
+  "platform_contact": {
+    "standing_y": 472,
+    "stable_seated": {"x": 256, "y": 350},
+    "horizontal_drift_tolerance_px": 8,
+    "loop_vertical_jitter_tolerance_px": 3,
+    "integration_rule": "Export a per-frame support-contact Y curve; Godot preserves the source window-top world coordinate while support ownership transfers from feet to pelvis and back."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.09,
+    "max_alpha_coverage": 0.54,
+    "max_color_jsd": 0.2,
+    "max_area_drift": 1.15,
+    "max_bbox_aspect_drift": 1.2,
+    "max_baseline_jitter_px": 4.0,
+    "max_center_range_px": 120.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.42,
+    "max_motion_energy_delta": 0.24,
+    "max_centroid_acceleration_px": 70.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {
+    "max_area_drift": "Standing-to-dangling-seat changes the silhouette while identity landmarks and limb volume remain locked.",
+    "max_bbox_aspect_drift": "The seated skirt and separated dangling legs legitimately widen the silhouette.",
+    "max_center_range_px": "The root descends intentionally during contact transfer; horizontal root remains centered.",
+    "max_centroid_acceleration_px": "Enter and exit include a large declared vertical support transition."
+  },
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "standing and approved window_edge_seated",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": [
+      "head_and_face_width",
+      "eye_region_scale",
+      "torso_and_skirt_volume",
+      "thigh_calf_sock_shoe_thickness",
+      "hair_luminance",
+      "navy_fabric_frequency",
+      "strap_bag_rabbit_topology",
+      "pelvis_platform_contact",
+      "dangling_leg_occlusion"
+    ]
+  },
+  "review_state": {
+    "status": "packaged_ready_for_engine",
+    "automated_status": "PASS",
+    "semantic_status": "accepted_2026-08-01",
+    "user_approval_artifact": "direct-frames-v1/qa/window_sit-full-contact-sheet.png",
+    "controller_qa_report": "direct-frames-v1/qa/controller-recheck/qa-report.json",
+    "user_approval": {
+      "date": "2026-08-01",
+      "verdict": "应该已经完成了，可以验收并且接入godot 并分阶段提交了。"
+    }
+  },
+  "key_pose_review": {
+    "generated_keys": ["K04", "K08", "K12", "K19", "K27"],
+    "authority_endpoints": ["K00", "K31"],
+    "producer_semantic_status": "PASS_FOR_USER_REVIEW",
+    "user_semantic_status": "accepted_2026-07-30",
+    "user_approval": {
+      "date": "2026-07-30",
+      "verdict": "通过，可以做连续帧了。",
+      "approved_keys": ["K00", "K04", "K08", "K12", "K19", "K27", "K31"],
+      "promoted_window_seated_authority": "key-poses/k08_stable_window_seat_chroma.png"
+    },
+    "normalization_status": "PASS",
+    "normalization_report": "key-poses/qa/normalization-report.json",
+    "generic_qa_status": "PASS",
+    "generic_qa_report": "key-poses/qa/automated/qa-report.json",
+    "local_identity_status": "PASS",
+    "local_identity_report": "key-poses/qa/local-identity-report.json",
+    "contact_sheet": "key-poses/qa/window_sit-key-contact-sheet.png",
+    "key_manifest": "key-poses/key-manifest.json",
+    "background_removal": "Built-in image generation on magenta source backgrounds followed by uniform hard chroma removal, 1px matte contraction and 0.35px alpha feather. The soft-matte v1/v2 attempts were rejected because magenta dominance misclassified pale skin and hair.",
+    "rejected_candidates": [
+      "key-poses/rejected-candidates/k19_side_lean_v1_small_scale_chroma.png",
+      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_chroma.png",
+      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_alpha.png",
+      "key-poses/rejected-candidates/k27_rise_load_v1_wide_squat_normalized.png",
+      "key-poses/alpha-1024/",
+      "key-poses/alpha-1024-v2/"
+    ],
+    "k27_revision": {
+      "trigger": "User reported that the original rise pose looked strange.",
+      "rejected_read": "Wide outward feet, splayed knees, hovering squat and a free arm reaching forward.",
+      "replacement": "Feet close and parallel below the knees, torso loaded forward, pelvis only just lifting, free hand beside the hip for a final push from the invisible edge.",
+      "generic_qa_status": "PASS",
+      "local_identity_status": "PASS",
+      "user_status": "accepted_2026-07-30"
+    },
+    "gate": "COMPLETE: the user explicitly approved the repaired sparse key set on 2026-07-30 and all 25 direct frames were independently generated and reviewed."
+  },
+  "direct_frame_review": {
+    "status": "PASS_FOR_USER_REVIEW",
+    "user_semantic_status": "pending",
+    "normalization_status": "PASS",
+    "normalization_report": "direct-frames-v1/qa/normalization-report.json",
+    "generic_qa_status": "PASS",
+    "generic_qa_report": "direct-frames-v1/qa/automated/qa-report.json",
+    "local_identity_status": "PASS",
+    "local_identity_report": "direct-frames-v1/qa/local-identity-report.json",
+    "contact_sheet": "direct-frames-v1/qa/window_sit-full-contact-sheet.png",
+    "identity_contact_sheet": "direct-frames-v1/qa/local-identity-contact-sheet.png",
+    "preview": "direct-frames-v1/qa/preview.gif",
+    "slow_preview": "direct-frames-v1/qa/preview-slow.gif",
+    "world_contact_preview": "direct-frames-v1/qa/preview-world-contact.gif",
+    "world_contact_slow_preview": "direct-frames-v1/qa/preview-world-contact-slow.gif",
+    "support_contact_curve": "direct-frames-v1/qa/support-contact-curve.json",
+    "producer_semantic_reviews": {
+      "enter": "PASS",
+      "seated_loop": "PASS",
+      "exit": "PASS"
+    },
+    "gate": "WAITING: final user semantic acceptance is required before packaging or Godot integration."
+  },
+  "frames": [
+    {"index":0,"file":"frame_000.png","phase":0.0,"role":"key","segment":"enter","pose":"exact approved standing authority; both soles own platform contact"},
+    {"index":1,"file":"frame_001.png","phase":0.0323,"role":"direct","segment":"enter","pose":"gaze lowers toward the implied edge"},
+    {"index":2,"file":"frame_002.png","phase":0.0645,"role":"direct","segment":"enter","pose":"knees soften and pelvis begins moving backward"},
+    {"index":3,"file":"frame_003.png","phase":0.0968,"role":"direct","segment":"enter","pose":"free hand opens beside hip as both knees flex"},
+    {"index":4,"file":"frame_004.png","phase":0.129,"role":"key","segment":"enter","pose":"deep controlled descent with connected skirt and readable legs"},
+    {"index":5,"file":"frame_005.png","phase":0.1613,"role":"direct","segment":"enter","pose":"pelvis lowers toward edge while first lower leg begins to pass below"},
+    {"index":6,"file":"frame_006.png","phase":0.1935,"role":"direct","segment":"enter","pose":"first pelvis contact; support transfers away from soles"},
+    {"index":7,"file":"frame_007.png","phase":0.2258,"role":"direct","segment":"enter","pose":"both legs clear the edge and approach stable hanging geometry"},
+    {"index":8,"file":"frame_008.png","phase":0.2581,"role":"key","segment":"loop","pose":"stable window-edge seated mother with pelvis contact and dangling legs"},
+    {"index":9,"file":"frame_009.png","phase":0.2903,"role":"direct","segment":"loop","pose":"one knee begins a restrained forward swing"},
+    {"index":10,"file":"frame_010.png","phase":0.3226,"role":"direct","segment":"loop","pose":"swinging lower leg advances while pelvis stays locked"},
+    {"index":11,"file":"frame_011.png","phase":0.3548,"role":"direct","segment":"loop","pose":"shoe reaches near swing peak with small hem lag"},
+    {"index":12,"file":"frame_012.png","phase":0.3871,"role":"key","segment":"loop","pose":"small leg-swing peak; both shoes and sock cylinders remain distinct"},
+    {"index":13,"file":"frame_013.png","phase":0.4194,"role":"direct","segment":"loop","pose":"swinging leg begins returning"},
+    {"index":14,"file":"frame_014.png","phase":0.4516,"role":"direct","segment":"loop","pose":"legs pass through center without collision"},
+    {"index":15,"file":"frame_015.png","phase":0.4839,"role":"direct","segment":"loop","pose":"both legs settle and shoulders soften"},
+    {"index":16,"file":"frame_016.png","phase":0.5161,"role":"breakdown","segment":"loop","pose":"stable center bridge between leg swing and side observation"},
+    {"index":17,"file":"frame_017.png","phase":0.5484,"role":"direct","segment":"loop","pose":"torso begins shifting toward free bracing hand"},
+    {"index":18,"file":"frame_018.png","phase":0.5806,"role":"direct","segment":"loop","pose":"free palm braces while gaze turns slightly downward"},
+    {"index":19,"file":"frame_019.png","phase":0.6129,"role":"key","segment":"loop","pose":"restrained side-lean observation with pelvis contact and bag controlled"},
+    {"index":20,"file":"frame_020.png","phase":0.6452,"role":"direct","segment":"loop","pose":"lean holds briefly without changing body scale"},
+    {"index":21,"file":"frame_021.png","phase":0.6774,"role":"direct","segment":"loop","pose":"torso returns from hand brace"},
+    {"index":22,"file":"frame_022.png","phase":0.7097,"role":"direct","segment":"loop","pose":"gaze and shoulders return toward stable seat"},
+    {"index":23,"file":"frame_023.png","phase":0.7419,"role":"breakdown","segment":"loop","pose":"approaches frame 8 stable seat without duplicating it"},
+    {"index":24,"file":"frame_024.png","phase":0.7742,"role":"direct","segment":"exit","pose":"attention returns and torso comes forward"},
+    {"index":25,"file":"frame_025.png","phase":0.8065,"role":"direct","segment":"exit","pose":"feet draw inward beneath the body"},
+    {"index":26,"file":"frame_026.png","phase":0.8387,"role":"direct","segment":"exit","pose":"both soles accept weight as pelvis begins releasing edge contact"},
+    {"index":27,"file":"frame_027.png","phase":0.871,"role":"key","segment":"exit","pose":"two-leg rise/load with broad torso and connected dress preserved"},
+    {"index":28,"file":"frame_028.png","phase":0.9032,"role":"direct","segment":"exit","pose":"hips lift and knees extend"},
+    {"index":29,"file":"frame_029.png","phase":0.9355,"role":"direct","segment":"exit","pose":"torso straightens and dress falls toward standing A-line"},
+    {"index":30,"file":"frame_030.png","phase":0.9677,"role":"direct","segment":"exit","pose":"strap hand, shoulders and gaze settle"},
+    {"index":31,"file":"frame_031.png","phase":1.0,"role":"key","segment":"exit","pose":"exact visual return to standing authority; both soles own platform contact"}
+  ]
+}

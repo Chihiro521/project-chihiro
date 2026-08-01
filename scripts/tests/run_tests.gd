@@ -31,7 +31,7 @@ func _run() -> void:
 func _test_manifest() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
 	_expect(manifest.is_valid(), "manifest should be valid: %s" % ", ".join(manifest.errors))
-	_expect(manifest.animation_names().size() == 80, "manifest should contain 80 animations")
+	_expect(manifest.animation_names().size() == 83, "manifest should contain 83 animations")
 	var breathe := manifest.clip("idle_breathe")
 	_expect((breathe.get("frames", []) as Array).size() == 8, "idle breathing should contain eight phases")
 	_expect(bool(breathe.get("loop", false)), "idle breathing should loop")
@@ -208,6 +208,21 @@ func _test_manifest() -> void:
 		window_land_textures_load = window_land_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
 	_expect(window_land_at_eight_fps, "window landing recovery should play at eight FPS")
 	_expect(window_land_textures_load, "window landing recovery frames should import as Texture2D resources")
+	var window_sit_specs := [
+		{"name": "window_sit_enter", "frames": 8, "loop": false},
+		{"name": "window_sit_loop", "frames": 16, "loop": true},
+		{"name": "window_sit_exit", "frames": 8, "loop": false},
+	]
+	var window_sit_textures_load := true
+	for spec in window_sit_specs:
+		var window_sit_clip := manifest.clip(str(spec["name"]))
+		_expect((window_sit_clip.get("frames", []) as Array).size() == int(spec["frames"]), "%s should contain its approved window-seat segment" % spec["name"])
+		_expect(bool(window_sit_clip.get("loop", false)) == bool(spec["loop"]), "%s should preserve its window-seat loop policy" % spec["name"])
+		_expect((window_sit_clip.get("supportContactY", []) as Array).size() == int(spec["frames"]), "%s should expose one support contact per frame" % spec["name"])
+		for frame in window_sit_clip.get("frames", []):
+			var resource_path := manifest.frame_resource_path(str(frame))
+			window_sit_textures_load = window_sit_textures_load and ResourceLoader.exists(resource_path) and load(resource_path) is Texture2D
+	_expect(window_sit_textures_load, "all window-seat frames should import as Texture2D resources")
 	var frame_count := 0
 	var missing_count := 0
 	for name in manifest.animation_names():
@@ -216,7 +231,7 @@ func _test_manifest() -> void:
 			frame_count += 1
 			if not FileAccess.file_exists(manifest.frame_resource_path(str(frame))):
 				missing_count += 1
-	_expect(frame_count == 1543, "manifest should expose 1543 runtime frames")
+	_expect(frame_count == 1575, "manifest should expose 1575 runtime frames")
 	_expect(missing_count == 0, "all manifest frame paths should exist")
 
 func _test_state_machine() -> void:
@@ -255,6 +270,13 @@ func _test_render_box() -> void:
 				route_side = clip_side
 				largest_route_clip = str(name)
 	_expect(route_side == 436, "complete patrol route locks a 436px host (got %d from %s)" % [route_side, largest_route_clip])
+	var sit_enter := manifest.clip("window_sit_enter")
+	var sit_loop := manifest.clip("window_sit_loop")
+	var sit_exit := manifest.clip("window_sit_exit")
+	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_enter, 0).y, 472.0), "window-seat enter begins on both shoe soles")
+	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_enter, 7).y, 365.0), "window-seat enter transfers support toward the pelvis")
+	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_loop, 8).y, 350.0), "window-seat loop pins its pelvis contact to the window top")
+	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_exit, 7).y, 472.0), "window-seat exit restores shoe support")
 
 func _test_playback() -> void:
 	var phase := PetSpritePlayer.resolve_playback_frame([100, 200, 300], 0, 2, false, true, 350.0)
@@ -358,6 +380,13 @@ func _test_behavior_director() -> void:
 	_expect(str(refused_pat_intent.get("clip", "")) == "head_pat_refuse", "refused head-pat behavior uses the approved direct animation")
 	var window_land_intent := director.create_intent("window_land_recover", needs, context, 99890)
 	_expect(str(window_land_intent.get("clip", "")) == "window_land_recover", "window landing behavior uses the approved recovery animation")
+	var platform_context := context.duplicate(true)
+	platform_context["has_platform"] = true
+	platform_context["on_platform"] = true
+	var window_sit_intent := director.create_intent("window_sit", needs, platform_context, 99900)
+	_expect(str(window_sit_intent.get("clip", "")) == "window_sit_enter", "window-seat behavior enters through its approved contact-transfer clip")
+	var window_sit_session: Dictionary = window_sit_intent.get("session", {})
+	_expect(str(window_sit_session.get("loop", "")) == "window_sit_loop" and str(window_sit_session.get("exit", "")) == "window_sit_exit", "window-seat behavior preserves enter-loop-exit routing")
 	needs.set_need("energy", 50.0)
 	var sit_intent := director.create_intent("sit_rest", needs, context, 99900)
 	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")

@@ -146,6 +146,7 @@ func _ready() -> void:
 	machine.transitioned.connect(_on_transition)
 	sprite_player.clip_completed.connect(_on_clip_completed)
 	sprite_player.clip_changed.connect(_on_clip_changed)
+	sprite_player.frame_changed.connect(_on_sprite_frame_changed)
 	sprite_player.passthrough_polygon_changed.connect(_on_passthrough_polygon_changed)
 	speech_bubble.message_finished.connect(_on_speech_finished)
 	_setup_menus()
@@ -793,12 +794,22 @@ func _track_pending_platform() -> void:
 func _pet_foot_global(at_position: Variant = null) -> Vector2:
 	var resolved_position := position if at_position == null else Vector2(at_position)
 	var clip := manifest.clip(sprite_player.current_clip)
+	var canvas: Dictionary = clip.get("canvas", manifest.canvas())
+	var anchor: Dictionary = clip.get("anchor", {"x": 0.5, "y": 0.96})
+	var anchor_point := Vector2(
+		float(anchor.get("x", 0.5)) * float(canvas.get("width", 512.0)),
+		float(anchor.get("y", 0.96)) * float(canvas.get("height", 512.0)),
+	)
+	var support_point := PetRenderBox.support_texture_point(clip, sprite_player.current_frame)
+	var support_offset := (support_point - anchor_point) * PetRenderBox.character_scale(manifest)
+	support_offset.x *= direction
 	var dock := PetRenderBox.dock_point(
 		Vector2(pet_window_size),
 		PetRenderBox.render_dock(clip),
 		PetRenderBox.render_dock_inset(clip),
 	)
-	return resolved_position + dock + Vector2(0.0, 4.0)
+	var legacy_inset := 0.0 if not (clip.get("supportContactY", []) as Array).is_empty() else 4.0
+	return resolved_position + dock + support_offset + Vector2(0.0, legacy_inset)
 
 func _position_for_platform(platform: WindowPlatform, foot_x: float) -> Vector2:
 	var local_foot := _pet_foot_global(Vector2.ZERO)
@@ -956,6 +967,15 @@ func _on_clip_changed(name: String, previous_name: String) -> void:
 	var previous := manifest.clip(previous_name)
 	var next_size := _desired_window_size(clip)
 	_set_window_geometry(next_size, previous, clip)
+
+func _on_sprite_frame_changed(_frame_index: int, _frame_count: int) -> void:
+	if active_platform == null:
+		return
+	var adjustment := float(active_platform.top_edge.position.y) - _pet_foot_global().y
+	if absf(adjustment) < 0.01:
+		return
+	position.y += adjustment
+	_apply_position()
 
 func _on_passthrough_polygon_changed(polygon: PackedVector2Array) -> void:
 	desktop.set_mouse_passthrough(polygon)

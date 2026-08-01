@@ -1,0 +1,149 @@
+{
+  "status": "PASS",
+  "method": "Fixed 128px head band from each alpha top; independent of crouch or seated full-body height.",
+  "summary": {
+    "key_count": 7,
+    "max_head_width_delta_px": 3.0,
+    "max_face_width_delta_px": 6.0,
+    "max_face_height_delta_px": 2.0,
+    "max_hair_luma_delta": 2.104,
+    "max_dark_material_luma_delta": 3.682,
+    "max_magenta_fringe_pixels": 0
+  },
+  "thresholds": {
+    "max_head_width_delta_px": 12,
+    "max_face_width_delta_px": 12,
+    "max_face_height_delta_px": 20,
+    "max_hair_luma_delta": 12,
+    "max_dark_material_luma_delta": 12,
+    "max_magenta_fringe_pixels": 16
+  },
+  "keys": [
+    {
+      "key": "k04_descent",
+      "authority": "k00_stand",
+      "bbox": [
+        173,
+        72,
+        366,
+        471
+      ],
+      "head_width_proxy_px": 107,
+      "face_width_proxy_px": 90,
+      "face_height_proxy_px": 98,
+      "hair_luma_proxy": 190.315,
+      "dark_material_luma_proxy": 55.89,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 0.0,
+      "face_width_delta_px": 2.0,
+      "face_height_delta_px": 0.0,
+      "hair_luma_delta": 0.588,
+      "dark_material_luma_delta": 1.328
+    },
+    {
+      "key": "k08_stable_window_seat",
+      "authority": "k00_stand",
+      "bbox": [
+        164,
+        60,
+        353,
+        471
+      ],
+      "head_width_proxy_px": 108,
+      "face_width_proxy_px": 94,
+      "face_height_proxy_px": 100,
+      "hair_luma_proxy": 190.251,
+      "dark_material_luma_proxy": 59.379,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 1.0,
+      "face_width_delta_px": 6.0,
+      "face_height_delta_px": 2.0,
+      "hair_luma_delta": 0.652,
+      "dark_material_luma_delta": 2.161
+    },
+    {
+      "key": "k12_leg_swing",
+      "authority": "k08_stable_window_seat",
+      "bbox": [
+        163,
+        63,
+        352,
+        471
+      ],
+      "head_width_proxy_px": 107,
+      "face_width_proxy_px": 89,
+      "face_height_proxy_px": 98,
+      "hair_luma_proxy": 192.355,
+      "dark_material_luma_proxy": 59.737,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 1.0,
+      "face_width_delta_px": 5.0,
+      "face_height_delta_px": 2.0,
+      "hair_luma_delta": 2.104,
+      "dark_material_luma_delta": 0.358
+    },
+    {
+      "key": "k19_side_lean",
+      "authority": "k08_stable_window_seat",
+      "bbox": [
+        150,
+        62,
+        332,
+        471
+      ],
+      "head_width_proxy_px": 107,
+      "face_width_proxy_px": 92,
+      "face_height_proxy_px": 98,
+      "hair_luma_proxy": 190.049,
+      "dark_material_luma_proxy": 55.697,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 1.0,
+      "face_width_delta_px": 2.0,
+      "face_height_delta_px": 2.0,
+      "hair_luma_delta": 0.202,
+      "dark_material_luma_delta": 3.682
+    },
+    {
+      "key": "k27_rise_load",
+      "authority": "k00_stand",
+      "bbox": [
+        200,
+        106,
+        369,
+        471
+      ],
+      "head_width_proxy_px": 104,
+      "face_width_proxy_px": 90,
+      "face_height_proxy_px": 96,
+      "hair_luma_proxy": 189.203,
+      "dark_material_luma_proxy": 57.713,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 3.0,
+      "face_width_delta_px": 2.0,
+      "face_height_delta_px": 2.0,
+      "hair_luma_delta": 1.7,
+      "dark_material_luma_delta": 0.495
+    },
+    {
+      "key": "k31_stand_return",
+      "authority": "k00_stand",
+      "bbox": [
+        181,
+        20,
+        328,
+        473
+      ],
+      "head_width_proxy_px": 107,
+      "face_width_proxy_px": 88,
+      "face_height_proxy_px": 98,
+      "hair_luma_proxy": 190.903,
+      "dark_material_luma_proxy": 57.218,
+      "magenta_fringe_pixels": 0,
+      "head_width_delta_px": 0.0,
+      "face_width_delta_px": 0.0,
+      "face_height_delta_px": 0.0,
+      "hair_luma_delta": 0.0,
+      "dark_material_luma_delta": 0.0
+    }
+  ]
+}

@@ -32,6 +32,21 @@ static func dock_point(size: Vector2, dock := "bottom", inset := EDGE_INSET) -> 
 		_axis_point(size.y, vertical, inset),
 	)
 
+static func support_texture_point(clip: Dictionary, frame_index: int) -> Vector2:
+	var canvas: Dictionary = clip.get("canvas", {"width": 512.0, "height": 512.0})
+	var anchor: Dictionary = clip.get("anchor", {"x": 0.5, "y": 0.96})
+	var point := Vector2(
+		float(anchor.get("x", 0.5)) * float(canvas.get("width", 512.0)),
+		float(anchor.get("y", 0.96)) * float(canvas.get("height", 512.0)),
+	)
+	var support_x: Array = clip.get("supportContactX", [])
+	var support_y: Array = clip.get("supportContactY", [])
+	if not support_x.is_empty():
+		point.x = float(support_x[clampi(frame_index, 0, support_x.size() - 1)])
+	if not support_y.is_empty():
+		point.y = float(support_y[clampi(frame_index, 0, support_y.size() - 1)])
+	return point
+
 static func resolve_size(manifest: PetManifestData, clip: Dictionary = {}) -> Vector2i:
 	var base_canvas := manifest.canvas()
 	var clip_canvas: Dictionary = clip.get("canvas", base_canvas)

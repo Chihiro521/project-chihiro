@@ -1,0 +1,199 @@
+{
+  "action": "window_sit",
+  "coordinate_space": "normalized_512x512_cell",
+  "platform_visible": false,
+  "records": [
+    {
+      "index": 0,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 1,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 2,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 3,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 4,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 5,
+      "support_x": 256,
+      "support_y": 440,
+      "owner": "transfer_feet_to_pelvis"
+    },
+    {
+      "index": 6,
+      "support_x": 256,
+      "support_y": 400,
+      "owner": "transfer_feet_to_pelvis"
+    },
+    {
+      "index": 7,
+      "support_x": 256,
+      "support_y": 365,
+      "owner": "transfer_feet_to_pelvis"
+    },
+    {
+      "index": 8,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 9,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 10,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 11,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 12,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 13,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 14,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 15,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 16,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 17,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 18,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 19,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 20,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 21,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 22,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 23,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 24,
+      "support_x": 256,
+      "support_y": 350,
+      "owner": "seated_pelvis_skirt_compression"
+    },
+    {
+      "index": 25,
+      "support_x": 256,
+      "support_y": 385,
+      "owner": "transfer_pelvis_to_feet"
+    },
+    {
+      "index": 26,
+      "support_x": 256,
+      "support_y": 430,
+      "owner": "transfer_pelvis_to_feet"
+    },
+    {
+      "index": 27,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 28,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 29,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 30,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    },
+    {
+      "index": 31,
+      "support_x": 256,
+      "support_y": 472,
+      "owner": "both_shoe_soles"
+    }
+  ]
+}

@@ -1072,6 +1072,82 @@
       ],
       "visualBounds": {"x": 143, "y": 18, "width": 227, "height": 455}
     },
+    "window_sit_enter": {
+      "frames": [
+        "animations/window_sit_enter/frame_000.png",
+        "animations/window_sit_enter/frame_001.png",
+        "animations/window_sit_enter/frame_002.png",
+        "animations/window_sit_enter/frame_003.png",
+        "animations/window_sit_enter/frame_004.png",
+        "animations/window_sit_enter/frame_005.png",
+        "animations/window_sit_enter/frame_006.png",
+        "animations/window_sit_enter/frame_007.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "supportContactY": [472, 472, 472, 472, 472, 440, 400, 365],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 164, "y": 19, "width": 202, "height": 454}
+    },
+    "window_sit_loop": {
+      "frames": [
+        "animations/window_sit_loop/frame_008.png",
+        "animations/window_sit_loop/frame_009.png",
+        "animations/window_sit_loop/frame_010.png",
+        "animations/window_sit_loop/frame_011.png",
+        "animations/window_sit_loop/frame_012.png",
+        "animations/window_sit_loop/frame_013.png",
+        "animations/window_sit_loop/frame_014.png",
+        "animations/window_sit_loop/frame_015.png",
+        "animations/window_sit_loop/frame_016.png",
+        "animations/window_sit_loop/frame_017.png",
+        "animations/window_sit_loop/frame_018.png",
+        "animations/window_sit_loop/frame_019.png",
+        "animations/window_sit_loop/frame_020.png",
+        "animations/window_sit_loop/frame_021.png",
+        "animations/window_sit_loop/frame_022.png",
+        "animations/window_sit_loop/frame_023.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167],
+      "supportContactY": [350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350],
+      "loop": true,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 165, "y": 55}, {"x": 350, "y": 55},
+        {"x": 365, "y": 260}, {"x": 356, "y": 473},
+        {"x": 150, "y": 473}, {"x": 145, "y": 280}
+      ],
+      "visualBounds": {"x": 150, "y": 57, "width": 206, "height": 416}
+    },
+    "window_sit_exit": {
+      "frames": [
+        "animations/window_sit_exit/frame_024.png",
+        "animations/window_sit_exit/frame_025.png",
+        "animations/window_sit_exit/frame_026.png",
+        "animations/window_sit_exit/frame_027.png",
+        "animations/window_sit_exit/frame_028.png",
+        "animations/window_sit_exit/frame_029.png",
+        "animations/window_sit_exit/frame_030.png",
+        "animations/window_sit_exit/frame_031.png"
+      ],
+      "frameDurationsMs": [167, 167, 167, 167, 167, 167, 167, 167],
+      "supportContactY": [350, 385, 430, 472, 472, 472, 472, 472],
+      "loop": false,
+      "anchor": {"x": 0.5, "y": 0.96},
+      "hitArea": [
+        {"x": 142, "y": 20}, {"x": 370, "y": 20},
+        {"x": 391, "y": 275}, {"x": 354, "y": 421},
+        {"x": 306, "y": 478}, {"x": 205, "y": 478},
+        {"x": 154, "y": 421}, {"x": 119, "y": 275}
+      ],
+      "visualBounds": {"x": 181, "y": 20, "width": 188, "height": 453}
+    },
     "idle_blink": {
       "frames": [
         "animations/idle_blink/frame_00.png",

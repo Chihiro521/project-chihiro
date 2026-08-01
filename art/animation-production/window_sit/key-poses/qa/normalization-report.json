@@ -1,0 +1,201 @@
+{
+  "status": "PASS",
+  "method": "uniform whole-canvas resize plus whole-frame translation only",
+  "target_size": [
+    512,
+    512
+  ],
+  "target_head_center_x": 256,
+  "target_visible_bottom": 472,
+  "records": [
+    {
+      "name": "k00_stand",
+      "source": "art/animation-production/return_wave/frames/frame_000.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "bbox_before_translation": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_center_before_translation": 260.0,
+      "translation": [
+        -4,
+        1
+      ],
+      "bbox_final": [
+        181,
+        20,
+        328,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.0
+    },
+    {
+      "name": "k04_descent",
+      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k04_descent_alpha.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        167,
+        77,
+        364,
+        480
+      ],
+      "head_center_before_translation": 252.5,
+      "translation": [
+        4,
+        -7
+      ],
+      "bbox_final": [
+        171,
+        70,
+        368,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.5
+    },
+    {
+      "name": "k08_stable_window_seat",
+      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k08_stable_window_seat_alpha.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        164,
+        44,
+        357,
+        459
+      ],
+      "head_center_before_translation": 258.5,
+      "translation": [
+        -2,
+        14
+      ],
+      "bbox_final": [
+        162,
+        58,
+        355,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.5
+    },
+    {
+      "name": "k12_leg_swing",
+      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k12_leg_swing_alpha.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        164,
+        46,
+        357,
+        458
+      ],
+      "head_center_before_translation": 259.0,
+      "translation": [
+        -3,
+        15
+      ],
+      "bbox_final": [
+        161,
+        61,
+        354,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.0
+    },
+    {
+      "name": "k19_side_lean",
+      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k19_side_lean_alpha.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        163,
+        46,
+        349,
+        459
+      ],
+      "head_center_before_translation": 271.0,
+      "translation": [
+        -15,
+        14
+      ],
+      "bbox_final": [
+        148,
+        60,
+        334,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.0
+    },
+    {
+      "name": "k27_rise_load",
+      "source": "art/animation-production/window_sit/key-poses/alpha-1024-v3/k27_rise_load_alpha.png",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "bbox_before_translation": [
+        186,
+        86,
+        359,
+        455
+      ],
+      "head_center_before_translation": 243.5,
+      "translation": [
+        12,
+        18
+      ],
+      "bbox_final": [
+        198,
+        104,
+        371,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 255.5
+    },
+    {
+      "name": "k31_stand_return",
+      "source": "art/animation-production/return_wave/frames/frame_000.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "bbox_before_translation": [
+        185,
+        19,
+        332,
+        472
+      ],
+      "head_center_before_translation": 260.0,
+      "translation": [
+        -4,
+        1
+      ],
+      "bbox_final": [
+        181,
+        20,
+        328,
+        473
+      ],
+      "visible_bottom_final": 472,
+      "head_center_final": 256.0
+    }
+  ]
+}

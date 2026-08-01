@@ -1,0 +1,50 @@
+{
+  "name": "window_sit_sparse_keys",
+  "frame_count": 7,
+  "fps": 2,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "authority_hierarchy": {
+    "design_authority": "../../character-reference/model-sheet.png",
+    "standing_proportion_authority": "../../return_wave/anchors/reason_pose_frame_000_chroma.png",
+    "window_seated_candidate": "k08_stable_window_seat_chroma.png",
+    "rule": "K08 remains a candidate until explicit user approval. Other keys may use it only as a motion/contact endpoint; original authorities retain identity and rendering ownership."
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.08,
+    "max_alpha_coverage": 0.55,
+    "max_color_jsd": 0.28,
+    "max_area_drift": 1.25,
+    "max_bbox_aspect_drift": 1.25,
+    "max_baseline_jitter_px": 2.0,
+    "max_center_range_px": 150.0,
+    "min_adjacent_diff": 0.0008,
+    "max_adjacent_diff": 0.58,
+    "max_motion_energy_delta": 0.45,
+    "max_centroid_acceleration_px": 120.0,
+    "min_loop_seam_ratio": 0.2,
+    "max_loop_seam_ratio": 2.0
+  },
+  "threshold_notes": {
+    "max_area_drift": "Sparse keys include standing, deep descent, dangling seat and rise-load silhouettes.",
+    "max_bbox_aspect_drift": "Window-edge sitting legitimately widens the dress and separates dangling legs.",
+    "max_center_range_px": "Sparse keys intentionally cover the full vertical support-transfer arc.",
+    "max_adjacent_diff": "Only semantic keys are present; direct midpoint frames are intentionally not generated before user approval."
+  },
+  "frames": [
+    {"index":0,"file":"k00_stand.png","phase":0.0,"role":"key","segment":"enter","pose":"approved standing endpoint"},
+    {"index":1,"file":"k04_descent.png","phase":0.129,"role":"key","segment":"enter","pose":"deep controlled descent"},
+    {"index":2,"file":"k08_stable_window_seat.png","phase":0.2581,"role":"key","segment":"loop","pose":"stable window-edge seated mother candidate"},
+    {"index":3,"file":"k12_leg_swing.png","phase":0.3871,"role":"key","segment":"loop","pose":"small leg-swing peak"},
+    {"index":4,"file":"k19_side_lean.png","phase":0.6129,"role":"key","segment":"loop","pose":"restrained side-lean observation"},
+    {"index":5,"file":"k27_rise_load.png","phase":0.871,"role":"key","segment":"exit","pose":"two-leg rise/load"},
+    {"index":6,"file":"k31_stand_return.png","phase":1.0,"role":"key","segment":"exit","pose":"approved standing return endpoint"}
+  ]
+}

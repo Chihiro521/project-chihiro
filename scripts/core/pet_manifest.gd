@@ -108,6 +108,16 @@ func _validate_clip(name: String, value: Variant) -> void:
 		if float(duration) <= 0.0:
 			errors.append("动作 %s 包含无效帧时长" % name)
 			break
+	var support_y: Array = clip_data.get("supportContactY", [])
+	if not support_y.is_empty():
+		if support_y.size() != frames.size():
+			errors.append("动作 %s 的 supportContactY 长度无效" % name)
+		var clip_canvas: Dictionary = clip_data.get("canvas", data.get("canvas", {}))
+		var canvas_height := float(clip_canvas.get("height", 512.0))
+		for value_y in support_y:
+			if typeof(value_y) not in [TYPE_INT, TYPE_FLOAT] or float(value_y) < 0.0 or float(value_y) > canvas_height:
+				errors.append("动作 %s 包含无效支撑点" % name)
+				break
 	var anchor: Dictionary = clip_data.get("anchor", {})
 	if not anchor.has("x") or not anchor.has("y"):
 		errors.append("动作 %s 的锚点无效" % name)
@@ -119,4 +129,3 @@ func _validate_clip(name: String, value: Variant) -> void:
 		var progress: Array = root_motion.get("frameProgress", [])
 		if progress.size() != frames.size() + 1:
 			errors.append("动作 %s 的 rootMotion.frameProgress 长度无效" % name)
-

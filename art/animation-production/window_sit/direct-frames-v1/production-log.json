@@ -1,0 +1,64 @@
+{
+  "action": "window_sit",
+  "date": "2026-07-30",
+  "state": "continuous_frames_ready_for_user_review",
+  "production_mode": "direct_full_frame",
+  "frame_count": 32,
+  "key_indices": [0, 4, 8, 12, 19, 27, 31],
+  "direct_indices": [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30],
+  "rules": {
+    "complete_independent_drawing_per_direct_frame": true,
+    "interpolation_used": false,
+    "optical_flow_used": false,
+    "morph_or_warp_used": false,
+    "part_compositing_used": false,
+    "background": "flat #FF00FF",
+    "background_removal": "hard chroma, tolerance 110, edge-contract 1, edge-feather 0.35, despill",
+    "normalization": "uniform whole-canvas resize plus whole-frame head-center/baseline translation"
+  },
+  "rejected_artifacts": {
+    "directory": "rejected-candidates",
+    "file_count": 211,
+    "chroma_count": 118,
+    "alpha_count": 79,
+    "normalized_count": 14,
+    "note": "Rejected candidates never enter the accepted temporal reference chain."
+  },
+  "major_repairs": [
+    "F01-F03 head and body scale drift",
+    "F05-F06 window-edge support-transfer semantics and head scale",
+    "F09-F15 leg-swing overshoot and return spacing",
+    "F17 side-observation scale drift",
+    "F21-F23 loop-seam scale and gaze recovery",
+    "F28-F30 rise scale and final standing recovery"
+  ],
+  "qa": {
+    "normalization": "PASS",
+    "generic": "PASS",
+    "generic_failures": 0,
+    "generic_warnings": 0,
+    "local_identity": "PASS",
+    "max_head_width_delta_px": 9,
+    "max_face_width_delta_px": 8,
+    "max_face_height_delta_px": 14,
+    "max_hair_luma_delta": 8.32,
+    "max_dark_material_luma_delta": 7.788,
+    "max_magenta_fringe_pixels": 3,
+    "max_green_cyan_fringe_pixels": 9
+  },
+  "semantic_reviews": {
+    "enter_F00_F08": "PASS",
+    "loop_F08_F23": "PASS",
+    "exit_F20_F31": "PASS"
+  },
+  "artifacts": {
+    "contact_sheet": "qa/window_sit-full-contact-sheet.png",
+    "identity_sheet": "qa/local-identity-contact-sheet.png",
+    "preview": "qa/preview.gif",
+    "slow_preview": "qa/preview-slow.gif",
+    "world_contact_preview": "qa/preview-world-contact.gif",
+    "world_contact_slow_preview": "qa/preview-world-contact-slow.gif",
+    "support_contact_curve": "qa/support-contact-curve.json"
+  },
+  "gate": "Awaiting final user semantic acceptance before packaging or Godot integration."
+}
