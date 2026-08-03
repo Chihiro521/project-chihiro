@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "controller": "main thread",
+  "worker_model": "gpt-5.6-sol",
+  "worker_reasoning_effort": "xhigh",
+  "workers": [
+    {
+      "id": "art_daily_standing",
+      "branch": "codex/art-daily-standing",
+      "actions": [
+        {"id": "adjust_hat_hair", "segments": ["one_shot"], "pose_family": "standing_front", "target_fps": 6},
+        {"id": "tired_yawn", "segments": ["one_shot"], "pose_family": "standing_front", "target_fps": 6}
+      ]
+    },
+    {
+      "id": "art_daily_seated",
+      "branch": "codex/art-daily-seated",
+      "actions": [
+        {"id": "rabbit_seated", "segments": ["enter", "loop", "exit"], "pose_family": "floor_seated", "target_fps": 6},
+        {"id": "quiet_companion", "segments": ["enter", "loop", "exit"], "pose_family": "floor_seated", "target_fps": 6}
+      ]
+    },
+    {
+      "id": "art_home_route",
+      "branch": "codex/art-home-route",
+      "actions": [
+        {"id": "home_relax", "segments": ["one_shot"], "pose_family": "standing_front", "target_fps": 6},
+        {"id": "route_decide", "segments": ["left", "right"], "pose_family": "standing_front", "target_fps": 6}
+      ]
+    },
+    {
+      "id": "art_window_inspect",
+      "branch": "codex/art-window-inspect",
+      "actions": [
+        {"id": "platform_peer", "segments": ["left", "right"], "pose_family": "window_seated", "target_fps": 6},
+        {"id": "window_edge_inspect", "segments": ["left", "right"], "pose_family": "window_seated", "target_fps": 6}
+      ]
+    },
+    {
+      "id": "art_platform_motion",
+      "branch": "codex/art-platform-motion",
+      "actions": [
+        {"id": "platform_balance_recover", "segments": ["left", "right"], "pose_family": "standing_front", "target_fps": 6},
+        {"id": "platform_wait", "segments": ["enter", "loop", "exit"], "pose_family": "window_seated", "target_fps": 6}
+      ]
+    }
+  ],
+  "worker_boundary": {
+    "may_write": "Only art/animation-production/ecology-v022/workers/<worker-id>/<action-id>/ in the worker worktree.",
+    "must_not_write": [
+      "skins/",
+      "data/",
+      "scripts/",
+      "scenes/",
+      "project.godot",
+      "shared authority files",
+      "shared tests"
+    ],
+    "first_stop_state": "keys_generated_pending_user"
+  }
+}
+

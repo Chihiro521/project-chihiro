@@ -1,0 +1,70 @@
+{
+  "name": "little-chihiro-ecology-action",
+  "frame_count": 8,
+  "fps": 6,
+  "loop": false,
+  "frame_width": 512,
+  "frame_height": 512,
+  "anchor_index": 0,
+  "production_mode": "direct_full_frame",
+  "movement_mode": "in_place",
+  "baseline_lock": true,
+  "center_lock": false,
+  "pivot": {"x": 256, "y": 492},
+  "authority_hierarchy": {
+    "design_authority": "../../../../character-reference/model-sheet.png",
+    "proportion_authority": "<select-from-authority-bundle>",
+    "pose_family_authorities": {},
+    "rule": "Temporal neighbors control motion and contacts only and never replace design or proportion authority."
+  },
+  "identity_lock": {
+    "source": "../../../../character-reference/identity-lock.json",
+    "head_face": "Preserve head width, rounded face, eye spacing and facial identity.",
+    "proportions": "Preserve body volume, dress width, leg thickness, shoe size, scale and margins.",
+    "hair_material": "Preserve ash-blonde luminance and restrained highlights without stripes, grain or brightening.",
+    "accessory_topology": "One fixed-side satchel, one connected strap and exactly one intact rabbit.",
+    "rendering": "Preserve original outline, shading, camera, light and material frequency."
+  },
+  "action_contract": {
+    "intent": "<complete-action-intent>",
+    "allowed_motion": "<declared-joints-expression-root-and-secondary-motion>",
+    "forbidden_changes": "identity, proportion, topology, palette, material, camera, crop, shadow and scenery",
+    "contact_ledger": []
+  },
+  "thresholds": {
+    "min_alpha_coverage": 0.02,
+    "max_alpha_coverage": 0.9,
+    "max_color_jsd": 0.18,
+    "max_area_drift": 0.35,
+    "max_bbox_aspect_drift": 0.3,
+    "max_baseline_jitter_px": 4.0,
+    "max_center_range_px": 18.0,
+    "min_adjacent_diff": 0.004,
+    "max_adjacent_diff": 0.55,
+    "max_motion_energy_delta": 0.22,
+    "max_centroid_acceleration_px": 18.0,
+    "min_loop_seam_ratio": 0.25,
+    "max_loop_seam_ratio": 1.75
+  },
+  "threshold_notes": {},
+  "local_identity_checks": {
+    "required": true,
+    "reference_pose_family": "<pose-family>",
+    "report": "qa/local-identity-report.json",
+    "contact_sheet": "qa/local-identity-contact-sheet.png",
+    "measurements": [
+      "head_and_face_dimensions",
+      "garment_landmarks",
+      "leg_and_shoe_dimensions",
+      "hair_luminance_and_material_frequency",
+      "satchel_strap_rabbit_topology"
+    ]
+  },
+  "review_state": {
+    "status": "contract_ready",
+    "automated_status": "pending",
+    "semantic_status": "pending_user",
+    "user_approval_artifact": ""
+  },
+  "frames": []
+}

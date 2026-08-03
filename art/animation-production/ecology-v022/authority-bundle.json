@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "release": "0.22.0-beta.1",
+  "production_mode": "direct_full_frame",
+  "design_authority": "../character-reference/model-sheet.png",
+  "identity_lock": "../character-reference/identity-lock.json",
+  "proportion_authorities": {
+    "standing_front": "../sit_rest/anchors/character_front.png",
+    "standing_left": "../inspect_rabbit/anchors/character_gaze_left.png",
+    "standing_right": "../inspect_rabbit/anchors/character_gaze_right.png",
+    "floor_seated": "../sit_rest/seated-loop-master-v1/frames/frame_008.png",
+    "window_seated": "../window_sit/key-poses/normalized/k08_stable_window_seat.png"
+  },
+  "canvas": {
+    "generation": [1024, 1024],
+    "final": [512, 512],
+    "pivot": [256, 492],
+    "background": "#FF00FF",
+    "background_rule": "perfectly flat chroma key without shadow, gradient, texture, floor or reflection"
+  },
+  "immutable_locks": {
+    "identity": "Approximately four heads tall with the same rounded face, muted blue-gray eyes, ash-blonde chin-length bob and large navy beret.",
+    "proportion": "Preserve head and face size, shoulder width, dress volume, hem height, leg thickness, shoe size, scale and margins from the selected pose-family authority.",
+    "costume": "Deep navy dress, cream Peter Pan collar and lace hem, orange neck ribbon, three brass buttons, cream knee socks and black Mary Jane shoes remain topologically identical.",
+    "hair_material": "Ash-blonde hair retains the original restrained warm highlights; do not brighten, bleach, add stripes, grain or high-frequency texture.",
+    "accessories": "One tan cross-body satchel remains on the character's fixed side with one connected strap and exactly one white rabbit with orange bow.",
+    "rendering": "Soft polished anime game illustration, fine dark outlines, restrained warm shading, orthographic camera, neutral light and no cast shadow."
+  },
+  "authority_rule": "Design authority owns identity and surface treatment; the selected pose-family authority owns geometry; approved temporal neighbors own motion and contacts only.",
+  "normalization": {
+    "fixed_cell": true,
+    "per_frame_trim": false,
+    "uniform_downsample": true,
+    "baseline_policy": "Declare per action; standing in-place actions lock the foot baseline, airborne or seated-contact transfers keep the fixed pivot but may disable alpha-bound baseline locking."
+  },
+  "required_review_artifacts": [
+    "key contact sheet",
+    "generic QA report",
+    "local identity and material report",
+    "target-FPS GIF",
+    "half-speed GIF",
+    "face-hand-bag-rabbit close-up sheet",
+    "structured handoff"
+  ]
+}
+
