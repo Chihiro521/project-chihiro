@@ -83,8 +83,8 @@ borderless and always-on-top.
 窗口透明、无边框、置顶。
 
 > Status: the v0.22 ecology / behavior system is under development on the local
-> line and is not part of this release.
-> 状态：v0.22 生态 / 行为系统仍在本地开发线中，未包含在本版本内。
+> line and is not part of this release. Updates are released irregularly.
+> 状态：v0.22 生态 / 行为系统仍在本地开发线中，未包含在本版本内。版本不定期更新。
 
 ---
 
