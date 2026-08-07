@@ -1,6 +1,12 @@
 extends SceneTree
 
 const DialogueSchedulerScript := preload("res://scripts/core/pet_dialogue_scheduler.gd")
+const EcologyClockScript := preload("res://scripts/core/pet_ecology_clock.gd")
+const HabitatModelScript := preload("res://scripts/core/desktop_habitat_model.gd")
+const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
+const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
+const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
+const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progression.gd")
 
 var failures: Array[String] = []
 var assertions := 0
@@ -25,6 +31,7 @@ func _run() -> void:
 	await _test_speech_bubble()
 	_test_action_catalog()
 	_test_mechanism_dashboard()
+	_test_ecology_models()
 	_test_window_platforms()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
@@ -605,13 +612,22 @@ func _test_state_store_and_dialogue() -> void:
 	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
 	var store := PetStateStore.new(test_path)
 	var state := store.create_default_state()
+	_expect(int(state.schema_version) == 2, "state store defaults to the v0.22 schema")
 	state.affection = 73.5
 	state.interaction_stats.head_pats = 4
+	state.habitat_familiarity = 32.5
+	state.habits = {"morning_patrol": {"count": 3, "stage": 1, "last_credit_unix": 123}}
+	state.discoveries = {"time_morning": {"unlocked_unix": 124}}
+	state.home_anchor = {"screen_rect": [0, 0, 1920, 1080], "uv": [0.8, 1.0], "global_position": [1240, 720]}
+	state.recent_ecology_events = [{"kind": "discovery", "id": "time_morning", "unix": 124, "window_title": "must not persist"}]
 	state["untrusted_title"] = "must not persist"
 	_expect(store.save_state(state), "state store writes atomically")
 	var loaded := store.load_state()
 	_expect(is_equal_approx(float(loaded.affection), 73.5), "state store restores affection")
 	_expect(int(loaded.interaction_stats.head_pats) == 4, "state store restores interaction counters")
+	_expect(is_equal_approx(float(loaded.habitat_familiarity), 32.5) and int(loaded.habits.morning_patrol.stage) == 1, "state store restores familiarity and habit progress")
+	_expect(loaded.discoveries.has("time_morning") and not (loaded.recent_ecology_events[0] as Dictionary).has("window_title"), "state store persists discovery ids without retaining window titles")
+	_expect(not (loaded.home_anchor as Dictionary).is_empty(), "state store restores a normalized multi-monitor home anchor")
 	_expect(not loaded.has("untrusted_title"), "state store drops fields outside the whitelist")
 	var previous_path := absolute + ".previous"
 	_expect(DirAccess.rename_absolute(absolute, previous_path) == OK, "test can simulate an interrupted state replacement")
@@ -782,6 +798,87 @@ func _test_mechanism_dashboard() -> void:
 	var dashboard := PetMechanismDashboard.new()
 	_expect(dashboard != null, "mechanism dashboard can be instantiated headlessly")
 	dashboard.free()
+
+
+func _test_ecology_models() -> void:
+	var clock := EcologyClockScript.new()
+	_expect(clock.set_rate(60.0), "ecology clock accepts the supported sixty-times rate")
+	_expect(is_equal_approx(clock.advance(2.0), 120.0) and clock.elapsed_ms() == 120000, "ecology clock accelerates simulation time without changing real time")
+	_expect(not clock.set_rate(3.0) and is_equal_approx(clock.rate(), 60.0), "ecology clock rejects unsupported rates")
+
+	var habitat := HabitatModelScript.new()
+	habitat.update_screens([
+		Rect2(-1280.0, 0.0, 1280.0, 1024.0),
+		Rect2(0.0, 0.0, 1920.0, 1080.0),
+	])
+	_expect(habitat.screen_rects().size() == 2 and habitat.virtual_bounds() == Rect2(-1280.0, 0.0, 3200.0, 1080.0), "habitat model unifies negative-coordinate monitors into virtual desktop bounds")
+	var pet_size := Vector2(360.0, 360.0)
+	var secondary_floor := habitat.clamp_pet_position(Vector2(-900.0, 900.0), pet_size, true)
+	_expect(is_equal_approx(secondary_floor.y, 664.0) and secondary_floor.x < 0.0, "habitat clamps a pet to the selected monitor instead of treating the inter-monitor union as walkable")
+	_expect(habitat.route_mode(Vector2(-900.0, 664.0), Vector2(900.0, 720.0), pet_size) == "flight", "cross-monitor habitat travel requests a flight route")
+	var anchor := habitat.make_anchor(Vector2(-700.0, 664.0), pet_size)
+	var restored := habitat.restore_anchor(anchor, pet_size)
+	_expect(restored.x < 0.0 and is_equal_approx(restored.y, 664.0), "habitat restores a normalized home anchor on its original monitor")
+	habitat.update_screens([Rect2(0.0, 0.0, 1920.0, 1080.0)])
+	var migrated := habitat.restore_anchor(anchor, pet_size)
+	_expect(migrated.x >= 0.0 and migrated.y <= 720.0, "a removed monitor migrates the home anchor to the nearest safe screen")
+
+	var profile := _load_json("res://data/ecology_profile.json")
+	_expect((profile.get("goals", []) as Array).size() == 12 and (profile.get("habits", []) as Array).size() == 12 and (profile.get("discoveries", []) as Array).size() == 24, "ecology profile declares twelve goals, twelve habits and twenty-four discoveries")
+	var needs := PetNeedsModel.new(_load_json("res://data/behavior_profile.json"))
+	var director := GoalDirectorScript.new(profile, 22013)
+	_expect(director.is_valid(), "ecology goal director accepts the complete profile")
+	var goal_context := {
+		"familiarity": 60.0,
+		"has_foreground": true,
+		"has_platform": true,
+		"has_multiple_platforms": true,
+		"on_platform": true,
+		"cursor_available": true,
+		"home_set": true,
+		"time_period": "afternoon",
+		"app_category": "development",
+		"habit_stages": {},
+	}
+	var selected_goals: Array[String] = []
+	for index in range(6):
+		var goal := director.select_goal(needs, goal_context, 100000 + index * 300000)
+		_expect(not goal.is_empty() and not (goal.get("steps", []) as Array).is_empty(), "goal director produces an executable multi-step goal")
+		var goal_id := str(goal.get("id", ""))
+		if selected_goals.size() >= 3:
+			_expect(goal_id not in selected_goals.slice(selected_goals.size() - 3), "goal director avoids the latest three goal families when alternatives exist")
+		selected_goals.append(goal_id)
+	_expect(director.last_candidates.size() == 12, "goal diagnostics expose all twelve ecological goals")
+
+	var routine := RoutineSessionScript.new()
+	var routine_goal := {"id": "test_routine", "steps": [{"type": "travel"}, {"type": "intent"}]}
+	_expect(routine.begin(routine_goal, 1000) and str(routine.current_step().type) == "travel", "routine session begins at its first semantic step")
+	routine.complete_step("completed", 2000)
+	_expect(str(routine.current_step().type) == "intent", "routine session advances only after a completed step")
+	_expect(routine.interrupt("direct_interaction", true) == "paused" and routine.resume(2500), "routine session can pause for a direct interaction and resume at the same step")
+	routine.complete_step("completed", 3000)
+	_expect(not routine.is_active() and str(routine.snapshot().outcome) == "completed", "routine session completes after its final step")
+
+	var requests := EcologyRequestScript.new(profile)
+	var accepted := requests.evaluate("come_here", {"cursor_available": true, "energy": 72.0, "irritation": 0.0, "busy": false}, 1000)
+	_expect(str(accepted.status) == "accepted" and str(accepted.goal_id) == "cursor_visit", "available ecological requests resolve to semantic goals")
+	var deferred := requests.evaluate("come_here", {"cursor_available": true, "energy": 72.0, "irritation": 0.0, "busy": true}, 2000)
+	_expect(str(deferred.status) == "deferred" and not requests.snapshot().is_empty(), "busy ecological requests defer for a bounded interval")
+	var resumed_request := requests.poll({"cursor_available": true, "energy": 72.0, "irritation": 0.0, "busy": false}, 3000)
+	_expect(str(resumed_request.status) == "accepted", "a deferred request starts at the next safe boundary")
+	var refused := requests.evaluate("inspect_foreground", {"has_foreground": false, "energy": 72.0, "irritation": 0.0}, 4000)
+	_expect(str(refused.status) == "refused" and str(refused.reason) == "target_unavailable", "requests refuse safely when their desktop target disappeared")
+
+	var progression := EcologyProgressionScript.new(profile)
+	progression.restore_persistent({})
+	var time_events := progression.observe_event("time_observed", {"time_period": "morning"}, 100, 1000)
+	var app_events := progression.observe_event("app_observed", {"app_category": "development"}, 101, 2000)
+	_expect(time_events.size() == 1 and app_events.size() == 1 and int(progression.snapshot().discovery_count) == 2, "time and application observations unlock privacy-safe discovery cards")
+	for index in range(3):
+		progression.record_goal("floor_roam", {"time_period": "morning", "app_category": "", "goal_id": "floor_roam"}, 200 + index, 10000 + index * 600001)
+	var habit_state: Dictionary = progression.habit_stages()
+	_expect(int(habit_state.get("morning_patrol", 0)) == 1, "three spaced qualifying goals form the first habit stage")
+	_expect(progression.familiarity() > 0.0 and (progression.persistent_snapshot().get("recent_ecology_events", []) as Array).size() <= 50, "ecology progression produces visible familiarity while bounding its private-safe history")
 
 func _test_window_platforms() -> void:
 	var snapshots := [

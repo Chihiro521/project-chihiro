@@ -1,6 +1,8 @@
 class_name PetMechanismDashboard
 extends Window
 
+signal simulation_rate_requested(rate: float)
+
 const NEED_ORDER := ["energy", "boredom", "curiosity", "irritation", "affection"]
 const NEED_LABELS := {
 	"energy": "精力",
@@ -36,6 +38,7 @@ var _environment_values: Dictionary = {}
 var _dialogue_values: Dictionary = {}
 var _persistence_values: Dictionary = {}
 var _settings_label: Label
+var _rate_selector: OptionButton
 var _candidate_tree: Tree
 var _timeline: ItemList
 
@@ -94,6 +97,16 @@ func _build_ui() -> void:
 	_live_label = _make_label("● 等待运行数据", Color("#778b9e"), 13)
 	_live_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(_live_label)
+	if OS.is_debug_build():
+		_rate_selector = OptionButton.new()
+		_rate_selector.tooltip_text = "只加速生态时钟；动画、输入和窗口轮询保持真实速度。"
+		for rate in [1.0, 10.0, 60.0, 240.0]:
+			_rate_selector.add_item("%d×" % int(rate))
+			_rate_selector.set_item_metadata(_rate_selector.item_count - 1, rate)
+		_rate_selector.item_selected.connect(func(index: int) -> void:
+			simulation_rate_requested.emit(float(_rate_selector.get_item_metadata(index)))
+		)
+		header.add_child(_rate_selector)
 
 	root.add_child(HSeparator.new())
 	_build_flow(root)
@@ -352,13 +365,21 @@ func _apply_snapshot(snapshot: Dictionary) -> void:
 	})
 
 	var settings := _dictionary(snapshot.get("settings", {}))
-	_settings_label.text = "自主闲逛 %s  ·  光标跟随 %s\n气泡 %s  ·  标题感知 %s  ·  音效 %s" % [
+	_settings_label.text = "自主闲逛 %s  ·  光标跟随 %s\n气泡 %s  ·  标题感知 %s  ·  音效 %s\n生态时钟 %d×%s" % [
 		_on_off(settings.get("auto_wander", false)),
 		_on_off(settings.get("cursor_tracking", false)),
 		_on_off(settings.get("speech_bubbles", false)),
 		_on_off(settings.get("title_awareness", false)),
 		_on_off(settings.get("action_sounds", false)),
+		int(settings.get("ecology_rate", 1.0)),
+		" · 独立开发存档" if bool(settings.get("developer_state", false)) else "",
 	]
+	if _rate_selector != null:
+		var requested_rate := float(settings.get("ecology_rate", 1.0))
+		for index in range(_rate_selector.item_count):
+			if is_equal_approx(float(_rate_selector.get_item_metadata(index)), requested_rate):
+				_rate_selector.select(index)
+				break
 	_update_candidates(snapshot.get("candidates", []), str(snapshot.get("intent", "")))
 	_update_flow(snapshot, needs, environment, bubble, persistence)
 	for event_text in describe_snapshot_changes(_history_snapshot, snapshot):
