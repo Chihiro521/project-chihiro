@@ -7,6 +7,8 @@ const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd
 const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
 const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
 const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progression.gd")
+const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
+const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
 
 var failures: Array[String] = []
 var assertions := 0
@@ -27,11 +29,15 @@ func _run() -> void:
 	_test_behavior_director()
 	_test_action_session()
 	_test_state_store_and_dialogue()
+	_test_control_dialogue()
 	_test_dialogue_scheduler()
 	await _test_speech_bubble()
 	_test_action_catalog()
 	_test_mechanism_dashboard()
 	_test_ecology_models()
+	_test_manual_control_model()
+	_test_roam_planner()
+	_test_control_and_roam_state()
 	_test_window_platforms()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
@@ -387,6 +393,14 @@ func _test_playback() -> void:
 	var handoff_side := load(manifest.frame_resource_path(str(handoff_frames[-1]))) as Texture2D
 	_expect(front_texture.get_image().get_data() == handoff_front.get_image().get_data(), "reverse side handoff ends on the exact front-idle pixels")
 	_expect(side_texture.get_image().get_data() == handoff_side.get_image().get_data(), "reverse side handoff starts on the exact side-idle pixels")
+	# Reversing playback preserves the current frame instead of restarting from an end.
+	player.play_clip("patrol_wall_left_a")
+	player._process(0.4)
+	var wall_frame_before := player.current_frame
+	player.set_playback_reverse(true)
+	_expect(player.current_frame == wall_frame_before, "reversing playback keeps the current frame")
+	player._process(0.12)
+	_expect(player.current_frame < wall_frame_before, "reversed playback advances backward from the same spot")
 	host.queue_free()
 	await process_frame
 
@@ -635,7 +649,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 145, "dialogue catalog contains 145 lines")
+	_expect(dialogue.line_count() == 192, "dialogue catalog contains 192 lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
@@ -703,6 +717,34 @@ func _test_speech_bubble() -> void:
 	bubble.hide_message(true)
 	bubble.queue_free()
 	await process_frame
+
+func _test_control_dialogue() -> void:
+	var dialogue := PetDialogueDirector.new(77)
+	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "control dialogue data loads")
+	var control_events := [
+		"control_enter", "control_exit", "control_jump", "control_fly", "control_fly_cancel",
+		"control_climb", "control_detach", "control_umbrella", "control_land",
+		"control_long", "control_combo", "fling", "fling_slide", "fling_throw",
+	]
+	var now := 300000.0
+	for event in control_events:
+		var line := dialogue.select_line({
+			"event": event, "relationship_tier": "familiar", "irritation": 0,
+			"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+		}, now)
+		_expect(not line.is_empty(), "control event %s selects a line" % event)
+		now += 20000.0  # step past the 12s event cooldown between events
+	# Relationship-tiered enter lines: distant must not select the close-tier variant.
+	dialogue.set_seed(11)
+	var distant_line := dialogue.select_line({
+		"event": "control_enter", "relationship_tier": "distant", "irritation": 0,
+		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+	}, now)
+	_expect(not distant_line.is_empty(), "distant control_enter selects a line")
+	_expect(
+		str(distant_line.get("id", "")) in ["control_enter_001", "control_enter_002", "control_enter_003", "control_enter_004"],
+		"distant control_enter avoids the close-tier line"
+	)
 
 func _test_dialogue_scheduler() -> void:
 	var scheduler := DialogueSchedulerScript.new()
@@ -879,6 +921,222 @@ func _test_ecology_models() -> void:
 	var habit_state: Dictionary = progression.habit_stages()
 	_expect(int(habit_state.get("morning_patrol", 0)) == 1, "three spaced qualifying goals form the first habit stage")
 	_expect(progression.familiarity() > 0.0 and (progression.persistent_snapshot().get("recent_ecology_events", []) as Array).size() <= 50, "ecology progression produces visible familiarity while bounding its private-safe history")
+
+func _test_manual_control_model() -> void:
+	var model := ManualControlModelScript.new(Vector2(300.0, 500.0))
+	model.configure_oneshot_durations({"takeoff": 300.0, "land": 700.0})
+	var context := {
+		"floor_y": 500.0,
+		"screen": Rect2(0.0, 0.0, 800.0, 600.0),
+		"pet_size": Vector2(360.0, 360.0),
+		"walk_speed": 120.0,
+		"flight_speed": 180.0,
+		"gravity": 1600.0,
+		"jump_vy": -520.0,
+		"wall_threshold": 40.0,
+	}
+	var result := model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "control model starts on the ground")
+	_expect(str(result.get("clip")) == "idle", "ground without input shows idle")
+	result = model.tick(0.5, {"dir_x": 1, "dir_y": 0}, context)
+	_expect(str(result.get("clip")) == "patrol_floor_right", "ground walk right uses patrol_floor_right")
+	model.queue_jump()
+	result = model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.JUMP, "queue_jump on ground starts a jump")
+	_expect(str(result.get("clip")) == "takeoff", "jump opens with the takeoff clip")
+	for i in range(30):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND, "jump arcs and returns to the ground")
+	model.reset(Vector2(300.0, 500.0))
+	model.set_flight_mode(true)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.flight_mode, "set_flight_mode(true) enables flight")
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "flight mode lifts off")
+	var start := model.position
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, context)
+	_expect(model.position.y < start.y, "flight moves vertically")
+	start = model.position
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, context)
+	_expect(model.position.x > start.x, "flight moves horizontally")
+	model.position = Vector2(10.0, 300.0)
+	model._wall_release_cooldown_ms = 0.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.has_pending_attach(), "flying into the left edge starts a wall attach")
+	_expect(model.attach_clip() == "patrol_balloon_arrive_left_a", "left-wall attach uses the left-anchored arrive clip")
+	model.finish_attach()
+	_expect(model.subphase == ManualControlModelScript.WALL, "finishing the attach enters the wall climb")
+	_expect(model.wall_side < 0, "adherence is on the left wall")
+	model.subphase = ManualControlModelScript.WALL
+	model.wall_side = -1
+	model.position = Vector2(0.0, 300.0)
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, context)
+	_expect(model.has_pending_detach(), "flight detach starts a pending transition")
+	_expect(model.subphase == ManualControlModelScript.WALL, "flight detach locks the pet on the wall until the clip completes")
+	_expect(model.detach_clip() == "patrol_balloon_depart_left", "left-wall detach uses the left-anchored balloon clip")
+	model.finish_detach()
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "finishing the detach returns to flight")
+	_expect(model._wall_release_cooldown_ms > 0.0, "finishing a flight detach grants re-attach grace")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "detach grace prevents an immediate re-attach")
+	for i in range(125):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "detach grace lasts long enough to fly away (no re-suck)")
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "cancelling flight while airborne falls")
+	result = model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(str(result.get("clip")) == "drag_fall", "fall uses the drag_fall clip")
+	for i in range(40):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND, "fall lands back on the ground")
+	_expect(is_equal_approx(model.position.y, 500.0), "landed pet sits on the floor (no floating)")
+	# Ground walk into the wall defers the climb until the corner clip completes.
+	model.reset(Vector2(400.0, 500.0))
+	model.tick(1.0, {"dir_x": 1, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.WALL, "ground walk into the wall attaches")
+	_expect(model.has_pending_attach(), "ground attach defers until the corner clip completes")
+	_expect(model.attach_clip() == "patrol_floor_to_wall_right_a", "ground attach uses the floor_to_wall corner clip")
+	model.finish_attach()
+	_expect(model.wall_side > 0, "ground climb attaches to the right wall")
+	# Regression: clinging at the wall base with no vertical input must stay on the
+	# wall (previously it oscillated ground<->wall every frame — the 鬼畜 jitter).
+	for i in range(5):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.WALL, "clinging at the wall base stays on the wall (no jitter)")
+	# Pressing down at the base plays the wall_to_floor detach, then stands.
+	model.tick(0.016, {"dir_x": 0, "dir_y": 1}, context)
+	_expect(model.has_pending_detach(), "pressing down at the base starts a wall detach")
+	_expect(model.detach_clip() == "patrol_wall_right_to_floor_left_a", "base detach uses the wall_to_floor clip")
+	model.finish_detach()
+	_expect(model.subphase == ManualControlModelScript.GROUND, "finishing the base detach stands on the ground")
+	# Climb speed matches the animation root motion (68 px/s), not flight speed.
+	model.reset(Vector2(400.0, 500.0))
+	model.subphase = ManualControlModelScript.WALL
+	model.wall_side = 1
+	model.position = Vector2(440.0, 500.0)
+	model.tick(1.0, {"dir_x": 0, "dir_y": -1}, context)
+	_expect(is_equal_approx(model.position.y, 432.0), "wall climb advances at the root-motion speed (68 px/s)")
+	# Non-flight detach near the ground defers until the wall_to_floor clip completes.
+	model.subphase = ManualControlModelScript.WALL
+	model.wall_side = 1
+	model.position = Vector2(440.0, 490.0)
+	model.tick(0.016, {"dir_x": -1, "dir_y": 0}, context)
+	_expect(model.has_pending_detach(), "non-flight low detach starts a pending transition")
+	model.finish_detach()
+	_expect(model.subphase == ManualControlModelScript.GROUND, "finishing the low detach returns to the ground")
+	# Non-flight detach high up falls immediately (no transition clip).
+	model.subphase = ManualControlModelScript.WALL
+	model.wall_side = 1
+	model.position = Vector2(440.0, 200.0)
+	model.tick(0.016, {"dir_x": -1, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "non-flight high detach falls")
+	_expect(not model.has_pending_detach(), "high detach does not wait for a transition clip")
+	# Jumping into the wall climbs.
+	model.reset(Vector2(400.0, 500.0))
+	model.queue_jump()
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, context)
+	model.position = Vector2(420.0, 300.0)
+	model.subphase = ManualControlModelScript.JUMP
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.WALL, "jumping into the wall climbs")
+	# High fall engages the umbrella descent.
+	model.reset(Vector2(300.0, 300.0))
+	model.set_flight_mode(true)
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.umbrella, "high fall engages the umbrella")
+	_expect(model.subphase == ManualControlModelScript.FALL, "umbrella descent stays in the fall sub-phase")
+	# Short fall does not engage the umbrella.
+	model.reset(Vector2(300.0, 480.0))
+	model.set_flight_mode(true)
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(not model.umbrella, "short fall does not engage the umbrella")
+	# A jump queued while flying must not fire after an umbrella-fall landing.
+	model.reset(Vector2(300.0, 300.0))
+	model.set_flight_mode(true)
+	model.queue_jump()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	for i in range(40):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND, "a stale flight jump does not fire after landing")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "landed pet stays standing (no queued jump)")
+
+func _test_roam_planner() -> void:
+	var screens: Array[Rect2] = [Rect2(0.0, 0.0, 800.0, 600.0), Rect2(800.0, 0.0, 800.0, 600.0)]
+	var start := Vector2(400.0, 240.0)
+	var pet_size := Vector2(360.0, 360.0)
+	var legs := RoamPlannerScript.build_legs(start, pet_size, screens, "roam-seed-1")
+	_expect(legs.size() >= 2 and legs.size() <= 4, "roam planner produces 2-4 legs")
+	var previous := start
+	for leg in legs:
+		var from: Vector2 = leg.get("from", Vector2.ZERO)
+		_expect(from.distance_to(previous) < 1.0, "roam legs chain from the previous target")
+		previous = leg.get("to", from)
+		var leg_type := str(leg.get("type", ""))
+		_expect(leg_type in ["walk", "fly", "fly_drop"], "roam leg type is known")
+		if leg.has("drop_at_progress") and leg.get("drop_at_progress", null) != null:
+			_expect(leg_type == "fly_drop", "drop_at_progress only appears on fly_drop legs")
+	var made_fly := false
+	for leg in legs:
+		if str(leg.get("type", "")) in ["fly", "fly_drop"]:
+			made_fly = true
+	_expect(made_fly, "roam path always contains a flight")
+	var last_to: Vector2 = legs.back().get("to", Vector2.ZERO)
+	var last_screen := _roam_screen_for_point(last_to, screens)
+	_expect(absf(last_to.y - (last_screen.end.y - pet_size.y)) < 2.0, "last roam leg ends on a floor")
+	var single_screens: Array[Rect2] = [screens[0]]
+	var single := RoamPlannerScript.build_legs(start, pet_size, single_screens, "roam-seed-2")
+	for leg in single:
+		var to: Vector2 = leg.get("to", Vector2.ZERO)
+		_expect(to.x >= 0.0 and to.x <= 800.0 - pet_size.x + 1.0, "single-screen roam legs stay in horizontal bounds")
+
+func _roam_screen_for_point(point: Vector2, screens: Array[Rect2]) -> Rect2:
+	for screen in screens:
+		if screen.has_point(point):
+			return screen
+	return screens[0]
+
+func _test_control_and_roam_state() -> void:
+	var machine := PetStateMachine.new()
+	machine.dispatch({"type": "CLIP_END"})
+	_expect(machine.dispatch({"type": "MANUAL_CONTROL_START"}) == "manual_control", "manual control starts from idle")
+	_expect(machine.dispatch({"type": "INTERACTION_END", "resume": "idle"}) == "idle", "manual control exits to resume")
+	machine.dispatch({"type": "MANUAL_CONTROL_START"})
+	_expect(machine.dispatch({"type": "POKE"}) == "poke_cheek", "poke interrupts manual control")
+	machine.dispatch({"type": "MANUAL_CONTROL_START"})
+	_expect(machine.dispatch({"type": "HEAD_PAT_START"}) == "head_pat", "head-pat interrupts manual control")
+	machine.dispatch({"type": "MANUAL_CONTROL_START"})
+	_expect(machine.dispatch({"type": "MENU_OPEN"}) == "menu_wait", "menu preempts manual control")
+	machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	machine.dispatch({"type": "MANUAL_CONTROL_START"})
+	_expect(machine.dispatch({"type": "FULLSCREEN_ENTER"}) == "suspended", "fullscreen suspends manual control")
+	machine.dispatch({"type": "FULLSCREEN_EXIT"})
+	_expect(machine.dispatch({"type": "ROAM_WALK_START"}) == "roam_walk", "roam walk starts from idle")
+	_expect(machine.dispatch({"type": "POKE"}) == "poke_cheek", "poke interrupts roam walk")
+	machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	_expect(machine.dispatch({"type": "ROAM_WALK_START"}) == "roam_walk", "roam walk re-enters")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "roam walk ends to idle")
+	_expect(machine.dispatch({"type": "WANDER", "needs_turn": false}) == "takeoff", "roam fly leg launches")
+	# Dragged fling branching: slide / throw / fall.
+	machine.dispatch({"type": "DRAG_START"})
+	_expect(machine.dispatch({"type": "SLIDE_START"}) == "drag_slide", "dragged ground flick slides")
+	_expect(machine.dispatch({"type": "SLIDE_END"}) == "idle", "slide ends to idle")
+	machine.dispatch({"type": "DRAG_START"})
+	_expect(machine.dispatch({"type": "THROW_START"}) == "drag_throw", "dragged air flick throws")
+	_expect(machine.dispatch({"type": "ARRIVE"}) == "land", "throw lands")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "throw landing returns idle")
+	machine.dispatch({"type": "DRAG_START"})
+	_expect(machine.dispatch({"type": "DRAG_END"}) == "drag_fall", "dragged normal release falls")
 
 func _test_window_platforms() -> void:
 	var snapshots := [

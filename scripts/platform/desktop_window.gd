@@ -23,6 +23,7 @@ func configure() -> void:
 	_window.borderless = true
 	_window.always_on_top = true
 	_window.unfocusable = true
+	_window.skip_taskbar = true
 	_window.min_size = Vector2i.ZERO
 	_window.max_size = Vector2i.ZERO
 
@@ -76,6 +77,9 @@ func set_visible(value: bool) -> void:
 
 func is_visible() -> bool:
 	return _window != null and _window.visible
+
+func is_minimized() -> bool:
+	return _window != null and _window.mode == Window.MODE_MINIMIZED
 
 func set_unfocusable(value: bool) -> void:
 	_window.unfocusable = value

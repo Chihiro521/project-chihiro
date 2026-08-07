@@ -115,6 +115,18 @@ func set_direction(next_direction: int) -> void:
 	direction = -1 if next_direction < 0 else 1
 	_layout()
 
+func set_playback_reverse(reverse: bool) -> void:
+	if manifest == null:
+		return
+	var desired := -1 if reverse else 1
+	if desired == _playback_direction:
+		return
+	_manual_frame = -1
+	_finished = false
+	_externally_driven = false
+	_playback_direction = desired
+	_apply_frame()
+
 func set_manual_frame(frame: int) -> void:
 	if manifest == null:
 		return

@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/core/pet_sfx.gd" id="8_sfx"]
 [ext_resource type="Script" path="res://scripts/ui/action_catalog_panel.gd" id="9_action_catalog"]
 [ext_resource type="Script" path="res://scripts/ui/mechanism_dashboard.gd" id="10_mechanism_dashboard"]
+[ext_resource type="Script" path="res://scripts/ui/offscreen_marker.gd" id="11_marker"]
 
 [node name="LittleChihiro" type="Node" unique_id=1273643401]
 script = ExtResource("1_main")
@@ -39,6 +40,21 @@ always_on_top = true
 mouse_passthrough = true
 force_native = true
 script = ExtResource("6_bubble")
+
+[node name="OffscreenMarker" type="Window" parent="."]
+title = "千寻离屏标记"
+size = Vector2i(72, 92)
+min_size = Vector2i(72, 92)
+max_size = Vector2i(72, 92)
+visible = false
+borderless = true
+transparent = true
+transparent_bg = true
+unfocusable = true
+always_on_top = true
+mouse_passthrough = true
+force_native = true
+script = ExtResource("11_marker")
 
 [node name="DebugOverlay" type="PanelContainer" parent="."]
 offset_left = 8.0

@@ -11,8 +11,12 @@ const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progre
 const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
 const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
 const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
+const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
+const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
 const IDLE_BLINK_MIN_MS := 2400.0
 const IDLE_BLINK_MAX_MS := 5200.0
+const IDLE_WANDER_MIN_MS := 15000.0
+const IDLE_WANDER_MAX_MS := 45000.0
 const AUTO_HEAD_PAT_MS := 900.0
 const FAST_MOVE_REACTION_DISTANCE := 220.0
 const TRAVEL_FACING_DEAD_ZONE := 18.0
@@ -22,6 +26,27 @@ const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
 const SPEECH_FOLLOW_INTERVAL_MS := 33.0
 const RAPID_POKE_WINDOW_MS := 10000.0
 const ROUGH_DRAG_SPEED_PX_PER_SECOND := 1200.0
+const SLIDE_GROUND_THRESHOLD := 20.0
+const SLIDE_MIN_VELOCITY := 0.12
+const SLIDE_VELOCITY_FACTOR := 0.6
+const SLIDE_DECAY_RATE := 3.0
+const SLIDE_STOP_SPEED := 20.0
+const THROW_MIN_UP_VELOCITY := 0.2
+const THROW_HEIGHT_FACTOR := 0.5
+const THROW_MIN_HEIGHT := 150.0
+const THROW_MAX_HEIGHT := 800.0
+const THROW_DRIFT_FACTOR := 120.0
+const MARKER_OFFSCREEN_MARGIN := 30.0
+const MANUAL_WALK_SPEED := 120.0
+const MANUAL_FLIGHT_SPEED := 180.0
+const MANUAL_CLIMB_SPEED := 68.0
+const MANUAL_GRAVITY := 1600.0
+const MANUAL_JUMP_VY := -520.0
+const MANUAL_WALL_THRESHOLD := 40.0
+const MANUAL_DOUBLE_TAP_MS := 300.0
+const CONTROL_QUIP_PROBABILITY := 0.4
+const CONTROL_LONG_MS := 30000.0
+const CONTROL_COMBO_MS := 800.0
 
 const MENU_HEAD_PAT := 1
 const MENU_POKE := 2
@@ -46,6 +71,7 @@ const MENU_COMPANION_15 := 20
 const MENU_COMPANION_30 := 21
 const MENU_COMPANION_60 := 22
 const MENU_FREE_ROAM := 23
+const MENU_MANUAL_CONTROL := 24
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -56,12 +82,14 @@ const TRAY_TITLE_AWARENESS := 110
 const TRAY_ACTION_SOUNDS := 111
 const TRAY_ACTION_CATALOG := 112
 const TRAY_MECHANISM_DASHBOARD := 113
+const TRAY_MANUAL_CONTROL := 114
 
 @onready var sprite_player: PetSpritePlayer = $SpritePlayer
 @onready var desktop: DesktopWindowBridge = $DesktopWindow
 @onready var menu: PopupMenu = $Menu
 @onready var tray_menu: PopupMenu = $TrayMenu
 @onready var speech_bubble: PetSpeechBubble = $SpeechBubble
+@onready var offscreen_marker: PetOffscreenMarker = $OffscreenMarker
 @onready var debug_overlay: PetDebugOverlay = $DebugOverlay
 @onready var sfx_player: PetSfxPlayer = $SfxPlayer
 @onready var action_catalog: PetActionCatalogPanel = $ActionCatalog
@@ -106,6 +134,8 @@ var direction := 1
 var facing := 1
 var pending_facing := 1
 var idle_pose_facing := 0
+var idle_side_pose_deadline := -1.0
+var side_pose_reverting := false
 var airborne_phase := ""
 var drag_fall_mode := "direct"
 var umbrella_visual_phase := ""
@@ -139,6 +169,8 @@ var last_foreground_app := ""
 
 var drag_visual_phase := ""
 var drag_motion_intent := "hold"
+var slide_speed := 0.0
+var throw_session: Dictionary = {}
 var drag_travel_direction := 0
 var drag_brake_direction := 1
 var drag_last_horizontal_speed := 0.0
@@ -153,6 +185,7 @@ var sfx_volume := 0.72
 var gaze_engaged := false
 var smoothed_cursor: Variant = null
 var suspended := false
+var hidden := false
 var started := false
 
 var wander_deadline := -1.0
@@ -169,6 +202,20 @@ var next_mechanism_dashboard_update := 0.0
 var next_speech_follow := 0.0
 var life_session_started_at_ms := 0.0
 var last_click_at := -INF
+var manual_control_model: Variant = null
+var manual_last_up_tap := -INF
+var manual_last_down_tap := -INF
+var manual_last_flight_enter_ms := -INF
+var _control_started_at := -1.0
+var _control_long_emitted := false
+var _last_control_clip := ""
+var _last_control_segment := ""
+var _last_control_reverse := false
+var _last_control_subphase := ""
+var _wall_frozen := false
+var _control_fall_started_at := -1.0
+var roam_active := false
+var roam_session: Dictionary = {}
 
 func _ready() -> void:
 	desktop.configure()
@@ -207,6 +254,7 @@ func _ready() -> void:
 	position = _clamp_position(position, false)
 	_apply_position()
 	sprite_player.set_manifest(manifest)
+	offscreen_marker.set_avatar_texture(_head_avatar_texture())
 	started = true
 	_next_system_check()
 	_next_cursor_sample()
@@ -220,9 +268,25 @@ func _process(delta: float) -> void:
 	_update_window_platforms(now)
 	_update_life_systems(delta, now)
 	_update_dialogue_system(now)
+	if not hidden and not suspended and desktop.is_visible() and not desktop.is_minimized():
+		if offscreen_marker != null:
+			var pet_screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
+			offscreen_marker.update_marker(position.x, pet_screen, position.y < pet_screen.position.y - MARKER_OFFSCREEN_MARGIN)
+	else:
+		speech_bubble.hide_message(true)
+		if offscreen_marker != null:
+			offscreen_marker.hide()
 	_update_motion(now)
+	if machine.state == "manual_control":
+		_update_manual_control(delta, now)
+	elif roam_active:
+		_update_roam(now)
 	_update_edge_patrol(now)
 	_update_drag_idle(now)
+	if machine.state == "drag_slide":
+		_update_drag_slide(delta)
+	elif machine.state == "drag_throw":
+		_update_drag_throw(now)
 	_update_long_press(now)
 	if wander_deadline >= 0.0 and now >= wander_deadline:
 		wander_deadline = -1.0
@@ -230,6 +294,9 @@ func _process(delta: float) -> void:
 	if blink_deadline >= 0.0 and now >= blink_deadline:
 		blink_deadline = -1.0
 		_trigger_idle_blink()
+	if idle_side_pose_deadline >= 0.0 and now >= idle_side_pose_deadline:
+		idle_side_pose_deadline = -1.0
+		_revert_side_pose()
 	if head_pat_deadline >= 0.0 and now >= head_pat_deadline:
 		head_pat_deadline = -1.0
 		_end_head_pat()
@@ -278,6 +345,20 @@ func _input(event: InputEvent) -> void:
 			debug_overlay.toggle()
 			get_viewport().set_input_as_handled()
 			return
+		if machine.state == "manual_control" and key.pressed and not key.echo:
+			match key.keycode:
+				KEY_ESCAPE:
+					_exit_manual_control()
+					get_viewport().set_input_as_handled()
+					return
+				KEY_W, KEY_UP:
+					_handle_manual_up_tap()
+					get_viewport().set_input_as_handled()
+					return
+				KEY_S, KEY_DOWN:
+					_handle_manual_down_tap()
+					get_viewport().set_input_as_handled()
+					return
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_RIGHT and button.pressed:
@@ -288,7 +369,8 @@ func _input(event: InputEvent) -> void:
 		if button.button_index != MOUSE_BUTTON_LEFT:
 			return
 		if button.pressed:
-			_begin_press(button.position)
+			if machine.state != "manual_control":
+				_begin_press(button.position)
 		else:
 			_finish_press(false)
 	elif event is InputEventMouseMotion and not press.is_empty():
@@ -315,6 +397,7 @@ func _setup_menus() -> void:
 	menu.add_item("陪伴 30 分钟", MENU_COMPANION_30)
 	menu.add_item("陪伴 60 分钟", MENU_COMPANION_60)
 	menu.add_item("自由活动", MENU_FREE_ROAM)
+	menu.add_item("操控她😏", MENU_MANUAL_CONTROL)
 	menu.add_separator()
 	menu.add_item("回到中央", MENU_RECENTER)
 	menu.add_item("暂时隐藏", MENU_HIDE)
@@ -342,6 +425,7 @@ func _setup_menus() -> void:
 	tray_menu.add_separator()
 	tray_menu.add_item("人格机制", TRAY_MECHANISM_DASHBOARD)
 	tray_menu.add_item("动作总览", TRAY_ACTION_CATALOG)
+	tray_menu.add_item("操控她😏", TRAY_MANUAL_CONTROL)
 	tray_menu.add_separator()
 	tray_menu.add_item("退出", TRAY_QUIT)
 	tray_menu.id_pressed.connect(_on_menu_id_pressed)
@@ -370,6 +454,8 @@ func _sync_menu_checks() -> void:
 func _open_context_menu(local_position: Vector2) -> void:
 	if machine.state in ["boot", "dragged", "suspended"]:
 		return
+	if machine.state == "manual_control":
+		_exit_manual_control()
 	if _defer_until_wake("menu", {"position": local_position}):
 		return
 	_interrupt_action("menu")
@@ -410,11 +496,18 @@ func _on_menu_id_pressed(id: int) -> void:
 			_submit_ecology_request("companion", {"duration_minutes": 60})
 		MENU_FREE_ROAM:
 			_submit_ecology_request("free_roam")
+		MENU_MANUAL_CONTROL, TRAY_MANUAL_CONTROL:
+			_trigger_manual_control()
 		MENU_RECENTER, TRAY_RECENTER:
 			desktop.set_visible(true)
 			_recenter()
 		MENU_HIDE:
+			hidden = true
 			speech_bubble.hide_message(true)
+			if offscreen_marker != null:
+				offscreen_marker.hide()
+			if machine.state == "manual_control":
+				_exit_manual_control()
 			desktop.set_visible(false)
 		MENU_AUTO_WANDER, TRAY_AUTO_WANDER:
 			auto_wander = not auto_wander
@@ -459,6 +552,7 @@ func _on_menu_id_pressed(id: int) -> void:
 			_save_life_state()
 			get_tree().quit()
 		TRAY_SHOW:
+			hidden = false
 			desktop.set_visible(true)
 	if machine.state == "menu_wait" and id not in [MENU_CLOCK]:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
@@ -665,6 +759,11 @@ func _emit_dialogue(event_name: String, tags: Array = []) -> bool:
 		_show_speech(str(line.get("id", event_name)), str(line.get("text", "")))
 		return true
 	return false
+
+func _emit_control_quip(event_name: String) -> void:
+	if randf() >= CONTROL_QUIP_PROBABILITY:
+		return
+	_emit_dialogue(event_name)
 
 func _behavior_context() -> Dictionary:
 	return {
@@ -1144,6 +1243,7 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		_: return ""
 
 func _interrupt_action(kind: String, context: Dictionary = {}) -> void:
+	_stop_roam()
 	if routine_session.is_active():
 		var resume_routine := kind in ["menu", "direct_interaction"]
 		var routine_decision := routine_session.interrupt(kind, resume_routine)
@@ -1395,6 +1495,8 @@ func _crossed_platform(previous_position: Vector2, next_position: Vector2) -> Wi
 func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	wander_deadline = -1.0
 	blink_deadline = -1.0
+	idle_side_pose_deadline = -1.0
+	side_pose_reverting = false
 	if to != "idle" and not pending_front_intent.is_empty():
 		pending_front_intent.clear()
 		pending_front_handoff_clip = ""
@@ -1454,6 +1556,13 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 			_observe_ecology("umbrella_land")
 	elif to == "dragged":
 		_play_drag_visual("grab")
+	elif to == "drag_slide":
+		facing = 1 if slide_speed >= 0.0 else -1
+		_set_direction(1)
+		sprite_player.play_clip("idle")
+	elif to == "drag_throw":
+		_set_direction(1)
+		sprite_player.play_clip("float", true, "%s-rise" % _facing_segment(facing))
 	elif to == "head_pat":
 		if head_pat_refused:
 			sprite_player.play_clip("head_pat_refuse" if manifest.has_clip("head_pat_refuse") else "react")
@@ -1469,11 +1578,20 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		sprite_player.play_clip(poke_visual_clip if manifest.has_clip(poke_visual_clip) else "poke_cheek")
 	elif to in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
 		_play_action_session_clip()
+	elif to == "manual_control":
+		motion.clear()
+		_last_control_clip = ""
+		_last_control_segment = ""
+		_set_direction(1)
+		sprite_player.play_clip("idle")
+	elif to == "roam_walk":
+		_set_direction(1)
+		sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
 	else:
 		sprite_player.play_clip(to)
 	if to != "float": airborne_phase = ""
 	if to != "drag_fall": umbrella_visual_phase = ""
-	if to == "idle": _schedule_wander()
+	if to == "idle": _advance_or_schedule_wander()
 
 func _on_clip_completed(clip_name: String, _segment: String) -> void:
 	if machine.state == "idle" and not pending_front_intent.is_empty() and clip_name == pending_front_handoff_clip:
@@ -1488,6 +1606,17 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		if action_session.is_active():
 			_play_action_session_clip()
 		return
+	if machine.state == "manual_control" and manual_control_model != null and manual_control_model.has_pending_attach() and clip_name == manual_control_model.attach_clip():
+		manual_control_model.finish_attach()
+		_emit_control_quip("control_climb")
+		return
+	if machine.state == "manual_control" and manual_control_model != null and manual_control_model.has_pending_detach() and clip_name == manual_control_model.detach_clip():
+		manual_control_model.finish_detach()
+		_emit_control_quip("control_detach")
+		return
+	if machine.state == "manual_control" and manual_control_model != null and manual_control_model.subphase == "fall" and clip_name == "drag_fall":
+		sprite_player.play_clip("drag_fall", true, _facing_segment(facing))
+		return
 	if head_pat_refused and machine.state == "head_pat" and clip_name in ["head_pat_refuse", "react"]:
 		head_pat_refused = false
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
@@ -1500,6 +1629,12 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		if pose.get("kind", "") == "corner" and clip_name == str(pose.get("clip_name", "")):
 			_advance_edge_patrol()
 			return
+	if machine.state == "idle" and side_pose_reverting and clip_name in ["idle_left_enter", "idle_right_enter"]:
+		side_pose_reverting = false
+		idle_pose_facing = 0
+		idle_side_pose_deadline = -1.0
+		_play_idle_pose()
+		return
 	if machine.state == "idle" and clip_name in ["idle_left_enter", "idle_right_enter", "idle_blink", "idle_left_blink", "idle_right_blink"]:
 		_play_idle_pose()
 		return
@@ -1557,7 +1692,7 @@ func _on_passthrough_polygon_changed(polygon: PackedVector2Array) -> void:
 	desktop.set_mouse_passthrough(polygon)
 
 func _show_speech(id: String, text: String, duration_seconds := -1.0) -> void:
-	if not speech_bubbles_enabled or text.strip_edges().is_empty():
+	if not speech_bubbles_enabled or hidden or suspended or not desktop.is_visible() or desktop.is_minimized() or text.strip_edges().is_empty():
 		return
 	speech_bubble.show_message(id, text, duration_seconds, _speech_anchor_rect(), work_area)
 	next_speech_follow = _now_ms() + SPEECH_FOLLOW_INTERVAL_MS
@@ -1655,28 +1790,37 @@ func _finish_press(cancelled: bool) -> void:
 			needs_model.apply_event("rough_drag")
 			_bump_interaction("rough_drags")
 			_emit_dialogue("rough_drag")
-		var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
-		var fall_distance := maxf(0.0, floor_target.y - position.y)
-		var use_umbrella := PetUmbrellaFall.should_use(
-			fall_distance,
-			_has_umbrella_family(),
-			float(manifest.behavior_value("umbrellaMinDropPx", 120.0)),
-		)
-		var projected_x := velocity.x * 120.0
-		if use_umbrella:
-			projected_x = PetUmbrellaFall.clamp_drift(projected_x)
-		var target := _clamp_position(Vector2(position.x + projected_x, _floor_y()), true)
-		var fall_duration := PetUmbrellaFall.duration_ms(
-			fall_distance,
-			float(manifest.behavior_value("umbrellaFallMinDurationMs", 1000.0)),
-			float(manifest.behavior_value("umbrellaFallMaxDurationMs", 2200.0)),
-		) if use_umbrella else clampf(360.0 + fall_distance * 0.7, 420.0, 720.0)
-		drag_fall_mode = "umbrella" if use_umbrella else "direct"
-		umbrella_visual_phase = ""
-		_prepare_motion(target, fall_duration, 0.0)
-		_prepare_travel_facing(target.x)
-		facing = pending_facing
-		machine.dispatch({"type": "DRAG_END"})
+		var grounded := absf(position.y - _floor_y()) < SLIDE_GROUND_THRESHOLD
+		if grounded and absf(velocity.x) >= SLIDE_MIN_VELOCITY:
+			_start_ground_slide(velocity)
+			_emit_control_quip("fling_slide")
+		elif not grounded and velocity.y < -THROW_MIN_UP_VELOCITY:
+			_start_air_throw(velocity)
+			_emit_control_quip("fling_throw")
+		else:
+			var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
+			var fall_distance := maxf(0.0, floor_target.y - position.y)
+			var use_umbrella := PetUmbrellaFall.should_use(
+				fall_distance,
+				_has_umbrella_family(),
+				float(manifest.behavior_value("umbrellaMinDropPx", 120.0)),
+			)
+			var projected_x := velocity.x * 120.0
+			if use_umbrella:
+				projected_x = PetUmbrellaFall.clamp_drift(projected_x)
+			var target := _clamp_position(Vector2(position.x + projected_x, _floor_y()), true)
+			var fall_duration := PetUmbrellaFall.duration_ms(
+				fall_distance,
+				float(manifest.behavior_value("umbrellaFallMinDurationMs", 1000.0)),
+				float(manifest.behavior_value("umbrellaFallMaxDurationMs", 2200.0)),
+			) if use_umbrella else clampf(360.0 + fall_distance * 0.7, 420.0, 720.0)
+			drag_fall_mode = "umbrella" if use_umbrella else "direct"
+			umbrella_visual_phase = ""
+			_prepare_motion(target, fall_duration, 0.0)
+			_prepare_travel_facing(target.x)
+			facing = pending_facing
+			machine.dispatch({"type": "DRAG_END"})
+			_emit_control_quip("fling")
 		_save_position()
 	elif intent == "long_press":
 		_end_head_pat()
@@ -1781,6 +1925,220 @@ func _trigger_clock_scare() -> void:
 		machine.dispatch({"type": "MENU_OPEN"})
 	machine.dispatch({"type": "MENU_SELECT_CLOCK"})
 
+func _trigger_manual_control() -> void:
+	if machine.state in ["boot", "dragged", "suspended"]:
+		return
+	_interrupt_action("direct_interaction")
+	var resume := _resume_for_new_interaction()
+	_leave_menu_for_interaction(resume)
+	interaction_resume = resume
+	_enter_manual_control()
+	machine.dispatch({"type": "MANUAL_CONTROL_START"})
+	_emit_dialogue("control_enter")
+
+func _enter_manual_control() -> void:
+	_cancel_edge_patrol()
+	active_platform = null
+	pending_platform = null
+	platform_walk_motion.clear()
+	motion.clear()
+	_stop_roam()
+	if manual_control_model == null:
+		manual_control_model = ManualControlModelScript.new()
+	manual_control_model.reset(position)
+	var durations := _control_oneshot_durations()
+	if not durations.is_empty():
+		manual_control_model.configure_oneshot_durations(durations)
+	_last_control_clip = ""
+	_last_control_segment = ""
+	_last_control_reverse = false
+	_last_control_subphase = ""
+	_wall_frozen = false
+	_control_fall_started_at = -1.0
+	_control_started_at = _now_ms()
+	_control_long_emitted = false
+	manual_last_flight_enter_ms = -INF
+	desktop.set_unfocusable(false)
+
+func _exit_manual_control() -> void:
+	if machine.state != "manual_control":
+		return
+	_emit_dialogue("control_exit")
+	desktop.set_unfocusable(true)
+	_last_control_clip = ""
+	_last_control_segment = ""
+	machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+
+func _handle_manual_up_tap() -> void:
+	if manual_control_model == null:
+		return
+	if _now_ms() - manual_last_up_tap <= MANUAL_DOUBLE_TAP_MS:
+		manual_last_up_tap = -INF
+		manual_last_flight_enter_ms = _now_ms()
+		manual_control_model.set_flight_mode(true)
+		_emit_control_quip("control_fly")
+	else:
+		manual_last_up_tap = _now_ms()
+		manual_control_model.queue_jump()
+		_emit_control_quip("control_jump")
+
+func _handle_manual_down_tap() -> void:
+	if manual_control_model == null:
+		return
+	if _now_ms() - manual_last_down_tap <= MANUAL_DOUBLE_TAP_MS:
+		manual_last_down_tap = -INF
+		manual_control_model.set_flight_mode(false)
+		if _now_ms() - manual_last_flight_enter_ms <= CONTROL_COMBO_MS:
+			_emit_control_quip("control_combo")
+		else:
+			_emit_control_quip("control_fly_cancel")
+	else:
+		manual_last_down_tap = _now_ms()
+
+func _update_manual_control(delta: float, now: float) -> void:
+	if manual_control_model == null:
+		return
+	var dir_x := 0
+	if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A):
+		dir_x -= 1
+	if Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D):
+		dir_x += 1
+	var dir_y := 0
+	if Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W):
+		dir_y -= 1
+	if Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S):
+		dir_y += 1
+	var screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
+	var result: Dictionary = manual_control_model.tick(delta, {"dir_x": dir_x, "dir_y": dir_y}, {
+		"floor_y": _floor_y(),
+		"screen": screen,
+		"pet_size": Vector2(pet_window_size),
+		"walk_speed": MANUAL_WALK_SPEED,
+		"flight_speed": MANUAL_FLIGHT_SPEED,
+		"climb_speed": MANUAL_CLIMB_SPEED,
+		"gravity": MANUAL_GRAVITY,
+		"jump_vy": MANUAL_JUMP_VY,
+		"wall_threshold": MANUAL_WALL_THRESHOLD,
+		"umbrella_available": _has_umbrella_family(),
+	})
+	position = _clamp_position(Vector2(result.get("position", position)), false)
+	var result_facing := int(result.get("facing", facing))
+	if result_facing != facing:
+		facing = result_facing
+		_set_direction(1)
+	var subphase := str(result.get("subphase", ""))
+	var clip := str(result.get("clip", "idle"))
+	var segment := str(result.get("segment", ""))
+	var umbrella_fall := subphase == "fall" and bool(result.get("umbrella", false))
+	var is_wall_loop := clip == "patrol_wall_left_a" or clip == "patrol_wall_right_a"
+	if not umbrella_fall:
+		if clip != _last_control_clip or segment != _last_control_segment:
+			_last_control_clip = clip
+			_last_control_segment = segment
+			_last_control_reverse = is_wall_loop and dir_y > 0
+			if _wall_frozen:
+				sprite_player.set_manual_frame(-1)
+				_wall_frozen = false
+			if segment.is_empty():
+				sprite_player.play_clip(clip, false, "", _last_control_reverse)
+			else:
+				sprite_player.play_clip(clip, false, segment, _last_control_reverse)
+		elif is_wall_loop and dir_y != 0:
+			var want_reverse := dir_y > 0
+			if want_reverse != _last_control_reverse:
+				_last_control_reverse = want_reverse
+				if _wall_frozen:
+					sprite_player.set_manual_frame(-1)
+					_wall_frozen = false
+				sprite_player.set_playback_reverse(want_reverse)
+		if is_wall_loop and dir_y == 0:
+			if not _wall_frozen:
+				sprite_player.set_manual_frame(sprite_player.current_frame)
+				_wall_frozen = true
+		elif _wall_frozen:
+			sprite_player.set_manual_frame(-1)
+			_wall_frozen = false
+	if subphase != _last_control_subphase:
+		_last_control_subphase = subphase
+		if subphase == "fall":
+			_control_fall_started_at = now
+		if subphase == "fall" and bool(result.get("umbrella", false)):
+			_emit_control_quip("control_umbrella")
+		elif subphase == "landing":
+			_emit_control_quip("control_land")
+	if umbrella_fall:
+		if _wall_frozen:
+			sprite_player.set_manual_frame(-1)
+			_wall_frozen = false
+		var fall_duration := maxf(1.0, float(result.get("fall_duration_ms", 1000.0)))
+		var phase := PetUmbrellaFall.phase(maxf(0.0, now - _control_fall_started_at), fall_duration)
+		_play_umbrella_phase(phase)
+	if not _control_long_emitted and _control_started_at >= 0.0 and now - _control_started_at >= CONTROL_LONG_MS:
+		_control_long_emitted = true
+		_emit_control_quip("control_long")
+	_apply_position()
+
+func _head_avatar_texture() -> Texture2D:
+	if manifest == null:
+		return null
+	var idle := manifest.clip("idle")
+	var frames: Array = idle.get("frames", [])
+	if frames.is_empty():
+		return null
+	var frame_texture := load(manifest.frame_resource_path(str(frames[0]))) as Texture2D
+	if frame_texture == null:
+		return null
+	var head: Array = manifest.data.get("hitZones", {}).get("head", [])
+	var min_x := INF
+	var min_y := INF
+	var max_x := -INF
+	var max_y := -INF
+	for point in head:
+		if not point is Dictionary:
+			continue
+		min_x = minf(min_x, float(point.get("x", INF)))
+		min_y = minf(min_y, float(point.get("y", INF)))
+		max_x = maxf(max_x, float(point.get("x", -INF)))
+		max_y = maxf(max_y, float(point.get("y", -INF)))
+	if not is_finite(min_x) or max_x <= min_x or max_y <= min_y:
+		return null
+	var image := frame_texture.get_image()
+	if image == null:
+		return null
+	var cropped := image.get_region(Rect2(min_x, min_y, max_x - min_x, max_y - min_y))
+	return ImageTexture.create_from_image(cropped)
+
+func _control_oneshot_durations() -> Dictionary:
+	var result := {}
+	var takeoff := _clip_segment_duration_ms("takeoff", _facing_segment(1))
+	if takeoff > 0.0:
+		result["takeoff"] = takeoff
+	var land := _clip_segment_duration_ms("land", _facing_segment(1))
+	if land > 0.0:
+		result["land"] = land
+	return result
+
+func _clip_segment_duration_ms(clip_name: String, segment: String) -> float:
+	var clip := manifest.clip(clip_name)
+	if clip.is_empty():
+		return 0.0
+	var durations: Array = clip.get("frameDurationsMs", [])
+	var segments: Dictionary = clip.get("segments", {})
+	if segments.is_empty():
+		var total := 0.0
+		for value in durations:
+			total += float(value)
+		return total
+	var segment_data: Dictionary = segments.get(segment, {})
+	if segment_data.is_empty():
+		return 0.0
+	var start := int(segment_data.get("start", 0))
+	var end := int(segment_data.get("end", durations.size() - 1))
+	var total := 0.0
+	for index in range(start, end + 1):
+		total += float(durations[index])
+	return total
+
 func _resume_for_new_interaction() -> String:
 	return menu_resume if machine.state == "menu_wait" else _capture_resume_state()
 
@@ -1790,6 +2148,7 @@ func _leave_menu_for_interaction(resume: String) -> void:
 
 func _capture_resume_state() -> String:
 	if machine.state == "menu_wait": return menu_resume
+	if machine.state == "manual_control": return "manual_control"
 	if machine.state in ["head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy"]:
 		return interaction_resume
 	if machine.state == "edge_patrol" and not edge_session.is_empty():
@@ -1887,6 +2246,71 @@ func _drag_velocity_px_per_second(samples: Array) -> Vector2:
 func _drag_velocity_px_per_ms(samples: Array) -> Vector2:
 	return _drag_velocity_px_per_second(samples) / 1000.0
 
+func _start_ground_slide(velocity: Vector2) -> void:
+	slide_speed = velocity.x * 1000.0 * SLIDE_VELOCITY_FACTOR
+	motion.clear()
+	active_platform = null
+	pending_platform = null
+	machine.dispatch({"type": "SLIDE_START"})
+
+func _start_air_throw(velocity: Vector2) -> void:
+	var screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
+	var throw_height := clampf(-velocity.y * 1000.0 * THROW_HEIGHT_FACTOR, THROW_MIN_HEIGHT, THROW_MAX_HEIGHT)
+	var apex := Vector2(position.x + velocity.x * THROW_DRIFT_FACTOR, screen.position.y - throw_height)
+	var duration := clampf(position.distance_to(apex) / 900.0 * 1000.0, 400.0, 1400.0)
+	motion = {
+		"from": position,
+		"to": apex,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(1.0, duration),
+		"arc_height": 0.0,
+	}
+	active_platform = null
+	pending_platform = null
+	throw_session = {
+		"descending": false,
+		"descent_target": Vector2(apex.x, _floor_y()),
+	}
+	machine.dispatch({"type": "THROW_START"})
+
+func _update_drag_slide(delta: float) -> void:
+	if machine.state != "drag_slide":
+		return
+	position.x += slide_speed * delta
+	position = _clamp_position(position, false)
+	_apply_position()
+	slide_speed *= maxf(0.0, 1.0 - SLIDE_DECAY_RATE * delta)
+	if absf(slide_speed) < SLIDE_STOP_SPEED:
+		slide_speed = 0.0
+		machine.dispatch({"type": "SLIDE_END"})
+
+func _update_drag_throw(now: float) -> void:
+	if machine.state != "drag_throw" or motion.is_empty():
+		return
+	var elapsed := now - float(motion.get("started_at", now))
+	var duration := maxf(1.0, float(motion.get("duration_ms", 1.0)))
+	var progress := clampf(elapsed / duration, 0.0, 1.0)
+	if not bool(throw_session.get("descending", false)):
+		position = Vector2(motion.get("from", position)).lerp(Vector2(motion.get("to", position)), progress)
+		_apply_position()
+		if progress >= 0.85:
+			throw_session.descending = true
+			var descent_target: Vector2 = throw_session.get("descent_target", Vector2(position.x, _floor_y()))
+			var fall_distance := maxf(0.0, descent_target.y - position.y)
+			var descent_duration := PetUmbrellaFall.duration_ms(fall_distance, 1200.0, 2600.0)
+			drag_fall_mode = "umbrella"
+			umbrella_visual_phase = ""
+			_prepare_motion(_clamp_position(descent_target, true), descent_duration, 0.0)
+	else:
+		position = Vector2(motion.get("from", position)).lerp(Vector2(motion.get("to", position)), PetUmbrellaFall.descent_progress(progress))
+		_apply_position()
+		var phase := PetUmbrellaFall.phase(elapsed, duration)
+		_play_umbrella_phase(phase)
+		if progress >= 1.0:
+			motion.clear()
+			throw_session.clear()
+			machine.dispatch({"type": "ARRIVE"})
+
 func _sample_cursor_tracking(now: float) -> void:
 	var gaze := manifest.gaze()
 	if gaze.is_empty() or not cursor_tracking or suspended or machine.state == "edge_patrol":
@@ -1968,6 +2392,8 @@ func _reset_cursor_tracking() -> void:
 		machine.dispatch({"type": "POINTER_LEAVE"})
 
 func _play_idle_entry_or_pose() -> void:
+	if idle_pose_facing != 0 and randf() < 0.6:
+		idle_pose_facing = 0
 	if idle_pose_facing != 0:
 		var entry := "idle_%s_enter" % _facing_segment(idle_pose_facing)
 		if manifest.has_clip(entry):
@@ -1984,6 +2410,22 @@ func _play_idle_pose() -> void:
 		if manifest.has_clip(candidate): name = candidate
 	sprite_player.play_clip(name)
 	_schedule_idle_blink()
+	if idle_pose_facing != 0 and pending_front_intent.is_empty():
+		idle_side_pose_deadline = _now_ms() + randf_range(5000.0, 10000.0)
+	else:
+		idle_side_pose_deadline = -1.0
+
+func _revert_side_pose() -> void:
+	if idle_pose_facing == 0 or machine.state != "idle" or not pending_front_intent.is_empty():
+		return
+	var seg := _facing_segment(idle_pose_facing)
+	var handoff := "idle_%s_enter" % seg
+	if not manifest.has_clip(handoff):
+		idle_pose_facing = 0
+		_play_idle_pose()
+		return
+	side_pose_reverting = true
+	sprite_player.play_clip(handoff, true, "", true)
 
 func _schedule_idle_blink() -> void:
 	if machine.state != "idle": return
@@ -2000,9 +2442,7 @@ func _trigger_idle_blink() -> void:
 
 func _schedule_wander() -> void:
 	if not auto_wander or machine.state != "idle": return
-	var minimum := 15000.0
-	var maximum := 45000.0
-	wander_deadline = _now_ms() + randf_range(minimum, maximum)
+	wander_deadline = _now_ms() + randf_range(IDLE_WANDER_MIN_MS, IDLE_WANDER_MAX_MS)
 
 func _trigger_ambient_behavior() -> void:
 	if machine.state != "idle" or not pending_front_intent.is_empty(): return
@@ -2040,16 +2480,110 @@ func _trigger_wander() -> void:
 					target_platform = candidate
 		if target_platform != null and _travel_to_platform(target_platform):
 			return
-	var minimum_x := work_area.position.x + 18.0
-	var maximum_x := work_area.end.x - pet_window_size.x - 18.0
-	var target_x := randf_range(minimum_x, maxf(minimum_x + 1.0, maximum_x))
-	if absf(target_x - position.x) < 180.0:
-		target_x = maximum_x if position.x < (minimum_x + maximum_x) / 2.0 else minimum_x
+	_start_random_roam()
+
+func _start_random_roam() -> void:
+	if machine.state != "idle" or not pending_front_intent.is_empty():
+		return
 	active_platform = null
 	pending_platform = null
-	_prepare_motion(Vector2(target_x, _floor_y()), float(manifest.behavior_value("floatDurationMs", 1050.0)), 84.0)
-	var needs_turn := _prepare_travel_facing(target_x)
-	machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
+	platform_walk_motion.clear()
+	motion.clear()
+	roam_active = true
+	roam_session = {
+		"legs": RoamPlannerScript.build_legs(
+			position,
+			Vector2(pet_window_size),
+			habitat_model.screen_rects(),
+			"%d:%f" % [Time.get_unix_time_from_system(), randf()],
+		),
+		"index": -1,
+		"walk_motion": {},
+		"drop_fired": false,
+	}
+	_dispatch_roam_leg(0)
+
+func _dispatch_roam_leg(index: int) -> void:
+	if not roam_active:
+		return
+	if machine.state != "idle":
+		_stop_roam()
+		return
+	var legs: Array = roam_session.get("legs", [])
+	if index < 0 or index >= legs.size():
+		_stop_roam()
+		_schedule_wander()
+		return
+	roam_session.index = index
+	roam_session.drop_fired = false
+	roam_session.walk_motion = {}
+	var leg: Dictionary = legs[index]
+	var leg_type := str(leg.get("type", "fly"))
+	active_platform = null
+	pending_platform = null
+	platform_walk_motion.clear()
+	motion.clear()
+	match leg_type:
+		"walk":
+			var walk_to: Vector2 = leg.get("to", position)
+			roam_session.walk_motion = {
+				"from": position,
+				"to": walk_to,
+				"started_at": _now_ms(),
+				"duration_ms": maxf(1.0, float(leg.get("duration_ms", 1000.0))),
+			}
+			_prepare_travel_facing(walk_to.x)
+			facing = pending_facing
+			machine.dispatch({"type": "ROAM_WALK_START"})
+		"fly", "fly_drop":
+			var fly_target: Vector2 = leg.get("fly_target", leg.get("to", position))
+			_prepare_motion(fly_target, float(leg.get("duration_ms", 1000.0)), float(leg.get("arc_height", 0.0)), false)
+			var needs_turn := _prepare_travel_facing(fly_target.x)
+			machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
+
+func _update_roam(now: float) -> void:
+	if not roam_active or roam_session.is_empty():
+		return
+	var legs: Array = roam_session.get("legs", [])
+	var index: int = roam_session.get("index", -1)
+	if index < 0 or index >= legs.size():
+		return
+	var leg: Dictionary = legs[index]
+	if machine.state == "roam_walk":
+		var walk_motion: Dictionary = roam_session.get("walk_motion", {})
+		if not walk_motion.is_empty():
+			var duration := maxf(1.0, float(walk_motion.get("duration_ms", 1.0)))
+			var progress := clampf((now - float(walk_motion.get("started_at", now))) / duration, 0.0, 1.0)
+			position = Vector2(walk_motion.from).lerp(Vector2(walk_motion.to), progress)
+			_apply_position()
+			if progress >= 1.0:
+				roam_session.walk_motion = {}
+				machine.dispatch({"type": "CLIP_END"})
+	elif machine.state == "float" and not roam_session.get("drop_fired", false) and leg.get("drop_at_progress", null) != null:
+		var drop_at := float(leg.get("drop_at_progress", 0.0))
+		if float(motion.get("arc_height", 0.0)) > 0.0:
+			var duration := maxf(1.0, float(motion.get("duration_ms", 1.0)))
+			var progress := clampf((now - float(motion.get("started_at", now))) / duration, 0.0, 1.0)
+			if progress >= drop_at:
+				roam_session.drop_fired = true
+				var drop_to: Vector2 = leg.get("to", position)
+				var drop_duration := maxf(300.0, position.distance_to(drop_to) / 900.0 * 1000.0)
+				_prepare_motion(_clamp_position(drop_to, true), drop_duration, 0.0)
+
+func _advance_or_schedule_wander() -> void:
+	if roam_active and not roam_session.is_empty():
+		var legs: Array = roam_session.get("legs", [])
+		var next_index: int = int(roam_session.get("index", -1)) + 1
+		if next_index < legs.size():
+			roam_session.index = next_index
+			call_deferred("_dispatch_roam_leg", next_index)
+			return
+	_stop_roam()
+	_schedule_wander()
+
+func _stop_roam() -> void:
+	roam_active = false
+	roam_session = {}
 
 func _recenter() -> void:
 	if machine.state == "menu_wait":
@@ -2249,7 +2783,7 @@ func _check_system_context() -> void:
 			position = _clamp_position(Vector2(position.x, _floor_y()), true)
 			if machine.state == "edge_patrol": machine.dispatch({"type": "EDGE_PATROL_END"})
 		elif active_platform == null and pending_platform == null:
-			var force_floor := active_platform == null and machine.state not in ["float", "drag_fall", "dragged"]
+			var force_floor := active_platform == null and machine.state not in ["float", "drag_fall", "dragged", "manual_control"]
 			position = _clamp_position(position, force_floor)
 		_apply_position()
 	var foreground := window_platform_service.foreground_snapshot()
@@ -2258,14 +2792,17 @@ func _check_system_context() -> void:
 	if fullscreen and not suspended:
 		suspended = true
 		speech_bubble.hide_message(true)
+		if machine.state == "manual_control":
+			_exit_manual_control()
 		_interrupt_action("fullscreen")
 		motion.clear()
 		_cancel_edge_patrol()
 		machine.dispatch({"type": "FULLSCREEN_ENTER"})
 		desktop.set_visible(false)
 	elif not fullscreen and suspended:
-		desktop.set_visible(true)
 		suspended = false
+		if not hidden:
+			desktop.set_visible(true)
 		machine.dispatch({"type": "FULLSCREEN_EXIT"})
 
 func _refresh_habitat_screens() -> void:
