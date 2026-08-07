@@ -29,6 +29,23 @@ func configure() -> void:
 func get_work_area() -> Rect2i:
 	return DisplayServer.screen_get_usable_rect(_window.current_screen)
 
+func get_usable_screen_rects() -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	for index in range(DisplayServer.get_screen_count()):
+		var rect := Rect2(DisplayServer.screen_get_usable_rect(index))
+		if rect.size.x > 0.0 and rect.size.y > 0.0:
+			result.append(rect)
+	return result
+
+func get_virtual_desktop_bounds() -> Rect2:
+	var screens := get_usable_screen_rects()
+	if screens.is_empty():
+		return Rect2(get_work_area())
+	var bounds := screens[0]
+	for index in range(1, screens.size()):
+		bounds = bounds.merge(screens[index])
+	return bounds
+
 func get_cursor_position() -> Vector2i:
 	return DisplayServer.mouse_get_position()
 

@@ -3,7 +3,14 @@ extends Node
 const SKIN_MANIFEST := "res://skins/little-chihiro/pet.json"
 const BEHAVIOR_PROFILE := "res://data/behavior_profile.json"
 const DIALOGUE_DATA := "res://data/dialogue_zh_CN.json"
+const ECOLOGY_PROFILE := "res://data/ecology_profile.json"
 const DialogueSchedulerScript := preload("res://scripts/core/pet_dialogue_scheduler.gd")
+const HabitatModelScript := preload("res://scripts/core/desktop_habitat_model.gd")
+const EcologyClockScript := preload("res://scripts/core/pet_ecology_clock.gd")
+const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progression.gd")
+const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
+const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
+const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
 const IDLE_BLINK_MIN_MS := 2400.0
 const IDLE_BLINK_MAX_MS := 5200.0
 const AUTO_HEAD_PAT_MS := 900.0
@@ -30,6 +37,15 @@ const MENU_ACTION_SOUNDS := 11
 const MENU_DEBUG_OVERLAY := 12
 const MENU_ACTION_CATALOG := 13
 const MENU_MECHANISM_DASHBOARD := 14
+const MENU_REQUEST_COME := 15
+const MENU_REQUEST_INSPECT := 16
+const MENU_REQUEST_STAY := 17
+const MENU_REQUEST_SET_HOME := 18
+const MENU_REQUEST_RETURN_HOME := 19
+const MENU_COMPANION_15 := 20
+const MENU_COMPANION_30 := 21
+const MENU_COMPANION_60 := 22
+const MENU_FREE_ROAM := 23
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -59,9 +75,17 @@ var needs_model: PetNeedsModel
 var behavior_director: PetBehaviorDirector
 var action_session := PetActionSession.new()
 var state_store := PetStateStore.new()
+var developer_state_store := PetStateStore.new("user://little_chihiro_state_dev.json")
 var dialogue_director := PetDialogueDirector.new(21013)
 var dialogue_scheduler := DialogueSchedulerScript.new()
 var window_platform_service := WindowPlatformService.new()
+var habitat_model := HabitatModelScript.new()
+var ecology_clock := EcologyClockScript.new()
+var ecology_profile: Dictionary = {}
+var ecology_progression
+var ecology_request_controller
+var goal_director
+var routine_session := RoutineSessionScript.new()
 
 var work_area := Rect2(0, 0, 1280, 720)
 var position := Vector2.ZERO
@@ -96,6 +120,14 @@ var persistent_state: Dictionary = {}
 var interaction_delta := {
 	"head_pats": 0, "pokes": 0, "rough_drags": 0, "positive": 0, "total": 0,
 }
+var home_anchor: Dictionary = {}
+var ecology_step_mode := ""
+var ecology_step_deadline_ms := -1
+var ecology_step_context: Dictionary = {}
+var active_request: Dictionary = {}
+var companion_until_ms := -1
+var last_ecology_time_period := ""
+var using_developer_state := false
 var returned_after_seconds := 0.0
 var session_unrecorded_seconds := 0.0
 var poke_timestamps: Array[float] = []
@@ -157,6 +189,7 @@ func _ready() -> void:
 		return
 	_initialize_life_systems()
 	action_catalog.configure(manifest)
+	mechanism_dashboard.simulation_rate_requested.connect(_on_ecology_rate_requested)
 	machine.transitioned.connect(_on_transition)
 	sprite_player.clip_completed.connect(_on_clip_completed)
 	sprite_player.clip_changed.connect(_on_clip_changed)
@@ -167,6 +200,7 @@ func _ready() -> void:
 	base_window_size = PetRenderBox.resolve_size(manifest)
 	pet_window_size = base_window_size
 	desktop.set_size(pet_window_size)
+	_refresh_habitat_screens()
 	work_area = Rect2(desktop.get_work_area())
 	var restored = desktop.load_position()
 	position = restored if restored is Vector2 else _default_position()
@@ -272,6 +306,16 @@ func _setup_menus() -> void:
 	menu.add_item("戳脸", MENU_POKE)
 	menu.add_item("看时间", MENU_CLOCK)
 	menu.add_separator()
+	menu.add_item("来我这里", MENU_REQUEST_COME)
+	menu.add_item("观察当前窗口", MENU_REQUEST_INSPECT)
+	menu.add_item("在这里待会", MENU_REQUEST_STAY)
+	menu.add_item("把这里设为休息点", MENU_REQUEST_SET_HOME)
+	menu.add_item("回休息点", MENU_REQUEST_RETURN_HOME)
+	menu.add_item("陪伴 15 分钟", MENU_COMPANION_15)
+	menu.add_item("陪伴 30 分钟", MENU_COMPANION_30)
+	menu.add_item("陪伴 60 分钟", MENU_COMPANION_60)
+	menu.add_item("自由活动", MENU_FREE_ROAM)
+	menu.add_separator()
 	menu.add_item("回到中央", MENU_RECENTER)
 	menu.add_item("暂时隐藏", MENU_HIDE)
 	menu.add_separator()
@@ -348,6 +392,24 @@ func _on_menu_id_pressed(id: int) -> void:
 			_trigger_poke()
 		MENU_CLOCK:
 			_trigger_clock_scare()
+		MENU_REQUEST_COME:
+			_submit_ecology_request("come_here")
+		MENU_REQUEST_INSPECT:
+			_submit_ecology_request("inspect_foreground")
+		MENU_REQUEST_STAY:
+			_submit_ecology_request("stay_here")
+		MENU_REQUEST_SET_HOME:
+			_submit_ecology_request("set_home")
+		MENU_REQUEST_RETURN_HOME:
+			_submit_ecology_request("return_home")
+		MENU_COMPANION_15:
+			_submit_ecology_request("companion", {"duration_minutes": 15})
+		MENU_COMPANION_30:
+			_submit_ecology_request("companion", {"duration_minutes": 30})
+		MENU_COMPANION_60:
+			_submit_ecology_request("companion", {"duration_minutes": 60})
+		MENU_FREE_ROAM:
+			_submit_ecology_request("free_roam")
 		MENU_RECENTER, TRAY_RECENTER:
 			desktop.set_visible(true)
 			_recenter()
@@ -401,6 +463,38 @@ func _on_menu_id_pressed(id: int) -> void:
 	if machine.state == "menu_wait" and id not in [MENU_CLOCK]:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
 
+func _submit_ecology_request(request_id: String, payload: Dictionary = {}) -> void:
+	if ecology_request_controller == null or needs_model == null:
+		return
+	if machine.state == "menu_wait":
+		machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	if request_id == "free_roam":
+		ecology_request_controller.cancel_pending()
+		companion_until_ms = -1
+		active_request.clear()
+		if routine_session.is_active():
+			routine_session.finish("cancelled_by_user")
+		auto_wander = true
+		if machine.state == "idle":
+			_schedule_wander()
+		_show_speech("request_free_roam", "好。恢复自由观察。", 3.6)
+		return
+	if routine_session.is_active():
+		routine_session.finish("replaced_by_request")
+	var context := _ecology_context()
+	context["busy"] = machine.state != "idle" or action_session.is_active()
+	context["payload"] = payload.duplicate(true)
+	var result: Dictionary = ecology_request_controller.evaluate(request_id, context, ecology_clock.elapsed_ms())
+	if str(result.get("status", "")) == "accepted" and request_id == "set_home":
+		home_anchor = habitat_model.make_anchor(_clamp_position(position, true), Vector2(pet_window_size))
+		ecology_progression.record_request(request_id, "accepted", int(Time.get_unix_time_from_system()))
+		ecology_progression.record_request(request_id, "completed", int(Time.get_unix_time_from_system()))
+		_observe_ecology("home_set")
+		_show_speech("request_home_set", "坐标已记录。以后我会自己回来。", 4.5)
+		_save_life_state()
+		return
+	_handle_request_result(result)
+
 func _save_user_settings() -> void:
 	var save_error := desktop.save_settings({
 		"auto_wander": auto_wander,
@@ -416,9 +510,20 @@ func _save_user_settings() -> void:
 func _initialize_life_systems() -> void:
 	life_session_started_at_ms = _now_ms()
 	var profile := _load_json_dictionary(BEHAVIOR_PROFILE)
+	ecology_profile = _load_json_dictionary(ECOLOGY_PROFILE)
 	needs_model = PetNeedsModel.new(profile)
 	persistent_state = state_store.load_state()
 	needs_model.restore_persistent(persistent_state)
+	ecology_progression = EcologyProgressionScript.new(ecology_profile)
+	ecology_progression.restore_persistent(persistent_state)
+	ecology_request_controller = EcologyRequestScript.new(ecology_profile)
+	goal_director = GoalDirectorScript.new(ecology_profile, 22013)
+	if not goal_director.is_valid():
+		for error in goal_director.errors:
+			push_error(error)
+	home_anchor = persistent_state.get("home_anchor", {}).duplicate(true) if persistent_state.get("home_anchor", {}) is Dictionary else {}
+	ecology_clock.reset()
+	routine_session.routine_completed.connect(_on_routine_completed)
 	var previous_seen := int(persistent_state.get("last_seen_unix", 0))
 	if previous_seen > 0:
 		returned_after_seconds = maxf(0.0, Time.get_unix_time_from_system() - previous_seen)
@@ -451,8 +556,10 @@ func _load_json_dictionary(path: String) -> Dictionary:
 func _update_life_systems(delta: float, now: float) -> void:
 	if needs_model == null:
 		return
-	needs_model.tick(delta, {"sleeping": machine.state == "sleeping"})
+	var ecology_delta := ecology_clock.advance(delta)
+	needs_model.tick(ecology_delta, {"sleeping": machine.state == "sleeping"})
 	session_unrecorded_seconds += maxf(0.0, delta)
+	_update_ecology(now)
 	if action_session.is_active():
 		var previous_phase := action_session.current_phase()
 		if machine.state == "sleeping" and needs_model.get_need("energy") >= 60.0:
@@ -478,22 +585,44 @@ func _update_dialogue_system(now: float) -> void:
 func _save_life_state() -> void:
 	if persistent_state.is_empty() or needs_model == null:
 		return
+	var target_store: PetStateStore = developer_state_store if using_developer_state else state_store
 	var candidate := persistent_state.duplicate(true)
 	candidate["affection"] = needs_model.get_need("affection")
 	candidate["recent_dialogue_ids"] = dialogue_director.recent_dialogue_ids()
-	candidate = state_store.record_session(
+	if ecology_progression != null:
+		candidate.merge(ecology_progression.persistent_snapshot(), true)
+	candidate["home_anchor"] = home_anchor.duplicate(true)
+	candidate = target_store.record_session(
 		candidate,
 		session_unrecorded_seconds,
 		interaction_delta,
 		int(Time.get_unix_time_from_system()),
 	)
-	if state_store.save_state(candidate):
+	if target_store.save_state(candidate):
 		persistent_state = candidate
 		session_unrecorded_seconds = 0.0
 		for key in interaction_delta.keys():
 			interaction_delta[key] = 0
 	else:
-		push_warning(state_store.last_error)
+		push_warning(target_store.last_error)
+
+func _on_ecology_rate_requested(rate: float) -> void:
+	if not ecology_clock.set_rate(rate):
+		return
+	var should_use_developer_state := ecology_clock.is_accelerated()
+	if should_use_developer_state == using_developer_state:
+		return
+	_save_life_state()
+	using_developer_state = should_use_developer_state
+	var source_store: PetStateStore = developer_state_store if using_developer_state else state_store
+	persistent_state = source_store.load_state()
+	needs_model.reset_session(float(persistent_state.get("affection", 40.0)))
+	ecology_progression.restore_persistent(persistent_state)
+	home_anchor = persistent_state.get("home_anchor", {}).duplicate(true) if persistent_state.get("home_anchor", {}) is Dictionary else {}
+	session_unrecorded_seconds = 0.0
+	for key in interaction_delta.keys():
+		interaction_delta[key] = 0
+	_show_speech("ecology_rate", "生态时钟切换为 %d 倍。%s" % [int(rate), "使用独立开发存档。" if using_developer_state else "恢复正式存档。"], 4.5)
 
 func _bump_interaction(kind: String, positive := false) -> void:
 	if interaction_delta.has(kind):
@@ -554,6 +683,277 @@ func _behavior_context() -> Dictionary:
 		"direct_interaction": machine.state in ["head_pat", "poke_cheek", "clock_scare"],
 	}
 
+func _ecology_context() -> Dictionary:
+	var foreground := window_platform_service.foreground_snapshot()
+	var safe_title := dialogue_director.sanitize_window_title(str(foreground.get("title", ""))) if title_awareness else ""
+	var app_category := dialogue_director.classify_application(str(foreground.get("process_name", "")), safe_title)
+	var habitat := habitat_model.snapshot(
+		position,
+		Vector2(pet_window_size),
+		Vector2(desktop.get_cursor_position()),
+		platforms.size(),
+		not foreground.is_empty(),
+		home_anchor
+	)
+	var context := {
+		"familiarity": ecology_progression.familiarity() if ecology_progression != null else 0.0,
+		"habit_stages": ecology_progression.habit_stages() if ecology_progression != null else {},
+		"time_period": dialogue_director.classify_time_period(),
+		"app_category": app_category,
+		"has_foreground": not foreground.is_empty(),
+		"has_platform": not platforms.is_empty(),
+		"has_multiple_platforms": platforms.size() >= 2,
+		"on_platform": active_platform != null,
+		"cursor_available": true,
+		"home_set": not home_anchor.is_empty(),
+		"fullscreen": suspended,
+		"dragging": machine.state == "dragged",
+		"busy": machine.state != "idle" or action_session.is_active() or routine_session.is_active(),
+		"energy": needs_model.get_need("energy"),
+		"irritation": needs_model.get_need("irritation"),
+		"relationship_tier": needs_model.relationship_tier(),
+		"screen_count": int(habitat.get("screen_count", 1)),
+		"pet_screen": int(habitat.get("pet_screen", 0)),
+		"platform_count": platforms.size(),
+	}
+	context.merge(habitat, true)
+	return context
+
+func _update_ecology(_real_now: float) -> void:
+	if ecology_progression == null or goal_director == null:
+		return
+	var simulation_now := ecology_clock.elapsed_ms()
+	var time_period := dialogue_director.classify_time_period()
+	if time_period != last_ecology_time_period:
+		last_ecology_time_period = time_period
+		_observe_ecology("time_observed", {"time_period": time_period})
+	if routine_session.is_active():
+		routine_session.tick(simulation_now)
+		if ecology_step_mode == "wait" and ecology_step_deadline_ms >= 0 and simulation_now >= ecology_step_deadline_ms:
+			_complete_ecology_step("completed")
+	if ecology_request_controller != null and not ecology_request_controller.snapshot().is_empty():
+		var request_context := _ecology_context()
+		request_context["busy"] = machine.state != "idle" or action_session.is_active() or routine_session.is_active()
+		var resolved: Dictionary = ecology_request_controller.poll(request_context, simulation_now)
+		if not resolved.is_empty():
+			_handle_request_result(resolved)
+	if companion_until_ms >= 0 and simulation_now >= companion_until_ms:
+		companion_until_ms = -1
+		if routine_session.is_active() and str(active_request.get("request_id", "")) == "companion":
+			routine_session.finish("completed")
+		var events: Array = ecology_progression.observe_event("companion_completed", _ecology_context(), int(Time.get_unix_time_from_system()), simulation_now)
+		_handle_progress_events(events)
+
+func _start_ecology_goal(goal: Dictionary, request: Dictionary = {}) -> bool:
+	if goal.is_empty() or routine_session.is_active() or machine.state != "idle":
+		return false
+	if not routine_session.begin(goal, ecology_clock.elapsed_ms()):
+		return false
+	active_request = request.duplicate(true)
+	ecology_step_mode = ""
+	ecology_step_deadline_ms = -1
+	call_deferred("_run_current_routine_step")
+	return true
+
+func _run_current_routine_step() -> void:
+	if not routine_session.is_active() or routine_session.is_paused():
+		return
+	if machine.state != "idle" or action_session.is_active() or not motion.is_empty():
+		return
+	var step := routine_session.current_step()
+	if step.is_empty():
+		routine_session.finish("invalid_step")
+		return
+	var step_type := str(step.get("type", ""))
+	ecology_step_mode = step_type
+	ecology_step_context = step.duplicate(true)
+	match step_type:
+		"intent":
+			var intent_id := _choose_ecology_intent(step)
+			if intent_id.is_empty() or not _start_direct_behavior(intent_id):
+				_finish_or_skip_ecology_step(step, "unavailable")
+		"travel":
+			if not _run_ecology_travel(step):
+				_finish_or_skip_ecology_step(step, "unavailable")
+		"special":
+			if str(step.get("special", "")) == "edge_patrol":
+				_trigger_edge_patrol()
+				if machine.state != "edge_patrol":
+					_finish_or_skip_ecology_step(step, "unavailable")
+			else:
+				_finish_or_skip_ecology_step(step, "unavailable")
+		"wait":
+			ecology_step_deadline_ms = ecology_clock.elapsed_ms() + maxi(1, int(step.get("duration_ms", 1000)))
+		_:
+			_finish_or_skip_ecology_step(step, "invalid")
+
+func _choose_ecology_intent(step: Dictionary) -> String:
+	var candidates: Array[String] = []
+	for value in step.get("intent_ids", []):
+		candidates.append(str(value))
+	if candidates.is_empty():
+		return ""
+	if str(step.get("select_by_need", "")) == "energy":
+		if needs_model.get_need("energy") <= 25.0 and "nap" in candidates:
+			return "nap"
+		if "sit_rest" in candidates:
+			return "sit_rest"
+	var start := ecology_clock.elapsed_ms() % candidates.size()
+	for offset in range(candidates.size()):
+		var candidate := candidates[(start + offset) % candidates.size()]
+		if behavior_director.create_intent(candidate, needs_model, _behavior_context(), int(_now_ms())).is_empty():
+			continue
+		return candidate
+	return ""
+
+func _run_ecology_travel(step: Dictionary) -> bool:
+	var target_kind := str(step.get("target", ""))
+	if target_kind in ["foreground_platform", "nearby_platform"]:
+		var target_platform: WindowPlatform = _foreground_platform() if target_kind == "foreground_platform" else _nearby_platform()
+		return target_platform != null and _travel_to_platform(target_platform)
+	var target := position
+	var screens := habitat_model.screen_rects()
+	match target_kind:
+		"random_floor":
+			if screens.is_empty():
+				return false
+			var screen_index := habitat_model.screen_index_for_point(position + Vector2(pet_window_size) * 0.5)
+			if ecology_progression.familiarity() >= 60.0 and screens.size() > 1:
+				screen_index = randi_range(0, screens.size() - 1)
+			var screen: Rect2 = screens[clampi(screen_index, 0, screens.size() - 1)]
+			target = Vector2(randf_range(screen.position.x + 18.0, screen.end.x - pet_window_size.x - 18.0), screen.end.y - pet_window_size.y)
+		"cursor_floor":
+			var cursor := Vector2(desktop.get_cursor_position())
+			target = Vector2(cursor.x - pet_window_size.x * 0.5, habitat_model.floor_y_for_position(cursor, Vector2(pet_window_size)))
+		"foreground_floor":
+			var foreground := window_platform_service.foreground_snapshot()
+			if foreground.is_empty():
+				return false
+			var rect := WindowPlatform.rect_from_value(foreground.get("rect", Rect2i()))
+			target = Vector2(rect.get_center().x - pet_window_size.x * 0.5, habitat_model.floor_y_for_position(rect.get_center(), Vector2(pet_window_size)))
+		"home":
+			if home_anchor.is_empty():
+				return false
+			target = habitat_model.restore_anchor(home_anchor, Vector2(pet_window_size))
+		_:
+			return false
+	target = habitat_model.clamp_pet_position(target, Vector2(pet_window_size), true)
+	active_platform = null
+	pending_platform = null
+	platform_walk_motion.clear()
+	_prepare_motion(target, clampf(position.distance_to(target) * 1.5, 850.0, 2600.0), 84.0, false)
+	var needs_turn := _prepare_travel_facing(target.x)
+	machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
+	return machine.state in ["turn", "takeoff", "float"]
+
+func _foreground_platform() -> WindowPlatform:
+	var foreground := window_platform_service.foreground_snapshot()
+	var handle := int(foreground.get("handle", 0))
+	for platform in platforms:
+		if platform.handle == handle:
+			return platform
+	return null
+
+func _nearby_platform() -> WindowPlatform:
+	if active_platform != null:
+		var nearby: Variant = WindowPlatformService.choose_nearby_platform(active_platform, platforms)
+		return nearby as WindowPlatform if nearby is WindowPlatform else null
+	if platforms.is_empty():
+		return null
+	var foot := _pet_foot_global()
+	var result: WindowPlatform = null
+	var best := INF
+	for platform in platforms:
+		var distance := foot.distance_squared_to(platform.center())
+		if distance < best:
+			best = distance
+			result = platform
+	return result
+
+func _finish_or_skip_ecology_step(step: Dictionary, outcome: String) -> void:
+	if bool(step.get("optional", false)):
+		_complete_ecology_step("completed")
+	else:
+		routine_session.finish("step_%s" % outcome)
+
+func _complete_ecology_step(outcome: String) -> void:
+	if not routine_session.is_active():
+		return
+	ecology_step_mode = ""
+	ecology_step_deadline_ms = -1
+	routine_session.complete_step(outcome, ecology_clock.elapsed_ms())
+	if routine_session.is_active():
+		call_deferred("_run_current_routine_step")
+
+func _on_routine_completed(goal_id: String, outcome: String) -> void:
+	var goal := routine_session.goal()
+	var request := active_request.duplicate(true)
+	ecology_step_mode = ""
+	ecology_step_deadline_ms = -1
+	ecology_step_context.clear()
+	active_request.clear()
+	if outcome == "completed" and ecology_progression != null:
+		var context := _ecology_context()
+		context["goal_id"] = goal_id
+		context.merge(goal.get("context", {}), true)
+		_handle_progress_events(ecology_progression.record_goal(goal_id, context, int(Time.get_unix_time_from_system()), ecology_clock.elapsed_ms()))
+		_observe_goal_discovery(goal_id, context)
+		if not request.is_empty():
+			ecology_progression.record_request(str(request.get("request_id", "")), "completed", int(Time.get_unix_time_from_system()))
+			var relationship_gain := 0.40 if str(request.get("request_id", "")) == "companion" else 0.25
+			needs_model.apply_event("friendly_interaction", {"effects": {"affection": relationship_gain, "boredom": -4.0}})
+	if machine.state == "idle":
+		_schedule_wander()
+
+func _observe_goal_discovery(goal_id: String, context: Dictionary) -> void:
+	var event_name := ""
+	match goal_id:
+		"platform_patrol": event_name = "platform_walk"
+		"window_migration": event_name = "window_migration"
+		"edge_expedition": event_name = "edge_expedition"
+	if not event_name.is_empty():
+		_observe_ecology(event_name, context)
+
+func _observe_ecology(event_type: String, context: Dictionary = {}) -> void:
+	if ecology_progression == null:
+		return
+	var merged := _ecology_context()
+	merged.merge(context, true)
+	var events: Array = ecology_progression.observe_event(event_type, merged, int(Time.get_unix_time_from_system()), ecology_clock.elapsed_ms())
+	_handle_progress_events(events)
+
+func _handle_progress_events(events: Array) -> void:
+	for value in events:
+		if not value is Dictionary:
+			continue
+		var kind := str(value.get("kind", ""))
+		var details: Dictionary = value.get("details", {}) if value.get("details", {}) is Dictionary else {}
+		if kind == "discovery":
+			_show_speech("discovery_%s" % str(value.get("id", "")), "新发现：%s" % str(details.get("name", value.get("id", ""))), 4.8)
+		elif kind == "habit_stage":
+			_show_speech("habit_%s" % str(value.get("id", "")), "形成习惯：%s · %d 阶" % [str(details.get("name", value.get("id", ""))), int(details.get("stage", 0))], 4.8)
+
+func _handle_request_result(result: Dictionary) -> void:
+	if ecology_progression != null:
+		ecology_progression.record_request(str(result.get("request_id", "")), str(result.get("status", "refused")), int(Time.get_unix_time_from_system()))
+	match str(result.get("status", "")):
+		"accepted":
+			var goal_id := str(result.get("goal_id", ""))
+			if goal_id.is_empty():
+				return
+			var goal: Dictionary = goal_director.create_goal(goal_id, _ecology_context(), ecology_clock.elapsed_ms())
+			if str(result.get("request_id", "")) == "stay_here" and not goal.is_empty():
+				goal["steps"] = [{"type": "intent", "intent_ids": ["sit_rest", "breathe_shift"], "max_duration_ms": 24000}]
+			if str(result.get("request_id", "")) == "companion":
+				var payload: Dictionary = result.get("payload", {}) if result.get("payload", {}) is Dictionary else {}
+				var minutes := clampi(int(payload.get("duration_minutes", 15)), 15, 60)
+				companion_until_ms = ecology_clock.elapsed_ms() + minutes * 60000
+			_start_ecology_goal(goal, result)
+		"deferred":
+			_show_speech("request_deferred", "等我把手上的事做完。", 3.8)
+		"refused":
+			_show_speech("request_refused", "条件不成立。你总不能要求实验对象违反物理。", 4.2)
+
 func _show_mechanism_dashboard() -> void:
 	next_mechanism_dashboard_update = _now_ms() + MECHANISM_DASHBOARD_REFRESH_MS
 	mechanism_dashboard.show_dashboard(_mechanism_snapshot(_now_ms()))
@@ -574,6 +974,7 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 	var state_stats: Dictionary = state_stats_value if state_stats_value is Dictionary else {}
 	var merged_stats := PetMechanismDashboard.merge_interaction_stats(state_stats, interaction_delta)
 	var event_cooldown_seconds := 0.0
+	var active_store: PetStateStore = developer_state_store if using_developer_state else state_store
 	if dialogue_director.next_event_at_ms > now:
 		event_cooldown_seconds = (dialogue_director.next_event_at_ms - now) / 1000.0
 	return {
@@ -582,6 +983,10 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 		"intent": str(current_intent.get("id", "")),
 		"clip": sprite_player.current_clip,
 		"session": action_session.snapshot(),
+		"routine": routine_session.snapshot(),
+		"ecology": ecology_progression.snapshot() if ecology_progression != null else {},
+		"ecology_clock": ecology_clock.snapshot(),
+		"goal_candidates": goal_director.last_candidates if goal_director != null else [],
 		"needs": needs_snapshot,
 		"relationship_tier": relationship_tier,
 		"mood": _current_mood(),
@@ -609,8 +1014,8 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 			"pending_seconds": session_unrecorded_seconds,
 			"last_saved_unix": int(persistent_state.get("last_seen_unix", 0)),
 			"next_save_seconds": maxf(0.0, (next_life_save - now) / 1000.0),
-			"path": ProjectSettings.globalize_path(state_store.save_path),
-			"last_error": state_store.last_error,
+			"path": ProjectSettings.globalize_path(active_store.save_path),
+			"last_error": active_store.last_error,
 		},
 		"settings": {
 			"auto_wander": auto_wander,
@@ -618,6 +1023,8 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 			"speech_bubbles": speech_bubbles_enabled,
 			"title_awareness": title_awareness,
 			"action_sounds": action_sounds,
+			"ecology_rate": ecology_clock.rate(),
+			"developer_state": using_developer_state,
 		},
 	}
 
@@ -714,6 +1121,11 @@ func _on_action_session_completed(outcome: String) -> void:
 			_emit_dialogue(dialogue_event)
 	if machine.state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
 		machine.dispatch({"type": "ACTION_END"})
+	if routine_session.is_active() and ecology_step_mode == "intent" and not routine_session.is_paused():
+		if outcome in ["completed", "timeout"]:
+			_complete_ecology_step("completed")
+		else:
+			routine_session.finish("step_%s" % outcome)
 	if not deferred_wake_action.is_empty():
 		call_deferred("_run_deferred_wake_action")
 
@@ -732,6 +1144,15 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		_: return ""
 
 func _interrupt_action(kind: String, context: Dictionary = {}) -> void:
+	if routine_session.is_active():
+		var resume_routine := kind in ["menu", "direct_interaction"]
+		var routine_decision := routine_session.interrupt(kind, resume_routine)
+		if routine_decision == "paused" and ecology_step_mode in ["travel", "special"]:
+			motion.clear()
+			if machine.state == "edge_patrol":
+				_cancel_edge_patrol()
+		elif routine_decision == "cancelled":
+			ecology_step_mode = ""
 	if not action_session.is_active():
 		return
 	var resolved_context := context.duplicate(true)
@@ -812,6 +1233,8 @@ func _update_window_platforms(now: float) -> void:
 			last_foreground_app = foreground_app
 			needs_model.apply_event("novel_window")
 			_emit_dialogue("app_context")
+			var safe_app_title := dialogue_director.sanitize_window_title(str(foreground.get("title", ""))) if title_awareness else ""
+			_observe_ecology("app_observed", {"app_category": dialogue_director.classify_application(foreground_app, safe_app_title)})
 		if title_awareness:
 			var stable_title := dialogue_director.observe_window_title(str(foreground.get("title", "")), now)
 			if not stable_title.is_empty():
@@ -830,6 +1253,7 @@ func _update_window_platforms(now: float) -> void:
 				var delta := Vector2(tracking.get("delta", Vector2i.ZERO))
 				active_platform = tracking.get("platform") as WindowPlatform
 				if not delta.is_zero_approx():
+					_observe_ecology("moving_platform")
 					position += delta
 					if not platform_walk_motion.is_empty():
 						platform_walk_motion.from = Vector2(platform_walk_motion.from) + delta
@@ -996,6 +1420,11 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 			call_deferred("_try_resume_platform_action")
 		if not deferred_wake_action.is_empty():
 			call_deferred("_run_deferred_wake_action")
+		if routine_session.is_paused() and from in ["menu_wait", "head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy"]:
+			if routine_session.resume(ecology_clock.elapsed_ms()):
+				call_deferred("_run_current_routine_step")
+		elif routine_session.is_active() and ecology_step_mode in ["travel", "special"]:
+			call_deferred("_complete_ecology_step", "completed")
 	elif to == "edge_patrol":
 		if not edge_session.is_empty() and bool(edge_session.get("paused", false)):
 			_resume_edge_patrol()
@@ -1021,6 +1450,8 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		_set_direction(1)
 		_play_segment_or_clip("land", _facing_segment(facing))
 		sfx_player.play("land")
+		if from == "drag_fall" and drag_fall_mode == "umbrella":
+			_observe_ecology("umbrella_land")
 	elif to == "dragged":
 		_play_drag_visual("grab")
 	elif to == "head_pat":
@@ -1499,6 +1930,7 @@ func _sample_cursor_tracking(now: float) -> void:
 		needs_model.apply_event("cursor_gesture")
 		_emit_dialogue("cursor")
 	if circle:
+		_observe_ecology("cursor_circle")
 		_trigger_cursor_reaction("CURSOR_CIRCLE")
 	elif sweep:
 		_trigger_cursor_reaction("CURSOR_SWEEP")
@@ -1568,12 +2000,19 @@ func _trigger_idle_blink() -> void:
 
 func _schedule_wander() -> void:
 	if not auto_wander or machine.state != "idle": return
-	var minimum := 3000.0
-	var maximum := 8000.0
+	var minimum := 15000.0
+	var maximum := 45000.0
 	wander_deadline = _now_ms() + randf_range(minimum, maximum)
 
 func _trigger_ambient_behavior() -> void:
 	if machine.state != "idle" or not pending_front_intent.is_empty(): return
+	if routine_session.is_active():
+		call_deferred("_run_current_routine_step")
+		return
+	if goal_director != null and goal_director.is_valid() and ecology_progression != null:
+		var goal: Dictionary = goal_director.select_goal(needs_model, _ecology_context(), ecology_clock.elapsed_ms())
+		if _start_ecology_goal(goal):
+			return
 	if behavior_director != null and behavior_director.is_valid():
 		var intent := behavior_director.select_intent(needs_model, _behavior_context(), int(_now_ms()))
 		if _start_autonomous_intent(intent):
@@ -1671,6 +2110,7 @@ func _update_motion(now: float) -> void:
 			machine.dispatch({"type": "ARRIVE"})
 			needs_model.apply_event("novel_window")
 			_emit_dialogue("window_land")
+			_observe_ecology("window_land")
 			return
 	position = next if pending_platform != null else _clamp_position(next, false)
 	_apply_position()
@@ -1682,6 +2122,7 @@ func _update_motion(now: float) -> void:
 			position = _position_for_platform(active_platform, _pet_foot_global(position).x)
 			_apply_position()
 			_emit_dialogue("window_land")
+			_observe_ecology("window_land")
 		else:
 			active_platform = null
 		_save_position()
@@ -1772,19 +2213,23 @@ func _set_window_geometry(next_size: Vector2i, previous_clip: Dictionary, next_c
 	sprite_player.refresh_layout()
 
 func _default_position() -> Vector2:
-	return Vector2(work_area.end.x - pet_window_size.x - 34.0, _floor_y())
+	if habitat_model != null:
+		return habitat_model.default_position(Vector2(pet_window_size))
+	return Vector2(work_area.end.x - pet_window_size.x - 34.0, work_area.end.y - pet_window_size.y)
 
 func _floor_y() -> float:
+	if habitat_model != null:
+		return habitat_model.floor_y_for_position(position, Vector2(pet_window_size))
 	return work_area.end.y - pet_window_size.y
 
 func _clamp_position(value: Vector2, force_floor: bool) -> Vector2:
-	var minimum_x := work_area.position.x
-	var maximum_x := work_area.end.x - pet_window_size.x
-	var minimum_y := work_area.position.y
-	var maximum_y := _floor_y()
-	var x := minimum_x if maximum_x < minimum_x else clampf(value.x, minimum_x, maximum_x)
-	var y := minimum_y if maximum_y < minimum_y else (maximum_y if force_floor else clampf(value.y, minimum_y, maximum_y))
-	return Vector2(x, y)
+	if habitat_model != null:
+		return habitat_model.clamp_pet_position(value, Vector2(pet_window_size), force_floor)
+	var maximum := work_area.end - Vector2(pet_window_size)
+	return Vector2(
+		clampf(value.x, work_area.position.x, maximum.x),
+		maximum.y if force_floor else clampf(value.y, work_area.position.y, maximum.y)
+	)
 
 func _apply_position() -> void:
 	desktop.set_position(position)
@@ -1795,6 +2240,7 @@ func _save_position() -> void:
 		desktop.save_position(stored_position, base_window_size, pet_window_size)
 
 func _check_system_context() -> void:
+	_refresh_habitat_screens()
 	var latest := Rect2(desktop.get_work_area())
 	if latest.size.x > 0.0 and latest.size.y > 0.0 and (latest.position != work_area.position or latest.size != work_area.size):
 		work_area = latest
@@ -1821,6 +2267,15 @@ func _check_system_context() -> void:
 		desktop.set_visible(true)
 		suspended = false
 		machine.dispatch({"type": "FULLSCREEN_EXIT"})
+
+func _refresh_habitat_screens() -> void:
+	if habitat_model == null or desktop == null:
+		return
+	var screens := desktop.get_usable_screen_rects()
+	if screens.is_empty():
+		screens.append(Rect2(desktop.get_work_area()))
+	if habitat_model.screen_rects() != screens:
+		habitat_model.update_screens(screens)
 
 func _next_cursor_sample() -> void:
 	next_cursor_sample = _now_ms() + maxf(16.0, float(manifest.gaze().get("sampleIntervalMs", 33.0)) if manifest != null else 33.0)

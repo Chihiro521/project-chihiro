@@ -1,7 +1,7 @@
 class_name PetStateStore
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION := 1
+const CURRENT_SCHEMA_VERSION := 2
 const DEFAULT_PATH := "user://little_chihiro_state.json"
 const DEFAULT_AFFECTION := 40.0
 const INTERACTION_KEYS := [
@@ -12,6 +12,7 @@ const INTERACTION_KEYS := [
 	"total",
 ]
 const RECENT_DIALOGUE_LIMIT := 12
+const RECENT_ECOLOGY_EVENT_LIMIT := 50
 
 var save_path := DEFAULT_PATH
 var last_error := ""
@@ -31,6 +32,13 @@ func create_default_state() -> Dictionary:
 		"total_companion_seconds": 0.0,
 		"last_seen_unix": 0,
 		"recent_dialogue_ids": [],
+		"habitat_familiarity": 0.0,
+		"habits": {},
+		"discoveries": {},
+		"goal_stats": {},
+		"request_stats": {"accepted": 0, "deferred": 0, "refused": 0, "completed": 0},
+		"recent_ecology_events": [],
+		"home_anchor": {},
 	}
 
 func load_state(default_overrides: Dictionary = {}) -> Dictionary:
@@ -116,6 +124,15 @@ func _migrate(source: Dictionary, from_version: int) -> Dictionary:
 		if migrated.has("recentDialogueIds") and not migrated.has("recent_dialogue_ids"):
 			migrated.recent_dialogue_ids = migrated.recentDialogueIds
 		migrated.schema_version = 1
+	if int(migrated.get("schema_version", from_version)) == 1:
+		migrated["habitat_familiarity"] = float(migrated.get("habitat_familiarity", 0.0))
+		migrated["habits"] = migrated.get("habits", {})
+		migrated["discoveries"] = migrated.get("discoveries", {})
+		migrated["goal_stats"] = migrated.get("goal_stats", {})
+		migrated["request_stats"] = migrated.get("request_stats", {})
+		migrated["recent_ecology_events"] = migrated.get("recent_ecology_events", [])
+		migrated["home_anchor"] = migrated.get("home_anchor", {})
+		migrated.schema_version = 2
 	return migrated
 
 func _normalized_state(source: Dictionary, fallback: Dictionary) -> Dictionary:
@@ -136,6 +153,7 @@ func _normalized_state(source: Dictionary, fallback: Dictionary) -> Dictionary:
 				recent_dialogue_ids.append(dialogue_id.left(96))
 	while recent_dialogue_ids.size() > RECENT_DIALOGUE_LIMIT:
 		recent_dialogue_ids.pop_front()
+	var recent_ecology_events := _normalize_ecology_events(source.get("recent_ecology_events", []))
 	return {
 		"schema_version": CURRENT_SCHEMA_VERSION,
 		"affection": clampf(float(source.get("affection", fallback.get("affection", DEFAULT_AFFECTION))), 0.0, 100.0),
@@ -149,7 +167,108 @@ func _normalized_state(source: Dictionary, fallback: Dictionary) -> Dictionary:
 			source.get("lastSeenUnix", fallback.get("last_seen_unix", 0))
 		))),
 		"recent_dialogue_ids": recent_dialogue_ids,
+		"habitat_familiarity": clampf(float(source.get("habitat_familiarity", fallback.get("habitat_familiarity", 0.0))), 0.0, 100.0),
+		"habits": _normalize_habits(source.get("habits", fallback.get("habits", {}))),
+		"discoveries": _normalize_discoveries(source.get("discoveries", fallback.get("discoveries", {}))),
+		"goal_stats": _normalize_counter_map(source.get("goal_stats", fallback.get("goal_stats", {}))),
+		"request_stats": _normalize_request_stats(source.get("request_stats", fallback.get("request_stats", {}))),
+		"recent_ecology_events": recent_ecology_events,
+		"home_anchor": _normalize_home_anchor(source.get("home_anchor", fallback.get("home_anchor", {}))),
 	}
+
+func _normalize_habits(value: Variant) -> Dictionary:
+	var source: Dictionary = value if value is Dictionary else {}
+	var result := {}
+	for raw_key in source.keys():
+		var key := _safe_id(raw_key)
+		if key.is_empty():
+			continue
+		var raw: Variant = source[raw_key]
+		var entry: Dictionary = raw if raw is Dictionary else {}
+		result[key] = {
+			"count": maxi(0, int(entry.get("count", 0))),
+			"stage": clampi(int(entry.get("stage", 0)), 0, 3),
+			"last_credit_unix": maxi(0, int(entry.get("last_credit_unix", 0))),
+		}
+	return result
+
+func _normalize_discoveries(value: Variant) -> Dictionary:
+	var source: Dictionary = value if value is Dictionary else {}
+	var result := {}
+	for raw_key in source.keys():
+		var key := _safe_id(raw_key)
+		if key.is_empty():
+			continue
+		var raw: Variant = source[raw_key]
+		var entry: Dictionary = raw if raw is Dictionary else {}
+		result[key] = {"unlocked_unix": maxi(0, int(entry.get("unlocked_unix", 0)))}
+	return result
+
+func _normalize_counter_map(value: Variant) -> Dictionary:
+	var source: Dictionary = value if value is Dictionary else {}
+	var result := {}
+	for raw_key in source.keys():
+		var key := _safe_id(raw_key)
+		if not key.is_empty():
+			result[key] = maxi(0, int(source[raw_key]))
+	return result
+
+func _normalize_request_stats(value: Variant) -> Dictionary:
+	var source: Dictionary = value if value is Dictionary else {}
+	var result := {}
+	for key in ["accepted", "deferred", "refused", "completed"]:
+		result[key] = maxi(0, int(source.get(key, 0)))
+	return result
+
+func _normalize_ecology_events(value: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if value is Array:
+		for raw in value:
+			if not raw is Dictionary:
+				continue
+			result.append({
+				"kind": _safe_id(raw.get("kind", "")),
+				"id": _safe_id(raw.get("id", "")),
+				"unix": maxi(0, int(raw.get("unix", 0))),
+				"time_period": _safe_id(raw.get("time_period", "")),
+				"app_category": _safe_id(raw.get("app_category", "")),
+				"goal_id": _safe_id(raw.get("goal_id", "")),
+				"request_id": _safe_id(raw.get("request_id", "")),
+			})
+	while result.size() > RECENT_ECOLOGY_EVENT_LIMIT:
+		result.pop_front()
+	return result
+
+func _normalize_home_anchor(value: Variant) -> Dictionary:
+	if not value is Dictionary:
+		return {}
+	var source: Dictionary = value
+	var screen_rect := _number_array(source.get("screen_rect", []), 4)
+	var uv := _number_array(source.get("uv", []), 2)
+	var global_position := _number_array(source.get("global_position", []), 2)
+	if screen_rect.size() != 4 or uv.size() != 2 or global_position.size() != 2:
+		return {}
+	uv[0] = clampf(float(uv[0]), 0.0, 1.0)
+	uv[1] = clampf(float(uv[1]), 0.0, 1.0)
+	return {"screen_rect": screen_rect, "uv": uv, "global_position": global_position}
+
+func _number_array(value: Variant, required_size: int) -> Array[float]:
+	var result: Array[float] = []
+	if value is Array and value.size() >= required_size:
+		for index in range(required_size):
+			var number := float(value[index])
+			if not is_finite(number):
+				return []
+			result.append(number)
+	return result
+
+func _safe_id(value: Variant) -> String:
+	var text := str(value).strip_edges().left(96)
+	var result := ""
+	for character in text:
+		if character.to_lower() in "abcdefghijklmnopqrstuvwxyz0123456789_-":
+			result += character
+	return result
 
 func _legacy_interaction_key(key: String) -> String:
 	match key:
