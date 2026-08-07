@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "progression": {
+    "familiarity_thresholds": [0, 20, 40, 60, 80],
+    "habit_stage_thresholds": [3, 8, 18],
+    "credit_window_ms": 600000,
+    "event_history_limit": 50,
+    "first_goal_familiarity": 1.0,
+    "repeat_goal_familiarity": 0.25,
+    "discovery_familiarity": 2.0
+  },
+  "goals": [
+    {
+      "id": "floor_roam", "name": "地面漫步", "base_weight": 18, "cooldown_ms": 45000,
+      "need_weights": {"boredom": 0.20, "curiosity": 0.08, "energy": 0.03},
+      "habit_ids": ["morning_patrol"],
+      "steps": [
+        {"type": "travel", "target": "random_floor", "max_duration_ms": 5000},
+        {"type": "intent", "intent_ids": ["look_around", "breathe_shift"]}
+      ]
+    },
+    {
+      "id": "foreground_observation", "name": "窗口观察", "base_weight": 16, "cooldown_ms": 70000,
+      "requires": ["has_foreground"], "need_weights": {"curiosity": 0.35, "boredom": 0.12},
+      "habit_ids": ["afternoon_observe", "development_reasoning", "creative_observe", "document_watch"],
+      "steps": [
+        {"type": "travel", "target": "foreground_platform", "optional": true, "max_duration_ms": 6000},
+        {"type": "intent", "intent_ids": ["look_around"]},
+        {"type": "intent", "intent_ids": ["reason_pose"]}
+      ]
+    },
+    {
+      "id": "platform_patrol", "name": "平台巡查", "base_weight": 15, "cooldown_ms": 65000,
+      "requires": ["on_platform"], "need_weights": {"boredom": 0.30, "curiosity": 0.12},
+      "habit_ids": ["window_stroll"],
+      "steps": [
+        {"type": "intent", "intent_ids": ["window_walk"]},
+        {"type": "intent", "intent_ids": ["window_sit"], "optional": true}
+      ]
+    },
+    {
+      "id": "window_migration", "name": "跨窗迁徙", "base_weight": 10, "cooldown_ms": 110000,
+      "requires": ["has_multiple_platforms"], "min_familiarity": 20,
+      "need_weights": {"curiosity": 0.42, "boredom": 0.22, "energy": 0.02},
+      "habit_ids": ["window_migration"],
+      "steps": [
+        {"type": "travel", "target": "nearby_platform", "max_duration_ms": 6500},
+        {"type": "intent", "intent_ids": ["window_walk"]},
+        {"type": "travel", "target": "nearby_platform", "optional": true, "max_duration_ms": 6500},
+        {"type": "intent", "intent_ids": ["window_sit"], "optional": true}
+      ]
+    },
+    {
+      "id": "edge_expedition", "name": "边缘远行", "base_weight": 8, "cooldown_ms": 180000,
+      "min_familiarity": 20, "need_weights": {"curiosity": 0.30, "boredom": 0.18, "energy": 0.04},
+      "steps": [{"type": "special", "special": "edge_patrol", "max_duration_ms": 45000}]
+    },
+    {
+      "id": "cursor_visit", "name": "寻找鼠标", "base_weight": 8, "cooldown_ms": 90000,
+      "requires": ["cursor_available"], "need_weights": {"curiosity": 0.30, "affection": 0.04, "irritation": -0.08},
+      "steps": [
+        {"type": "travel", "target": "cursor_floor", "max_duration_ms": 6000},
+        {"type": "intent", "intent_ids": ["return_wave", "look_around"], "optional": true}
+      ]
+    },
+    {
+      "id": "quiet_companion", "name": "安静陪伴", "base_weight": 9, "cooldown_ms": 150000,
+      "requires": ["has_foreground"], "need_weights": {"affection": 0.08, "energy": -0.03, "irritation": -0.10},
+      "habit_ids": ["late_companion", "document_watch", "media_rest"],
+      "steps": [
+        {"type": "travel", "target": "foreground_floor", "optional": true, "max_duration_ms": 6000},
+        {"type": "intent", "intent_ids": ["sit_rest"], "max_duration_ms": 24000}
+      ]
+    },
+    {
+      "id": "return_home", "name": "返回休息点", "base_weight": 12, "cooldown_ms": 90000,
+      "requires": ["home_set"], "need_weights": {"energy": -0.12, "irritation": 0.10},
+      "habit_ids": ["home_return"],
+      "steps": [
+        {"type": "travel", "target": "home", "max_duration_ms": 8000},
+        {"type": "intent", "intent_ids": ["sit_rest", "breathe_shift"], "optional": true}
+      ]
+    },
+    {
+      "id": "home_rest", "name": "在家休息", "base_weight": 14, "cooldown_ms": 140000,
+      "requires": ["home_set"], "need_weights": {"energy": -0.25, "boredom": 0.04},
+      "steps": [
+        {"type": "travel", "target": "home", "max_duration_ms": 8000},
+        {"type": "intent", "intent_ids": ["nap", "sit_rest"], "select_by_need": "energy"}
+      ]
+    },
+    {
+      "id": "self_care", "name": "自我整理", "base_weight": 13, "cooldown_ms": 100000,
+      "need_weights": {"boredom": 0.13, "irritation": 0.08}, "habit_ids": ["self_care"],
+      "steps": [{"type": "intent", "intent_ids": ["straighten_bag", "tidy_clothes", "stretch"]}]
+    },
+    {
+      "id": "rabbit_time", "name": "兔子时间", "base_weight": 11, "cooldown_ms": 130000,
+      "need_weights": {"boredom": 0.16, "curiosity": 0.08, "affection": 0.03}, "habit_ids": ["rabbit_time"],
+      "steps": [{"type": "intent", "intent_ids": ["inspect_rabbit"]}]
+    },
+    {
+      "id": "environment_reasoning", "name": "环境推演", "base_weight": 10, "cooldown_ms": 120000,
+      "need_weights": {"curiosity": 0.34, "boredom": 0.09},
+      "habit_ids": ["development_reasoning", "creative_observe"],
+      "steps": [
+        {"type": "intent", "intent_ids": ["look_around"]},
+        {"type": "intent", "intent_ids": ["reason_pose"]}
+      ]
+    }
+  ],
+  "requests": [
+    {"id": "come_here", "name": "来我这里", "goal_id": "cursor_visit", "requires": ["cursor_available"], "min_energy": 12, "refuse_irritation": 80, "max_defer_ms": 30000},
+    {"id": "inspect_foreground", "name": "观察当前窗口", "goal_id": "foreground_observation", "requires": ["has_foreground"], "min_energy": 18, "refuse_irritation": 72, "max_defer_ms": 30000},
+    {"id": "stay_here", "name": "在这里待会", "goal_id": "quiet_companion", "min_energy": 10, "refuse_irritation": 75, "max_defer_ms": 30000},
+    {"id": "set_home", "name": "把这里设为休息点", "goal_id": "", "min_energy": 0, "refuse_irritation": 85, "max_defer_ms": 30000},
+    {"id": "return_home", "name": "回休息点", "goal_id": "return_home", "requires": ["home_set"], "min_energy": 0, "refuse_irritation": 82, "max_defer_ms": 30000},
+    {"id": "companion", "name": "陪伴模式", "goal_id": "quiet_companion", "requires": ["has_foreground"], "min_energy": 8, "refuse_irritation": 70, "max_defer_ms": 30000},
+    {"id": "free_roam", "name": "自由活动", "goal_id": "", "min_energy": 0, "refuse_irritation": 101, "max_defer_ms": 1}
+  ],
+  "habits": [
+    {"id": "morning_patrol", "name": "晨间巡查", "description": "早晨沿桌面地形活动。", "goal_ids": ["floor_roam", "edge_expedition"], "time_periods": ["morning"]},
+    {"id": "afternoon_observe", "name": "午后观察", "description": "下午观察窗口与环境。", "goal_ids": ["foreground_observation", "environment_reasoning"], "time_periods": ["afternoon"]},
+    {"id": "late_companion", "name": "深夜陪伴", "description": "深夜安静留在用户附近。", "goal_ids": ["quiet_companion"], "time_periods": ["late_night"]},
+    {"id": "development_reasoning", "name": "开发推演", "description": "在开发工具旁进行推演。", "goal_ids": ["foreground_observation", "environment_reasoning"], "app_categories": ["development"]},
+    {"id": "creative_observe", "name": "创作旁观", "description": "观察绘图、设计与创作过程。", "goal_ids": ["foreground_observation", "environment_reasoning"], "app_categories": ["art"]},
+    {"id": "document_watch", "name": "文档守望", "description": "在文档工作时安静陪伴。", "goal_ids": ["foreground_observation", "quiet_companion"], "app_categories": ["document"]},
+    {"id": "media_rest", "name": "媒体小憩", "description": "播放媒体时选择休息。", "goal_ids": ["quiet_companion", "home_rest"], "app_categories": ["media"]},
+    {"id": "window_stroll", "name": "窗沿散步", "description": "在安全窗口顶边往返行走。", "goal_ids": ["platform_patrol"]},
+    {"id": "window_migration", "name": "跨窗迁徙", "description": "在多个窗口平台间迁徙。", "goal_ids": ["window_migration"]},
+    {"id": "home_return", "name": "桌边归巢", "description": "主动回到指定休息点。", "goal_ids": ["return_home", "home_rest"]},
+    {"id": "rabbit_time", "name": "兔子时间", "description": "定期照看包上的兔子。", "goal_ids": ["rabbit_time"]},
+    {"id": "self_care", "name": "自我整理", "description": "整理衣物、肩带并舒展身体。", "goal_ids": ["self_care"]}
+  ],
+  "discoveries": [
+    {"id": "time_morning", "name": "晨光样本", "description": "在早晨完成一次观察。", "event": "time_observed", "time_periods": ["morning"]},
+    {"id": "time_noon", "name": "正午样本", "description": "在正午完成一次观察。", "event": "time_observed", "time_periods": ["noon"]},
+    {"id": "time_afternoon", "name": "午后样本", "description": "在下午完成一次观察。", "event": "time_observed", "time_periods": ["afternoon"]},
+    {"id": "time_evening", "name": "暮色样本", "description": "在傍晚完成一次观察。", "event": "time_observed", "time_periods": ["evening"]},
+    {"id": "time_late_night", "name": "深夜样本", "description": "在深夜完成一次观察。", "event": "time_observed", "time_periods": ["late_night"]},
+    {"id": "app_development", "name": "开发环境", "description": "观察一次开发工具。", "event": "app_observed", "app_categories": ["development"]},
+    {"id": "app_art", "name": "创作环境", "description": "观察一次创作工具。", "event": "app_observed", "app_categories": ["art"]},
+    {"id": "app_document", "name": "文档环境", "description": "观察一次文档工具。", "event": "app_observed", "app_categories": ["document"]},
+    {"id": "app_media", "name": "媒体环境", "description": "观察一次媒体工具。", "event": "app_observed", "app_categories": ["media"]},
+    {"id": "app_communication", "name": "通信环境", "description": "观察一次通信工具。", "event": "app_observed", "app_categories": ["communication"]},
+    {"id": "first_window_land", "name": "窗沿着陆", "description": "第一次稳定落上窗口平台。", "event": "window_land"},
+    {"id": "first_platform_walk", "name": "窄边行走", "description": "第一次完成窗口顶边行走。", "event": "platform_walk"},
+    {"id": "first_window_migration", "name": "跨窗路线", "description": "第一次完成跨窗口迁徙。", "event": "window_migration"},
+    {"id": "first_edge_expedition", "name": "桌面边界", "description": "第一次完成边缘远行。", "event": "edge_expedition"},
+    {"id": "first_secondary_monitor", "name": "第二片天空", "description": "第一次抵达另一块显示器。", "event": "secondary_monitor", "requires_multi_monitor": true},
+    {"id": "home_found", "name": "休息坐标", "description": "建立一个会记住的休息点。", "event": "home_set"},
+    {"id": "cursor_circle", "name": "环形轨迹", "description": "识别一次鼠标绕圈。", "event": "cursor_circle"},
+    {"id": "gentle_drag_home", "name": "温和搬运", "description": "被平稳地带回休息点附近。", "event": "gentle_drag_home"},
+    {"id": "accepted_request", "name": "协作开始", "description": "完成一次接受的生活请求。", "event": "request_completed"},
+    {"id": "companion_completed", "name": "共同时间", "description": "完整结束一次陪伴模式。", "event": "companion_completed"},
+    {"id": "moving_platform", "name": "移动平台", "description": "在移动窗口上保持站立。", "event": "moving_platform"},
+    {"id": "platform_recovered", "name": "失足恢复", "description": "平台丢失后安全恢复。", "event": "platform_recovered"},
+    {"id": "umbrella_landing", "name": "伞下降落", "description": "使用雨伞完成一次缓降。", "event": "umbrella_land"},
+    {"id": "three_platform_expedition", "name": "三平台考察", "description": "一次路线抵达至少三个窗口平台。", "event": "three_platform_expedition", "min_platform_count": 3}
+  ]
+}

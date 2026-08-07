@@ -9,8 +9,8 @@
     "event_effects": {
       "novel_window": {"curiosity": 18, "boredom": -5},
       "cursor_gesture": {"curiosity": 8, "boredom": -3},
-      "head_pat_accepted": {"affection": 0.08, "irritation": -4, "boredom": -2},
-      "friendly_interaction": {"affection": 0.04, "boredom": -4},
+      "head_pat_accepted": {"affection": 0.15, "irritation": -4, "boredom": -2},
+      "friendly_interaction": {"affection": 0.05, "boredom": -4},
       "rapid_poke": {"affection": -0.3, "irritation": 12},
       "rough_drag": {"affection": -0.5, "irritation": 18},
       "behavior_completed": {"boredom": -3}
@@ -120,7 +120,7 @@
       {
         "id": "head_pat_accept", "clip": "head_pat_accept", "state": "direct_interaction",
         "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
-        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"affection": 0.08}, "session": {"type": "one_shot"}
+        "preconditions": {}, "score_weights": {"base": 0}, "effects": {"affection": 0.15}, "session": {"type": "one_shot"}
       },
       {
         "id": "head_pat_refuse", "clip": "head_pat_refuse", "fallback_clip": "react", "state": "direct_interaction",
