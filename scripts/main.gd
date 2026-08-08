@@ -343,6 +343,7 @@ func _input(event: InputEvent) -> void:
 			return
 		if key.pressed and not key.echo and key.keycode == KEY_F10:
 			debug_overlay.toggle()
+			_sync_menu_checks()
 			get_viewport().set_input_as_handled()
 			return
 		if machine.state == "manual_control" and key.pressed and not key.echo:
@@ -408,7 +409,7 @@ func _setup_menus() -> void:
 	menu.add_check_item("读取窗口标题", MENU_TITLE_AWARENESS)
 	menu.add_check_item("动作音效", MENU_ACTION_SOUNDS)
 	menu.add_item("人格机制…（F8）", MENU_MECHANISM_DASHBOARD)
-	menu.add_item("动作总览…", MENU_ACTION_CATALOG)
+	menu.add_item("动作总览…（F9）", MENU_ACTION_CATALOG)
 	menu.add_check_item("调试信息（F10）", MENU_DEBUG_OVERLAY)
 	menu.add_separator()
 	menu.add_item("退出", MENU_QUIT)
