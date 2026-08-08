@@ -670,7 +670,7 @@ func _update_life_systems(delta: float, now: float) -> void:
 func _update_dialogue_system(now: float) -> void:
 	if not dialogue_scheduler.should_attempt(now, {
 		"enabled": speech_bubbles_enabled,
-		"surface_visible": not suspended and desktop.is_visible(),
+		"surface_visible": not suspended and desktop.is_visible() and not desktop.is_minimized(),
 		"bubble_busy": speech_bubble.is_showing(),
 	}):
 		return
@@ -2780,6 +2780,8 @@ func _clamp_position(value: Vector2, force_floor: bool) -> Vector2:
 	)
 
 func _apply_position() -> void:
+	if desktop.is_minimized():
+		return
 	desktop.set_position(position)
 
 func _save_position() -> void:

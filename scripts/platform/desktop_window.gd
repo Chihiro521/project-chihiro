@@ -23,7 +23,8 @@ func configure() -> void:
 	_window.borderless = true
 	_window.always_on_top = true
 	_window.unfocusable = true
-	_window.skip_taskbar = true
+	# NOTE: Godot's Window class has no skip_taskbar property; the unfocusable
+	# flag above is what keeps the pet out of the taskbar and Alt+Tab.
 	_window.min_size = Vector2i.ZERO
 	_window.max_size = Vector2i.ZERO
 
@@ -73,7 +74,11 @@ func set_geometry(value_position: Vector2, value_size: Vector2i) -> void:
 	_window.size = value_size
 
 func set_visible(value: bool) -> void:
-	_window.visible = value
+	# Godot forbids toggling the main window's `visible` property directly
+	# ("Can't change visibility of main window"), so hiding takes the form of
+	# minimizing the window. The window is unfocusable and taskbar-less, so a
+	# minimized pet is fully off the desktop; the tray "显示小千寻" restores it.
+	_window.mode = Window.MODE_WINDOWED if value else Window.MODE_MINIMIZED
 
 func is_visible() -> bool:
 	return _window != null and _window.visible
