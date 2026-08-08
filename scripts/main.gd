@@ -1033,21 +1033,34 @@ func _handle_progress_events(events: Array) -> void:
 			_show_speech("habit_%s" % str(value.get("id", "")), "形成习惯：%s · %d 阶" % [str(details.get("name", value.get("id", ""))), int(details.get("stage", 0))], 4.8)
 
 func _handle_request_result(result: Dictionary) -> void:
-	if ecology_progression != null:
-		ecology_progression.record_request(str(result.get("request_id", "")), str(result.get("status", "refused")), int(Time.get_unix_time_from_system()))
-	match str(result.get("status", "")):
+	var request_id := str(result.get("request_id", ""))
+	var request_status := str(result.get("status", "refused"))
+	if ecology_progression != null and request_status != "accepted":
+		ecology_progression.record_request(request_id, request_status, int(Time.get_unix_time_from_system()))
+	match request_status:
 		"accepted":
 			var goal_id := str(result.get("goal_id", ""))
 			if goal_id.is_empty():
+				if ecology_progression != null:
+					ecology_progression.record_request(request_id, "refused", int(Time.get_unix_time_from_system()))
+				_show_speech("request_unavailable", "现在没法满足这个请求，稍后再试试。", 4.0)
 				return
 			var goal: Dictionary = goal_director.create_goal(goal_id, _ecology_context(), ecology_clock.elapsed_ms())
-			if str(result.get("request_id", "")) == "stay_here" and not goal.is_empty():
+			if request_id == "stay_here" and not goal.is_empty():
 				goal["steps"] = [{"type": "intent", "intent_ids": ["sit_rest", "breathe_shift"], "max_duration_ms": 24000}]
-			if str(result.get("request_id", "")) == "companion":
+			if request_id == "companion":
 				var payload: Dictionary = result.get("payload", {}) if result.get("payload", {}) is Dictionary else {}
 				var minutes := clampi(int(payload.get("duration_minutes", 15)), 15, 60)
 				companion_until_ms = ecology_clock.elapsed_ms() + minutes * 60000
-			_start_ecology_goal(goal, result)
+			if _start_ecology_goal(goal, result):
+				if ecology_progression != null:
+					ecology_progression.record_request(request_id, "accepted", int(Time.get_unix_time_from_system()))
+			else:
+				if request_id == "companion":
+					companion_until_ms = -1
+				if ecology_progression != null:
+					ecology_progression.record_request(request_id, "refused", int(Time.get_unix_time_from_system()))
+				_show_speech("request_unavailable", "现在没法满足这个请求，稍后再试试。", 4.0)
 		"deferred":
 			_show_speech("request_deferred", "等我把手上的事做完。", 3.8)
 		"refused":
