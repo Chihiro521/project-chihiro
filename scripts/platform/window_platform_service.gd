@@ -43,6 +43,10 @@ var capture_titles := true
 
 var _native_bridge: Variant = null
 var _self_process_id := -1
+## The pet's own always-on-top window z-order, the occlusion threshold for standing
+## points: only windows in front of it (z < self_z) or maximized ones truly cover
+## the pet's feet. -1 = unknown → full-occlusion fallback (old behavior).
+var _self_z_order := -1
 var _last_snapshots: Array = []
 var _last_platforms: Array[WindowPlatform] = []
 var _last_bodies: Array[WindowBody] = []
@@ -69,10 +73,18 @@ func native_bridge() -> Variant:
 	return _native_bridge
 
 
+## Pet's own always-on-top z-order captured by the last native enumeration.
+## Read-only: used for drop-log attribution on the GDScript side.
+func self_z_order() -> int:
+	return _self_z_order
+
+
 func enumerate_snapshots(max_count := 0) -> Array:
 	if _native_bridge == null or not _native_bridge.has_method("enumerate_windows"):
 		return []
 	var result: Variant = _native_bridge.call("enumerate_windows", maxi(0, max_count), capture_titles)
+	if _native_bridge.has_method("get_self_window_z_order"):
+		_self_z_order = int(_native_bridge.call("get_self_window_z_order"))
 	return result if result is Array else []
 
 
@@ -142,9 +154,10 @@ static func build_platforms(
 	include_maximized := false,
 	max_area_ratio := 0.0,
 	work_area := Rect2i(),
+	occluder_z_limit := -1,
 ) -> Array[WindowPlatform]:
 	return _platforms_from_entries(
-		compute_visible_fragments(snapshots, self_pid, min_width, max_source_windows, include_maximized, max_area_ratio, work_area)
+		compute_visible_fragments(snapshots, self_pid, min_width, max_source_windows, include_maximized, max_area_ratio, work_area, occluder_z_limit)
 	)
 
 
@@ -178,6 +191,7 @@ static func compute_visible_fragments(
 	include_maximized := false,
 	max_area_ratio := 0.0,
 	work_area := Rect2i(),
+	occluder_z_limit := -1,
 ) -> Array[Dictionary]:
 	var windows := _normalize_occluding_snapshots(snapshots, self_pid)
 	windows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -203,6 +217,14 @@ static func compute_visible_fragments(
 		var fragments: Array[Rect2i] = [rect]
 		for occluder_index in range(index):
 			var occluder: Dictionary = windows[occluder_index]
+			# Standing-point semantics: a window behind the pet (z >= pet_z, non-
+			# maximized) renders under the always-on-top pet and cannot cover its
+			# feet, so it is not an occluder. Maximized windows stay occluders —
+			# the user maximizes to focus, so the pet yields. -1 limit = full
+			# occlusion (navigation world / bridge missing z data).
+			if occluder_z_limit > 0 and int(occluder.get("z_order", 0)) >= occluder_z_limit \
+					and not bool(occluder.get("maximized", false)):
+				continue
 			var occluder_rect := WindowPlatformData.rect_from_value(occluder.get("rect", Rect2i()))
 			fragments = _subtract_rect(fragments, occluder_rect, maxi(1, min_width))
 			if fragments.is_empty():
@@ -387,6 +409,7 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 		false,
 		max_body_area_ratio if _work_area.size.x > 0 and _work_area.size.y > 0 else 0.0,
 		_work_area,
+		_self_z_order,
 	)
 	var expected_x := (standing_x if is_finite(standing_x) else current.center().x) + delta.x
 	var selected: WindowPlatform = null
@@ -448,6 +471,11 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		return []
 	var rect := WindowPlatformData.rect_from_value(matching_snapshot.get("rect", Rect2i()))
 	var target_z := int(matching_snapshot.get("z_order", 0))
+	# Standing-point semantics: a window only occludes the foot if it is in front
+	# of the pet (z < pet_z) or maximized. Windows behind the always-on-top pet
+	# render under it and cannot cover its feet. -1 fallback (bridge lacks pet z)
+	# keeps the old full-occlusion behavior.
+	var occlusion_limit := _self_z_order if _self_z_order > 0 else target_z
 	var fragments: Array[Rect2i] = [rect]
 	# Subtract the cached front occluders in the same slab pass the refresh uses
 	# (lower z_order covers, front-to-back), dropping slivers below the min width so
@@ -458,7 +486,8 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		var occluder := value as Dictionary
 		if int(occluder.get("handle", 0)) == handle:
 			continue
-		if int(occluder.get("z_order", 0)) >= target_z:
+		if int(occluder.get("z_order", 0)) >= occlusion_limit \
+				and not bool(occluder.get("maximized", false)):
 			continue
 		if not is_foreground_snapshot_valid(occluder, _self_process_id):
 			continue

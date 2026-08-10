@@ -28,6 +28,7 @@ struct EnumerationContext {
 	Array snapshots;
 	int32_t max_count = 0;
 	int32_t z_order = 0;
+	int32_t self_z_order = -1;
 	bool include_titles = true;
 };
 
@@ -245,6 +246,12 @@ BOOL CALLBACK collect_window(HWND window, LPARAM user_data) {
 	DWORD process_id = 0;
 	GetWindowThreadProcessId(window, &process_id);
 	if (process_id == ::GetCurrentProcessId()) {
+		// The pet's own always-on-top window is enumerated topmost; capture its
+		// z-order as the occlusion threshold. first-hit-wins: the topmost
+		// own-process window is the pet; later own windows never overwrite it.
+		if (context->self_z_order < 0) {
+			context->self_z_order = z_order;
+		}
 		return TRUE;
 	}
 	const RECT rect = extended_window_rect(window);
@@ -269,6 +276,7 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_window_snapshot", "handle", "include_title"), &WindowsWindowEnumerator::get_window_snapshot, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_foreground_window_snapshot", "include_title"), &WindowsWindowEnumerator::get_foreground_window_snapshot, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_current_process_id"), &WindowsWindowEnumerator::get_current_process_id);
+	ClassDB::bind_method(D_METHOD("get_self_window_z_order"), &WindowsWindowEnumerator::get_self_window_z_order);
 	ClassDB::bind_method(D_METHOD("set_window_rect", "handle", "x", "y", "width", "height"), &WindowsWindowEnumerator::set_window_rect);
 	ClassDB::bind_method(D_METHOD("atomic_replace_file", "temporary_path", "target_path"), &WindowsWindowEnumerator::atomic_replace_file);
 	ClassDB::bind_method(D_METHOD("start_event_hook"), &WindowsWindowEnumerator::start_event_hook);
@@ -284,7 +292,12 @@ Array WindowsWindowEnumerator::enumerate_windows(int32_t max_count, bool include
 	context.max_count = max_count > 0 ? max_count : 0;
 	context.include_titles = include_titles;
 	EnumWindows(collect_window, reinterpret_cast<LPARAM>(&context));
+	self_z_order_ = context.self_z_order;
 	return context.snapshots;
+}
+
+int32_t WindowsWindowEnumerator::get_self_window_z_order() const {
+	return self_z_order_;
 }
 
 Dictionary WindowsWindowEnumerator::get_window_snapshot(int64_t handle, bool include_title) const {

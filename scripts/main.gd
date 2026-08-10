@@ -1895,7 +1895,7 @@ func _drop_from_platform(_reason: String) -> void:
 ## be attributed from the log instead of guessed at. Written to an absolute path
 ## because the pet is usually run from the exported exe. Remove after diagnosis.
 func _log_ride_drop(tag: String, info: Dictionary) -> void:
-	var line := "[%s] %s drop=%s pos=%s foot=%s state=%s platforms=%d bodies=%d collision=%s"
+	var line := "[%s] %s drop=%s pos=%s foot=%s state=%s platforms=%d bodies=%d collision=%s self_z=%s"
 	line = line % [
 		str(_now_ms()),
 		tag,
@@ -1906,6 +1906,7 @@ func _log_ride_drop(tag: String, info: Dictionary) -> void:
 		platforms.size(),
 		window_bodies.size(),
 		str(window_collision_enabled),
+		str(window_platform_service.self_z_order()),
 	]
 	for key in info:
 		if key == "reason":

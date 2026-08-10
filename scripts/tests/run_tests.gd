@@ -44,6 +44,7 @@ func _run() -> void:
 	_test_control_and_roam_state()
 	_test_wall_resolver()
 	_test_window_platforms()
+	_test_pet_z_occlusion_threshold()
 	_test_window_bodies()
 	_test_n_way_occlusion()
 	_test_window_event_debounce()
@@ -2450,6 +2451,70 @@ func _test_window_platforms() -> void:
 			titles_suppressed = false
 	_expect(titles_suppressed, "disabling title awareness prevents native title collection")
 
+## Pet-own-z occlusion threshold: only windows in FRONT of the pet (z < pet_z) or
+## maximized ones occlude a standing point. A window behind the always-on-top pet
+## renders under it and cannot cover its feet, so it must NOT drop the rider — this
+## is the "flash to ground + roam" false-drop fix. -1 fallback keeps old behavior.
+func _test_pet_z_occlusion_threshold() -> void:
+	var tracker := WindowPlatformService.new()
+	tracker.set_native_bridge(null)
+	tracker._self_z_order = 50
+	var ridden := WindowPlatform.from_snapshot(
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+		0, 700)
+	# 1. Normal window behind the pet (z=60 >= pet_z=50): the standing point stays.
+	var behind := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(behind.get("lost", false)) and str(behind.get("status", "")) != "occluded", "a normal window behind the pet does not occlude the standing point")
+	# 2. Window in front of the pet (z=40 < pet_z=50): still occludes -> occluded.
+	var in_front := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 40, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(in_front.get("lost", false)) and str(in_front.get("status", "")) == "occluded", "a window in front of the pet still occludes the standing point")
+	# 3. Maximized window behind the pet (z=60, maximized): the user maximizes to
+	# focus, so the pet yields — still occluded.
+	var maximized := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(maximized.get("lost", false)) and str(maximized.get("status", "")) == "occluded", "a maximized window behind the pet still occludes (maximized exception)")
+	# 4. Tool/owned window behind the pet (the `platforms=0 bodies=1` log signature):
+	# tool windows are ineligible as sources but were occluders under the old standing
+	# window z threshold; behind the pet they no longer trigger a false drop.
+	var tool_behind := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "tool_window": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(tool_behind.get("lost", false)) and str(tool_behind.get("status", "")) != "occluded", "a tool window behind the pet does not occlude the standing point (false-drop signature)")
+	# 5. live_top_segment_planes: a behind-pet normal window keeps the plane; a
+	# behind-pet maximized window removes it.
+	var live_tracker := WindowPlatformService.new()
+	live_tracker.set_native_bridge(null)
+	live_tracker._self_z_order = 50
+	var standing := {"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true}
+	var live_planes := live_tracker.live_top_segment_planes(11, 21, 356.0, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true},
+		standing,
+	])
+	_expect(live_planes.size() == 1 and is_equal_approx(float(live_planes[0].get("left", -1.0)), 0.0) and is_equal_approx(float(live_planes[0].get("right", -1.0)), 700.0), "a behind-pet window leaves the live top segment intact")
+	var live_maximized := live_tracker.live_top_segment_planes(11, 21, 356.0, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "maximized": true},
+		standing,
+	])
+	_expect(live_maximized.is_empty(), "a behind-pet maximized window removes the live top segment")
+	# 6. Fallback: _self_z_order = -1 (no bridge z data) keeps the old full-occlusion
+	# behavior — the standing point covered by any front window is still occluded.
+	var fallback := WindowPlatformService.new()
+	fallback.set_native_bridge(null)
+	var fallback_track := fallback.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(fallback_track.get("lost", false)) and str(fallback_track.get("status", "")) == "occluded", "without pet z the old full-occlusion behavior is preserved")
+
 func _test_window_bodies() -> void:
 	var snapshots := [
 		{"handle": 1, "process_id": 10, "rect": Rect2i(100, 100, 500, 400), "z_order": 0, "visible": true},
@@ -2747,6 +2812,7 @@ func _test_window_event_debounce() -> void:
 		and native_bridge.has_method("set_event_hook_tracked_handles"),
 		"native bridge exposes the event-hook API"
 	)
+	_expect(native_bridge.has_method("get_self_window_z_order"), "native bridge exposes the pet's own z-order")
 
 
 class FakeEventBridge:
@@ -2761,6 +2827,8 @@ class FakeEventBridge:
 		return value
 	func get_dirty_handle() -> int:
 		return handle_value
+	func get_self_window_z_order() -> int:
+		return -1
 	func start_event_hook() -> void:
 		start_calls += 1
 	func stop_event_hook() -> void:

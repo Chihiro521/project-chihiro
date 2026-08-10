@@ -21,6 +21,7 @@ public:
 	Dictionary get_window_snapshot(int64_t handle, bool include_title = true) const;
 	Dictionary get_foreground_window_snapshot(bool include_title = true) const;
 	int64_t get_current_process_id() const;
+	int32_t get_self_window_z_order() const;
 	bool set_window_rect(int64_t handle, int32_t x, int32_t y, int32_t width, int32_t height) const;
 	bool atomic_replace_file(const String &temporary_path, const String &target_path) const;
 
@@ -32,6 +33,13 @@ public:
 	bool consume_dirty_flag();
 	int64_t get_dirty_handle() const;
 	void set_event_hook_tracked_handles(const Array &handles);
+
+private:
+	// Z-order of the pet's own always-on-top window, captured by
+	// enumerate_windows() (the topmost own-process window). Used as the
+	// occlusion threshold: only windows in front of the pet (z < self_z)
+	// truly cover its feet. Mutable because enumerate_windows() is const.
+	mutable int32_t self_z_order_ = -1;
 };
 
 // Join-safe shutdown for module unload; joins the hook worker before its
