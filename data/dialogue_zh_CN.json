@@ -101,6 +101,18 @@
     {"id":"window_lost_005","text":"重力又赢了一次，毫无新意。","events":["window_lost"],"tags":["window","fall"]},
     {"id":"window_lost_006","text":"记账：一次未经授权的平台撤除。","events":["window_lost"],"tags":["window","fall","relationship"]},
 
+    {"id":"window_move_001","text":"别拖动窗口，我正在测量边界条件。","events":["window_move"],"tags":["window","move"]},
+    {"id":"window_move_002","text":"位移记录在案。建议你停手接受复核。","events":["window_move"],"tags":["window","move","science"]},
+    {"id":"window_move_003","text":"连平台都会动，桌面的秩序堪忧。","events":["window_move"],"tags":["window","move","tease"]},
+    {"id":"window_move_004","text":"你挪窗户的时候，把我坐标系也带偏了。","events":["window_move"],"tags":["window","move"]},
+    {"id":"window_move_005","text":"跟随成功。但未经协商的迁移不友好。","events":["window_move"],"tags":["window","move"]},
+    {"id":"window_move_006","text":"停！让我重新校准落点。","events":["window_move"],"tags":["window","move"]},
+
+    {"id":"window_resize_001","text":"平台尺寸变了。我正在重新分配重心。","events":["window_resize"],"tags":["window","resize","science"]},
+    {"id":"window_resize_002","text":"缩放之后，站姿要重新论证。","events":["window_resize"],"tags":["window","resize"]},
+    {"id":"window_resize_003","text":"改尺寸可以，先征求我的意见。","events":["window_resize"],"tags":["window","resize","tease"]},
+    {"id":"window_resize_004","text":"新边界已纳入。别再动它了。","events":["window_resize"],"tags":["window","resize"]},
+
     {"id":"sleep_001","text":"能量低于阈值。我暂停一下世界。","events":["sleep"],"tags":["sleep","energy"]},
     {"id":"sleep_002","text":"进入休眠。禁止把打呼声当作数据。","events":["sleep"],"tags":["sleep","tease"]},
     {"id":"sleep_003","text":"我只是闭眼推演，不是困。","events":["sleep"],"tags":["sleep","think"]},
@@ -199,6 +211,9 @@
     {"id":"control_land_001","text":"落地。脚感还行。","events":["control_land"]},
     {"id":"control_land_002","text":"站稳了。","events":["control_land"]},
     {"id":"control_land_003","text":"着陆成功，重力结算完毕。","events":["control_land"]},
+    {"id":"control_step_off_001","text":"下台。这窗台我不想待了。","events":["control_step_off"]},
+    {"id":"control_step_off_002","text":"主动离开平台，落脚待定。","events":["control_step_off"]},
+    {"id":"control_step_off_003","text":"我下去了，你随意。","events":["control_step_off"]},
     {"id":"control_long_001","text":"……你到底要开到什么时候？","events":["control_long"]},
     {"id":"control_long_002","text":"操控时长已超三十秒，已记录。你是在测试我的耐心？","events":["control_long"]},
     {"id":"control_long_003","text":"你打算把我当遥控玩具玩到几点？","events":["control_long"],"relationship_tiers":["distant","wary"]},

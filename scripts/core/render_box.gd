@@ -47,6 +47,24 @@ static func support_texture_point(clip: Dictionary, frame_index: int) -> Vector2
 		point.y = float(support_y[clampi(frame_index, 0, support_y.size() - 1)])
 	return point
 
+
+## Y distance from the pet box top to the foot for a clip+frame. Riding pins the
+## foot with this LIVE pose offset: standing/walking clips resolve to the standing
+## constant (WINDOW_FOOT_OFFSET_Y = 356), but riding poses like the window sit keep
+## their feet at a different supportContactY offset, and a hardcoded standing pin
+## fights the per-frame foot correction (vertical 鬼畜 while sitting on a window).
+static func foot_offset_y(clip: Dictionary, frame_index: int, box_size: Vector2, scale: float) -> float:
+	var canvas: Dictionary = clip.get("canvas", {"width": 512.0, "height": 512.0})
+	var anchor: Dictionary = clip.get("anchor", {"x": 0.5, "y": 0.96})
+	var anchor_point := Vector2(
+		float(anchor.get("x", 0.5)) * float(canvas.get("width", 512.0)),
+		float(anchor.get("y", 0.96)) * float(canvas.get("height", 512.0)),
+	)
+	var support_point := support_texture_point(clip, frame_index)
+	var dock := dock_point(box_size, render_dock(clip), render_dock_inset(clip))
+	var legacy_inset := 0.0 if not (clip.get("supportContactY", []) as Array).is_empty() else 4.0
+	return dock.y + (support_point.y - anchor_point.y) * scale + legacy_inset
+
 static func resolve_size(manifest: PetManifestData, clip: Dictionary = {}) -> Vector2i:
 	var base_canvas := manifest.canvas()
 	var clip_canvas: Dictionary = clip.get("canvas", base_canvas)

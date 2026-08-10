@@ -17,6 +17,23 @@ const DEFAULT_DROP_PROBABILITY := 0.35
 const GROUND_SPEED := 82.0
 const FLIGHT_SPEED := 150.0
 const FALL_SPEED := 900.0
+const GROUND_RELOCATION_WALK_PROBABILITY := 0.5
+
+
+## Movement-mode policy for a same-level relocation (floor → floor). Jump and walk
+## are the same tier: when the pet is grounded on the same screen, the roll landing
+## in the walk band picks a walk, otherwise it jumps. Window travel (floor → a
+## platform, handled by the caller) can never walk up onto a window, so it always
+## jumps regardless of this policy.
+static func choose_ground_relocation_mode(
+	on_floor: bool,
+	same_screen: bool,
+	roll: float,
+	walk_probability := GROUND_RELOCATION_WALK_PROBABILITY,
+) -> String:
+	if on_floor and same_screen and roll < walk_probability:
+		return "walk"
+	return "jump"
 
 
 static func build_legs(

@@ -12,7 +12,7 @@ const ACTIVE_STATES := {
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
 	"platform_walk": true, "platform_sit": true,
 	"manual_control": true, "roam_walk": true,
-	"drag_slide": true, "drag_throw": true,
+	"drag_slide": true, "drag_throw": true, "wall_climb": true,
 }
 const DIRECT_INTERACTION_STATES := {
 	"idle": true, "notice": true, "cursor_track": true, "cursor_startle": true,
@@ -26,7 +26,7 @@ const DIRECT_INTERACTION_STATES := {
 const PASSIVE_CURSOR_STATES := {"idle": true, "notice": true, "cursor_track": true}
 const AUTONOMOUS_ACTION_STATES := {
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
-	"platform_walk": true, "platform_sit": true, "roam_walk": true,
+	"platform_walk": true, "platform_sit": true, "roam_walk": true, "wall_climb": true,
 }
 
 var state := "boot"
@@ -101,6 +101,7 @@ func _reduce(current: String, event: Dictionary) -> String:
 			if event_type == "CLICK": return "react"
 			if event_type == "EDGE_PATROL_START": return "edge_patrol"
 			if event_type == "ROAM_WALK_START": return "roam_walk"
+			if event_type == "WALL_CLIMB_START": return "wall_climb"
 			if event_type == "WANDER": return "takeoff" if not bool(event.get("needs_turn", true)) else "turn"
 			if event_type == "ACTION_START":
 				var requested := str(event.get("state", "ambient_action"))

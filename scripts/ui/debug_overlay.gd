@@ -30,6 +30,13 @@ func set_snapshot(snapshot: Dictionary) -> void:
 	for key in ["state", "intent", "clip", "platform"]:
 		if snapshot.has(key):
 			lines.append("%s: %s" % [key, str(snapshot[key])])
+	var world: Dictionary = snapshot.get("world", {})
+	if not world.is_empty():
+		lines.append("world: %d plat · %d body · %d wall" % [
+			int(world.get("platforms", 0)),
+			int(world.get("bodies", 0)),
+			int(world.get("walls", 0)),
+		])
 	var needs: Dictionary = snapshot.get("needs", {})
 	if not needs.is_empty():
 		lines.append("E %.1f  B %.1f  C %.1f  I %.1f  A %.1f" % [

@@ -259,7 +259,8 @@ func _build_observation_column(parent: HBoxContainer) -> void:
 	var environment := _subsection(column, "环境感知")
 	_environment_values = _detail_grid(environment, [
 		["前台应用", "app"], ["应用类别", "category"], ["即时安全标题", "title"],
-		["上次稳定标题", "stable_title"], ["可站平台", "platform_count"], ["乘坐平台", "active_platform"],
+		["上次稳定标题", "stable_title"], ["可站平台", "platform_count"], ["碰撞体", "body_count"],
+		["墙体边", "wall_count"], ["乘坐平台", "active_platform"], ["上次掉平台", "last_lost"],
 	], 90.0)
 
 	var dialogue := _subsection(column, "气泡与台词")
@@ -334,7 +335,10 @@ func _apply_snapshot(snapshot: Dictionary) -> void:
 		"title": _title_display(environment.get("title", ""), bool(environment.get("title_awareness", false))),
 		"stable_title": _title_display(environment.get("stable_title", ""), bool(environment.get("title_awareness", false))),
 		"platform_count": "%d 个可站立区段" % int(environment.get("platform_count", 0)),
+		"body_count": "%d 个碰撞体" % int(environment.get("body_count", 0)),
+		"wall_count": "%d 条墙体边" % int(environment.get("wall_count", 0)),
 		"active_platform": _display_or_dash(environment.get("active_platform", "")),
+		"last_lost": _display_or_dash(environment.get("last_lost", "")),
 	})
 
 	var dialogue := _dictionary(snapshot.get("dialogue", {}))

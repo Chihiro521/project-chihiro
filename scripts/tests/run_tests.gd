@@ -9,6 +9,9 @@ const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_co
 const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progression.gd")
 const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
 const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
+const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd")
+const WindowEventDebouncerScript := preload("res://scripts/core/window_event_debouncer.gd")
+const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
 
 var failures: Array[String] = []
 var assertions := 0
@@ -37,8 +40,14 @@ func _run() -> void:
 	_test_ecology_models()
 	_test_manual_control_model()
 	_test_roam_planner()
+	_test_ground_relocation_mode()
 	_test_control_and_roam_state()
+	_test_wall_resolver()
 	_test_window_platforms()
+	_test_window_bodies()
+	_test_n_way_occlusion()
+	_test_window_event_debounce()
+	_test_ride_feedback()
 	if failures.is_empty():
 		print("PASS: %d assertions" % assertions)
 		quit(0)
@@ -349,6 +358,18 @@ func _test_render_box() -> void:
 	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_enter, 7).y, 365.0), "window-seat enter transfers support toward the pelvis")
 	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_loop, 8).y, 350.0), "window-seat loop pins its pelvis contact to the window top")
 	_expect(is_equal_approx(PetRenderBox.support_texture_point(sit_exit, 7).y, 472.0), "window-seat exit restores shoe support")
+	var standing_box := Vector2(360.0, 360.0)
+	var standing_scale := PetRenderBox.character_scale(manifest)
+	var standing_offset := PetRenderBox.foot_offset_y(manifest.clip("idle_breathe"), 0, standing_box, standing_scale)
+	_expect(is_equal_approx(standing_offset, 356.0), "standing clips resolve to the model's standing foot offset 356 (got %s)" % standing_offset)
+	_expect(is_equal_approx(PetRenderBox.foot_offset_y(manifest.clip("patrol_floor_right"), 0, standing_box, standing_scale), 356.0), "floor patrol also resolves to the standing foot offset")
+	# The riding y-pin follows the LIVE pose offset (PetRenderBox.foot_offset_y) so it
+	# agrees with _on_sprite_frame_changed. Standing/walking clips equal the standing
+	# constant, but riding poses like the window sit keep their feet higher; a
+	# hardcoded 356 pin would fight the per-frame correction and vibrate the pet.
+	var sit_loop_offset := PetRenderBox.foot_offset_y(sit_loop, 0, standing_box, standing_scale)
+	_expect(absf(sit_loop_offset - 356.0) > 80.0, "window-seat loop keeps its feet well above the standing offset (got %s)" % sit_loop_offset)
+	_expect(is_equal_approx(sit_loop_offset, 261.338760375977), "window-seat loop pins a stable 261px sitting foot offset")
 
 func _test_playback() -> void:
 	var phase := PetSpritePlayer.resolve_playback_frame([100, 200, 300], 0, 2, false, true, 350.0)
@@ -649,7 +670,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 192, "dialogue catalog contains 192 lines")
+	_expect(dialogue.line_count() == 205, "dialogue catalog contains 205 lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
@@ -1035,14 +1056,16 @@ func _test_manual_control_model() -> void:
 	model.tick(0.016, {"dir_x": -1, "dir_y": 0}, context)
 	_expect(model.subphase == ManualControlModelScript.FALL, "non-flight high detach falls")
 	_expect(not model.has_pending_detach(), "high detach does not wait for a transition clip")
-	# Jumping into the wall climbs.
+	# Jumping into the screen edge clamps horizontally; the arc continues — a jump
+	# never climbs, not even a legacy screen edge.
 	model.reset(Vector2(400.0, 500.0))
 	model.queue_jump()
 	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, context)
-	model.position = Vector2(420.0, 300.0)
+	model.position = Vector2(430.0, 300.0)
 	model.subphase = ManualControlModelScript.JUMP
 	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, context)
-	_expect(model.subphase == ManualControlModelScript.WALL, "jumping into the wall climbs")
+	_expect(model.subphase == ManualControlModelScript.JUMP, "jumping into the screen edge stays a jump (no climb)")
+	_expect(is_equal_approx(model.position.x, 440.0), "jump into the screen edge clamps the pet's right edge flush")
 	# High fall engages the umbrella descent.
 	model.reset(Vector2(300.0, 300.0))
 	model.set_flight_mode(true)
@@ -1070,6 +1093,1116 @@ func _test_manual_control_model() -> void:
 	_expect(model.subphase == ManualControlModelScript.GROUND, "a stale flight jump does not fire after landing")
 	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
 	_expect(model.subphase == ManualControlModelScript.GROUND, "landed pet stays standing (no queued jump)")
+	# --- Window-body collision world ---
+	# A tall window: walking right into its left face attaches, climbs, and mounts.
+	var walls_context := context.duplicate(true)
+	walls_context["walls"] = [
+		{"x": 700.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	walls_context["platforms"] = [
+		{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8},
+	]
+	walls_context["foot_offset_x"] = 180.0
+	walls_context["foot_offset_y"] = 356.0
+	walls_context["hop_reach_px"] = 120.0
+	walls_context["auto_hop_short_walls"] = true
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, walls_context)
+		if model.has_pending_attach():
+			break
+	_expect(model.has_pending_attach(), "walking into a window wall defers to the corner clip")
+	_expect(model.attach_clip() == "patrol_floor_to_wall_right_a", "attaching on the window's left face uses the right-anchored corner clip")
+	_expect(is_equal_approx(model.position.x, 465.0), "attach parks the pet flush against the wall face")
+	model.finish_attach()
+	_expect(model.subphase == ManualControlModelScript.WALL and model.wall_side == 1, "wall climb clings to the window side")
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, walls_context)
+		if model.has_pending_mount():
+			break
+	_expect(model.has_pending_mount(), "climbing past the wall top mounts onto it")
+	_expect(model.mount_clip() == "window_land_recover", "mount plays the window land recover clip")
+	_expect(is_equal_approx(model.position.y, 44.0), "mount parks the pet on the wall top")
+	_expect(model.standing_plane_handle() == 8, "mounted pet stands on the window plane")
+	model.finish_mount()
+	_expect(model.subphase == ManualControlModelScript.GROUND, "finishing the mount stands on the window")
+	# A jump into a window wall mid-air clamps flush against the face but does NOT
+	# attach: only a ground walk / flight approach climbs. The arc continues (the
+	# wall's horizontal extent is the only thing blocked), so the pet falls back and
+	# climbs only after it walks into the wall again from the ground.
+	model.reset(Vector2(420.0, 500.0))
+	model.queue_jump()
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, walls_context)
+	model.position = Vector2(450.0, 300.0)
+	model.subphase = ManualControlModelScript.JUMP
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, walls_context)
+	_expect(model.subphase == ManualControlModelScript.JUMP, "jump into a window wall stays a jump (no attach)")
+	_expect(not model.has_pending_attach(), "a jump into a wall never defers to an attach clip")
+	_expect(is_equal_approx(model.position.x, 465.0), "jump into a wall clamps flush against the face")
+	model.tick(0.5, {"dir_x": 0, "dir_y": 0}, walls_context)
+	_expect(model.position.x <= 465.0, "jump into a wall does not ride the face upward")
+	# Dragging the window while the pet climbs carries it: the WALL tick must re-read
+	# the current wall edge (identity handle+pid+side) instead of the stored attach
+	# x, or the pet clings to the old position while the window moves away.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, walls_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, walls_context)
+	_expect(model.subphase == ManualControlModelScript.WALL, "climb-follow pet clings to the window wall")
+	var climb_x := model.position.x
+	var moved_wall_context := walls_context.duplicate(true)
+	moved_wall_context["walls"] = [
+		{"x": 800.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, moved_wall_context)
+	_expect(is_equal_approx(model.position.x, climb_x + 100.0), "dragged window carries the climbing pet horizontally")
+	# A wall owned by a different process must not hijack the climb.
+	var other_pid_context := walls_context.duplicate(true)
+	other_pid_context["walls"] = [
+		{"x": 999.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8, "process_id": 42},
+	]
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, other_pid_context)
+	_expect(is_equal_approx(model.position.x, climb_x + 100.0), "a wall with a different process id does not move the pet")
+	# A per-frame live wall (host-fed during a drag) beats the refresh-built
+	# collision world: two consecutive frames move the window 100px each and the pet
+	# tracks each frame instead of teleporting once per refresh.
+	var live_a := walls_context.duplicate(true)
+	live_a["live_wall"] = {"x": 750.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8, "process_id": 0}
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, live_a)
+	_expect(is_equal_approx(model.position.x, climb_x + 50.0), "live wall frame 1: pet follows the fresh edge, not the stale wall set")
+	var live_b := walls_context.duplicate(true)
+	live_b["live_wall"] = {"x": 850.0, "top_y": 380.0, "bottom_y": 856.0, "side": 1, "handle": 8, "process_id": 0}
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, live_b)
+	_expect(is_equal_approx(model.position.x, climb_x + 150.0), "live wall frame 2: pet tracks each per-frame edge, not the refresh batch")
+	_expect(is_equal_approx(model._wall_top_y, 380.0), "live wall refreshes the mount gate too")
+	# --- Fix 2: vanishing the climbed wall must auto-detach, not pin the pet ---
+	# Manual climb had no wall-vanish guard (autonomous climb has _wall_handle_present
+	# + 8s timeout). When the climbed window is moved away/closed/cloaked,
+	# _follow_wall_edge silently keeps the stale _wall_x and the WALL tick pins
+	# position.x to it: with no input and no wall the pet soft-locks to the ghost edge
+	# (两小窗交界卡死). A vanished wall must detach into a fall instead.
+	var vanish_ctx := walls_context.duplicate(true)
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, vanish_ctx)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(4):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, vanish_ctx)
+		if model.subphase != ManualControlModelScript.WALL:
+			break
+	_expect(model.subphase == ManualControlModelScript.WALL, "fix2 pet climbs the tall window before the wall vanishes")
+	_expect(model.position.y < 420.0, "fix2 pet climbs high enough for a high detach")
+	var vanish_gone := vanish_ctx.duplicate(true)
+	vanish_gone["walls"] = []
+	vanish_gone["live_wall"] = {}
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, vanish_gone)
+	_expect(model.subphase == ManualControlModelScript.FALL, "vanishing the climbed wall auto-detaches the pet into a fall (Fix 2)")
+	_expect(model.wall_side == 0, "the wall-vanish detach clears the wall side (Fix 2)")
+	# A still-present wall must NOT detach: the guard is not over-eager.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, vanish_ctx)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, vanish_ctx)
+	_expect(model.subphase == ManualControlModelScript.WALL, "a still-present climbed wall keeps the pet climbing (Fix 2 not over-eager)")
+	# A short window: auto-hop clears it and lands on the plane.
+	var short_context := context.duplicate(true)
+	short_context["walls"] = [
+		{"x": 500.0, "top_y": 760.0, "bottom_y": 856.0, "side": 1, "handle": 9},
+	]
+	short_context["platforms"] = [
+		{"left": 445.0, "right": 555.0, "y": 404.0, "handle": 9},
+	]
+	short_context["foot_offset_x"] = 180.0
+	short_context["foot_offset_y"] = 356.0
+	short_context["hop_reach_px"] = 120.0
+	short_context["auto_hop_short_walls"] = true
+	model.reset(Vector2(200.0, 500.0))
+	model.tick(1.0, {"dir_x": 1, "dir_y": 0}, short_context)
+	_expect(not model.has_pending_attach(), "a short wall is not climbed")
+	_expect(is_equal_approx(model.position.x, 265.0), "auto-hop parks the pet against the short wall")
+	for i in range(60):
+		model.tick(0.05, {"dir_x": 0, "dir_y": 0}, short_context)
+		if model.subphase == ManualControlModelScript.GROUND and i > 0:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND, "auto-hop lands back on a surface")
+	_expect(is_equal_approx(model.position.y, 404.0), "auto-hop lands on the short wall top")
+	_expect(model.standing_plane_handle() == 9, "auto-hop landing reports the window plane")
+	# Dragging the window the pet stands on carries it: the plane's left edge moves
+	# under a fresh platform set and the pet follows instead of stranding its foot
+	# and dropping to the floor (the stale rect during a drag used to end the ride).
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, walls_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, walls_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	_expect(model.standing_plane_handle() == 8, "drag test pet stands on the window plane")
+	_expect(is_equal_approx(model.position.x, 465.0), "drag test pet parks at the plane's left edge")
+	# One still tick establishes the follow baseline (a freshly landed/mounted pet
+	# records the current left edge without shifting, so a mid-mount drag does not
+	# snap it sideways).
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, walls_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "still pet stays standing on the window")
+	_expect(is_equal_approx(model.position.x, 465.0), "still tick does not shift the pet")
+	# The drag is signaled by the live per-frame segments plus the window-rect motion
+	# delta (standing_plane_live_delta); a static platform-list swap no longer means
+	# movement — it means the standing segment vanished, which falls after grace.
+	walls_context["live_platforms"] = [
+		{"left": 745.0, "right": 855.0, "y": 44.0, "handle": 8},
+	]
+	walls_context["standing_plane_live_delta"] = 100.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, walls_context)
+	_expect(is_equal_approx(model.position.x, 565.0), "dragged window carries the standing pet horizontally")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "pet keeps standing while the window drags")
+	_expect(model.standing_plane_handle() == 8, "pet stays on the dragged window plane")
+	walls_context["standing_plane_live_delta"] = 0.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, walls_context)
+	_expect(is_equal_approx(model.position.x, 565.0), "a settled window does not double-shift the pet")
+	# Walking off the moved plane's right edge still falls.
+	model.tick(1.0, {"dir_x": 1, "dir_y": 0}, walls_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "walking off the dragged window's edge still falls")
+	# --- Phase 1: plane identity (handle, pid), center-delta follow, teleport ---
+	# The drag test above moved walls_context (wall at x=800); Phase 1 tests use a
+	# fresh copy of the original geometry.
+	var p1_context := context.duplicate(true)
+	p1_context["walls"] = [
+		{"x": 700.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	p1_context["platforms"] = [
+		{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8},
+	]
+	p1_context["foot_offset_x"] = 180.0
+	p1_context["foot_offset_y"] = 356.0
+	p1_context["hop_reach_px"] = 120.0
+	p1_context["auto_hop_short_walls"] = true
+	# A same-handle plane with a different process_id is NOT the same perch: the pet
+	# holds position (no follow) while the identity changes, then the vanished plane
+	# drops it after the grace window.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	_expect(model.standing_plane_handle() == 8 and model.standing_plane_pid() == 0, "pid test pet mounts the pid-0 window plane")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, p1_context)
+	var pid_context := p1_context.duplicate(true)
+	pid_context["platforms"] = [
+		{"left": 745.0, "right": 855.0, "y": 44.0, "handle": 8, "process_id": 4321},
+	]
+	pid_context["walls"] = [
+		{"x": 800.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8, "process_id": 4321},
+	]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, pid_context)
+	_expect(is_equal_approx(model.position.x, 465.0), "a same-handle different-pid plane is not followed")
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "identity change holds the pet in grace")
+	# The wall still exists but its plane is gone: the pet holds through the grace
+	# window and then falls (keeping the wall present avoids the legacy no-collision
+	# floor branch, exercising the standing-plane grace path directly).
+	var gone_context := pid_context.duplicate(true)
+	gone_context["platforms"] = []
+	for i in range(110):  # 110 * 16ms = 1.76s, past the 1500ms grace
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, gone_context)
+		if model.subphase == ManualControlModelScript.FALL:
+			break
+	_expect(model.subphase == ManualControlModelScript.FALL, "a truly vanished standing plane drops after the grace window")
+	# Center-delta follow is gated on span preservation. Stretching only the right
+	# edge moves the segment center but changes the span — a reshape (like an
+	# occlusion reshuffle) is not a drag, so the pet must NOT shift sideways by half
+	# the width growth; the follow resets its baseline instead and the pet stays put.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	_expect(is_equal_approx(model.position.x, 465.0), "center-follow test pet parks on the plane")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, p1_context)  # baseline: center 700
+	var stretch_context := p1_context.duplicate(true)
+	stretch_context["platforms"] = [
+		{"left": 645.0, "right": 855.0, "y": 44.0, "handle": 8},
+	]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stretch_context)
+	_expect(is_equal_approx(model.position.x, 465.0), "a right-edge stretch (span change) does NOT shift the pet sideways")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "pet keeps standing after a right-edge stretch")
+	# A window that teleports (center moved past TELEPORT_MIN_PX at teleport speed in
+	# one tick) drops the pet immediately — no grace, no follow-shift — from where it
+	# actually stands.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, p1_context)  # baseline: center 700
+	var teleport_context := p1_context.duplicate(true)
+	teleport_context["live_platforms"] = [
+		{"left": 3845.0, "right": 3955.0, "y": 44.0, "handle": 8},
+	]
+	teleport_context["standing_plane_live_delta"] = 3200.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, teleport_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "a window teleport drops the pet immediately")
+	_expect(model.standing_plane_handle() == 0, "teleport clears the standing plane")
+	_expect(is_equal_approx(model.position.x, 465.0), "teleport leaves the pet where it stood (no follow shift)")
+	# A fast-but-sub-threshold move is a drag, not a teleport: the pet follows.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	model.tick(0.2, {"dir_x": 0, "dir_y": 0}, p1_context)  # baseline: center 700
+	var fast_drag_context := p1_context.duplicate(true)
+	fast_drag_context["live_platforms"] = [
+		{"left": 1345.0, "right": 1455.0, "y": 44.0, "handle": 8},
+	]
+	fast_drag_context["standing_plane_live_delta"] = 700.0
+	model.tick(0.2, {"dir_x": 0, "dir_y": 0}, fast_drag_context)
+	_expect(is_equal_approx(model.position.x, 465.0 + 700.0), "a 700px/200ms move is followed, not treated as a teleport")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "pet keeps standing after the fast drag")
+	# --- Phase 2: occlusion of the standing point drops the pet after grace ---
+	# Standing geometry is the visible segments only. When the segment under the
+	# foot is covered (removed from the platform list while the window still
+	# exists), the pet holds through the grace window then falls — there is no
+	# injected full-width fallback anymore. Walls stay present so the legacy
+	# wall-empty floor branch cannot mask the standing-plane grace path.
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, p1_context)
+	var occluded_context := p1_context.duplicate(true)
+	occluded_context["platforms"] = []
+	for i in range(110):  # 110 * 16ms = 1.76s, past the 1500ms grace
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, occluded_context)
+		if model.subphase == ManualControlModelScript.FALL:
+			break
+	_expect(model.subphase == ManualControlModelScript.FALL, "a covered standing point drops the pet through the grace window (no injected fallback)")
+	# A segment that reappears before the grace expires keeps the pet standing — the
+	# grace exists precisely for this transient-occlusion case (cached occluder rects
+	# stale mid-drag).
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, p1_context)
+		if model.has_pending_attach():
+			break
+	model.finish_attach()
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, p1_context)
+		if model.has_pending_mount():
+			break
+	model.finish_mount()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, p1_context)
+	# A segment that reappears before the grace expires keeps the pet standing — the
+	# grace exists precisely for this transient-occlusion case (cached occluder rects
+	# stale mid-drag). 60 * 16ms = 960ms is long past the old 450ms boundary but still
+	# inside the 1500ms grace, so recovery here pins the raised grace window.
+	var medium_context := p1_context.duplicate(true)
+	medium_context["platforms"] = []
+	for i in range(60):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, medium_context)
+		if model.subphase == ManualControlModelScript.FALL:
+			break
+	medium_context["platforms"] = (p1_context["platforms"] as Array)
+	for i in range(5):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, medium_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "a segment that reappears within the grace window keeps the pet standing")
+	# --- Phase 3: shared landing rule (static land_on_platform) ---
+	# A descending segment crossing several planes lands on the highest one.
+	var planes := [
+		{"left": 400.0, "right": 600.0, "y": 100.0, "handle": 1, "process_id": 10},
+		{"left": 400.0, "right": 600.0, "y": 200.0, "handle": 2, "process_id": 20},
+		{"left": 400.0, "right": 600.0, "y": 300.0, "handle": 3, "process_id": 30},
+	]
+	var landed := ManualControlModelScript.land_on_platform(50.0, 350.0, 500.0, planes)
+	_expect(int(landed.get("handle", 0)) == 1 and is_equal_approx(float(landed.get("y", -1.0)), 100.0), "land_on_platform picks the highest crossed plane")
+	var reached := ManualControlModelScript.land_on_platform(50.0, 120.0, 500.0, planes)
+	_expect(int(reached.get("handle", 0)) == 1, "land_on_platform only crosses planes within the segment")
+	var ascent := ManualControlModelScript.land_on_platform(200.0, 60.0, 500.0, planes)
+	_expect(ascent.is_empty(), "land_on_platform ignores planes on the ascending side")
+	var offset := ManualControlModelScript.land_on_platform(50.0, 350.0, 200.0, planes)
+	_expect(offset.is_empty(), "land_on_platform ignores planes that do not contain the foot")
+	# --- climb_contact: the sprite hugs the window edge while climbing ---
+	# The collision body (110px) is narrower than the pet window (360px), so a body
+	# flush park floats the character inside/past the pane. With host-fed contact
+	# offsets the model anchors the character's wall-facing (hand) edge to the wall
+	# face instead: patrol_wall_right_a's hand edge at window x 344 (side +1, left
+	# face) and patrol_wall_left_a's at 15.36 (side -1, right face).
+	var hug_context := context.duplicate(true)
+	hug_context["foot_offset_x"] = 180.0
+	hug_context["foot_offset_y"] = 356.0
+	hug_context["hop_reach_px"] = 120.0
+	hug_context["auto_hop_short_walls"] = true
+	hug_context["climb_contact"] = {1: 344.0, -1: 15.36}
+	hug_context["walls"] = [
+		{"x": 700.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	hug_context["platforms"] = [
+		{"left": 700.0, "right": 800.0, "y": 44.0, "handle": 8},
+	]
+	model.reset(Vector2(300.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, hug_context)
+		if model.has_pending_attach():
+			break
+	_expect(model.has_pending_attach(), "contact climb walking into the wall attaches")
+	_expect(is_equal_approx(model.position.x, 356.0), "contact attach parks the hand edge on the wall face (700 - 344)")
+	model.finish_attach()
+	_expect(model.subphase == ManualControlModelScript.WALL and model.wall_side == 1, "contact climb clings to the left face")
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, hug_context)
+	var hug_climb_x := model.position.x
+	# A per-frame live wall keeps the hug flush while the window is dragged.
+	var hug_live_context := hug_context.duplicate(true)
+	hug_live_context["live_wall"] = {"x": 800.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8}
+	model.tick(0.5, {"dir_x": 0, "dir_y": -1}, hug_live_context)
+	_expect(is_equal_approx(model.position.x, hug_climb_x + 100.0), "a dragged wall carries the hug-climbing pet frame by frame")
+	_expect(is_equal_approx(model.position.x, 456.0), "live-wall hug stays flush at the new wall face (800 - 344)")
+	# The climb x is visual-hug (feet off the top surface), so mounting re-anchors the
+	# foot onto the plane corner the pet reached — plane left for a left-face climb —
+	# and the pet stands instead of dropping off the edge.
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, hug_live_context)
+		if model.has_pending_mount():
+			break
+	_expect(model.has_pending_mount(), "contact climb mounts at the wall top")
+	_expect(is_equal_approx(model.position.x, 520.0), "left-face mount re-anchors the foot onto the plane's left corner (700 - 180)")
+	model.finish_mount()
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "contact-climb mount stands on the window plane")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, hug_live_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "contact-climb mount keeps standing (foot is on the plane)")
+	# Right face (side=-1) uses patrol_wall_left_a's hand edge and mounts at the
+	# plane's right corner, so the pet hugs that side and lands on the top-right.
+	var hug_right_context := hug_context.duplicate(true)
+	hug_right_context["walls"] = [
+		{"x": 800.0, "top_y": 400.0, "bottom_y": 856.0, "side": -1, "handle": 9},
+	]
+	hug_right_context["platforms"] = [
+		{"left": 700.0, "right": 800.0, "y": 44.0, "handle": 9},
+	]
+	model.reset(Vector2(860.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": -1, "dir_y": 0}, hug_right_context)
+		if model.has_pending_attach():
+			break
+	_expect(model.has_pending_attach(), "contact climb into the right face attaches")
+	_expect(is_equal_approx(model.position.x, 784.64), "right-face attach parks the hand edge on the wall face (800 - 15.36)")
+	model.finish_attach()
+	_expect(model.wall_side == -1, "contact climb clings to the right face")
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, hug_right_context)
+		if model.has_pending_mount():
+			break
+	_expect(model.has_pending_mount(), "right-face contact climb mounts at the top")
+	_expect(is_equal_approx(model.position.x, 620.0), "right-face mount re-anchors the foot onto the plane's right corner (800 - 180)")
+	model.finish_mount()
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 9, "right-face contact-climb mount stands")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, hug_right_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "right-face mount keeps standing (foot is on the plane)")
+	# --- Entry-state preservation: toggling into manual control must not move the pet ---
+	# The model is (re)initialized at the pet's current position, and the first tick
+	# must keep that position. A pet riding a window enters with its feet flush on the
+	# plane top and keeps standing; a pet caught mid-air enters falling from the current
+	# height; a floor entry stays on the floor. Previously all three snapped
+	# position.y to the floor, visibly teleporting the character on the state switch.
+	var entry_context := {
+		"floor_y": 500.0,
+		"screen": Rect2(0.0, 0.0, 800.0, 600.0),
+		"pet_size": Vector2(360.0, 360.0),
+		"walk_speed": 120.0,
+		"flight_speed": 180.0,
+		"climb_speed": 68.0,
+		"gravity": 1600.0,
+		"jump_vy": -520.0,
+		"wall_threshold": 40.0,
+		"umbrella_available": false,
+		"foot_offset_x": 180.0,
+		"foot_offset_y": 356.0,
+		"walls": [
+			{"x": 700.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+		],
+		"platforms": [
+			{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8},
+		],
+	}
+	# Riding entry: feet flush on the plane top (foot = position + (180, 356) rests at
+	# the plane's y = 44). The pet keeps standing on the window at the exact position.
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, entry_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "riding entry keeps the pet on the ground")
+	_expect(model.standing_plane_handle() == 8, "riding entry adopts the window plane the feet rest on")
+	_expect(model.position == Vector2(500.0, 44.0), "riding entry preserves the exact position (no floor snap)")
+	# Mid-air entry: above the floor and not flush on a plane top -> fall from the
+	# current height instead of teleporting down to the floor.
+	model.reset(Vector2(500.0, 100.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, entry_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "mid-air entry falls from the current height")
+	_expect(model.position.y < 200.0, "mid-air entry does not snap to the floor (falls from near y=100)")
+	# Floor entry: already on the ground, nothing to adopt, position untouched.
+	model.reset(Vector2(500.0, 500.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, entry_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "floor entry stays grounded")
+	_expect(model.standing_plane_handle() == 0, "floor entry adopts no plane")
+	_expect(is_equal_approx(model.position.y, 500.0), "floor entry keeps the floor position")
+	# The adopted plane is a real perch: walking along it stays on it instead of
+	# dropping through once input resumes.
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, entry_context)
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, entry_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "walking after a riding entry stays on the adopted plane")
+	_expect(model.position.x > 500.0 and model.position.x <= 560.0, "walking after a riding entry advances along the plane")
+	# --- Per-frame live segments: a dragged window carries the standing pet frame by frame ---
+	# The refresh-built `platforms` list only moves at the window-refresh cadence, so a
+	# fast drag would carry the pet in ~500ms steps. The host feeds the standing
+	# window's per-frame visible top segments (`live_platforms`) and the window-rect
+	# motion signal (`standing_plane_live_delta`) every tick; the model replaces the
+	# refresh segments with the live ones and gates perch continuity on the motion
+	# signal — a static window whose segment stopped covering the foot has really been
+	# occluded (the pet falls), while a dragged window follows its moving segment.
+	var live_plane_context := entry_context.duplicate(true)
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, live_plane_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "live-segment test pet stands on the adopted plane")
+	_expect(is_equal_approx(model.position.x, 500.0), "live-segment test baseline tick records the center without shifting")
+	# Live segments for a different window do not evict the real perch (the merge
+	# keeps foreign segments out; the standing segment stays authoritative).
+	live_plane_context["live_platforms"] = [{"left": 845.0, "right": 955.0, "y": 44.0, "handle": 99, "process_id": 0}]
+	live_plane_context["standing_plane_live_delta"] = 0.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, live_plane_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "live segments for another window do not evict the pet")
+	_expect(is_equal_approx(model.position.x, 500.0), "live segments for another window do not move the pet")
+	# Now the real window: move it 200px right. The pet follows by the center delta in
+	# a single tick even though the refresh `platforms` list still holds the old rect
+	# ([645, 755]) — the fresh live segment wins.
+	live_plane_context["live_platforms"] = [{"left": 845.0, "right": 955.0, "y": 44.0, "handle": 8, "process_id": 0}]
+	live_plane_context["standing_plane_live_delta"] = 200.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, live_plane_context)
+	_expect(is_equal_approx(model.position.x, 700.0), "live segment frame 1: pet follows the fresh segment, not the stale platform set")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "live segment drag keeps the pet standing")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, live_plane_context)
+	_expect(is_equal_approx(model.position.x, 700.0), "a settled live segment does not double-shift the pet")
+	# Dragging the window down moves the y-pin too (the standing plane is a real perch,
+	# carried vertically by the same per-frame source).
+	live_plane_context["live_platforms"] = [{"left": 845.0, "right": 955.0, "y": 64.0, "handle": 8, "process_id": 0}]
+	live_plane_context["standing_plane_live_delta"] = 0.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, live_plane_context)
+	_expect(is_equal_approx(model.position.y, 64.0), "live segment carries the pet vertically when the window is dragged down")
+	_expect(is_equal_approx(model.position.x, 700.0), "vertical drag does not shift the pet sideways")
+	# Walking along the live segment stays on it (edge checks use the fresh segment).
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, live_plane_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "walking on a live-dragged plane stays standing")
+	_expect(is_equal_approx(model.position.x, 760.0), "walking advances along the live segment")
+	# --- Multi-segment top edge: a window occluded into several segments ---
+	# One window can yield several top segments. The model must stand on / follow the
+	# segment its foot is on, not the first matching segment (bug: first-match made
+	# the pet standing on segment 2 misjudge walking off segment 1's edge and fall).
+	var segment_context := entry_context.duplicate(true)
+	segment_context["platforms"] = [
+		{"left": 100.0, "right": 200.0, "y": 44.0, "handle": 8},
+		{"left": 300.0, "right": 400.0, "y": 44.0, "handle": 8},
+	]
+	segment_context["walls"] = [
+		{"x": 300.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(150.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, segment_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "two-segment entry lands on segment 2 and stands")
+	_expect(model.standing_plane_handle() == 8, "two-segment entry adopts the window identity")
+	_expect(model.position == Vector2(150.0, 44.0), "two-segment entry preserves the exact position")
+	# Walking right on segment 2 stays standing: the old first-match code judged the
+	# foot (342) against segment 1's right edge (200) and dropped the pet.
+	model.tick(0.1, {"dir_x": 1, "dir_y": 0}, segment_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "walking on segment 2 stays standing (segment selection follows the foot)")
+	_expect(is_equal_approx(model.position.x, 162.0), "walking on segment 2 advances along its own span")
+	# Past segment 2's right edge the pet falls.
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, segment_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "walking past segment 2's right edge drops the pet")
+	# Multi-segment follow: standing on segment 2, when segment 2 moves while segment
+	# 1 stays put the pet follows its own segment's center delta — the old first-match
+	# code saw segment 1's static center and did not move at all.
+	var follow_context := entry_context.duplicate(true)
+	follow_context["platforms"] = [
+		{"left": 100.0, "right": 200.0, "y": 44.0, "handle": 8},
+		{"left": 300.0, "right": 400.0, "y": 44.0, "handle": 8},
+	]
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(150.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, follow_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "multi-segment follow baseline pet stands on segment 2")
+	follow_context["live_platforms"] = [
+		{"left": 100.0, "right": 200.0, "y": 44.0, "handle": 8},
+		{"left": 500.0, "right": 600.0, "y": 44.0, "handle": 8},
+	]
+	follow_context["standing_plane_live_delta"] = 200.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, follow_context)
+	_expect(is_equal_approx(model.position.x, 350.0), "multi-segment pet follows the segment it stands on, not the first segment")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "multi-segment follow keeps standing on the moved segment")
+	# Inner-wall mount: the window is split into two segments; the pet climbs the
+	# wall at x=300 (the left face of segment 2). The mount must anchor onto the
+	# adjacent segment (segment 2, edge closest to the wall face), not the first
+	# matching segment (old code anchored onto segment 1 and parked the pet at -80).
+	var mount_context := entry_context.duplicate(true)
+	mount_context["platforms"] = [
+		{"left": 100.0, "right": 200.0, "y": 44.0, "handle": 8},
+		{"left": 300.0, "right": 400.0, "y": 44.0, "handle": 8},
+	]
+	mount_context["walls"] = [
+		{"x": 300.0, "top_y": 400.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	mount_context["climb_contact"] = {1: 344.0, -1: 15.36}
+	mount_context["hop_reach_px"] = 120.0
+	mount_context["auto_hop_short_walls"] = true
+	model.reset(Vector2(50.0, 500.0))
+	for i in range(10):
+		model.tick(1.0, {"dir_x": 1, "dir_y": 0}, mount_context)
+		if model.has_pending_attach():
+			break
+	_expect(model.has_pending_attach(), "inner-wall climb walking right attaches")
+	model.finish_attach()
+	_expect(model.subphase == ManualControlModelScript.WALL and model.wall_side == 1, "inner-wall climb clings to the left face at x=300")
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, mount_context)
+		if model.has_pending_mount():
+			break
+	_expect(model.has_pending_mount(), "inner-wall climb mounts at the top")
+	_expect(is_equal_approx(model.position.x, 120.0), "inner-wall mount anchors onto the adjacent segment's left edge (300 - 180)")
+	model.finish_mount()
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "inner-wall mount stands on the window")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, mount_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "inner-wall mount keeps standing (foot is on segment 2)")
+	# --- Manual jump: the control-mode boost raises the apex ---
+	# main.gd feeds input["jump_boost"] (MANUAL_CONTROL_JUMP_BOOST x1.1 for manual
+	# control, absent=1.0 for the autonomous climb); the model must honor a boost by
+	# arcing higher than the unboosted default.
+	var apex_for_boost := func(boost: float) -> float:
+		var boost_input := {"dir_x": 0, "dir_y": 0, "jump_boost": boost}
+		model.reset(Vector2(300.0, 500.0))
+		model.tick(0.016, boost_input, context)
+		model.queue_jump()
+		model.tick(0.016, boost_input, context)
+		_expect(model.subphase == ManualControlModelScript.JUMP, "boosted jump leaves the ground")
+		var apex_y := 500.0
+		# 0.016s ticks: the arc is ~45 ticks plus the 700ms "land" oneshot (~44 ticks),
+		# so 130 ticks lets the jump complete back to GROUND.
+		for i in range(130):
+			model.tick(0.016, boost_input, context)
+			if model.subphase == ManualControlModelScript.GROUND:
+				break
+			apex_y = minf(apex_y, model.position.y)
+		return apex_y
+	var default_apex: float = apex_for_boost.call(1.0)
+	var boosted_apex: float = apex_for_boost.call(1.1)
+	_expect(default_apex > 400.0 and default_apex < 425.0, "default jump apex ~84px above the floor (%s)" % default_apex)
+	_expect(boosted_apex < default_apex, "the manual-control jump boost reaches a higher apex (%.1f vs %.1f)" % [boosted_apex, default_apex])
+	# Mid-jump air control: holding left/right moves the pet while it is airborne.
+	var boosted_setup := {"dir_x": 0, "dir_y": 0, "jump_boost": 1.1}
+	var boosted_move := {"dir_x": 1, "dir_y": 0, "jump_boost": 1.1}
+	model.reset(Vector2(300.0, 500.0))
+	model.tick(0.016, boosted_setup, context)
+	model.queue_jump()
+	model.tick(0.016, boosted_setup, context)
+	var jump_x := model.position.x
+	# 0.1s ticks: the arc is ~8 ticks and the 700ms "land" oneshot ~7 more, so 30
+	# ticks comfortably completes the jump back to GROUND.
+	for i in range(30):
+		model.tick(0.1, boosted_move, context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.position.x > jump_x, "holding right during a jump moves the pet horizontally (air control)")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "air-controlled jump lands back on the ground")
+	# --- Aligned transfer (Tier 2 standing rule) ---
+	# Standing on window A, a front window B whose top edge is the SAME height
+	# covers the foot: the pet smoothly stands on B (handle switches, no fall).
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(20.0, 44.0))
+	var transfer_context := {
+		"floor_y": 500.0,
+		"screen": Rect2(0, 0, 800, 600),
+		"pet_size": Vector2(360, 360),
+		"platforms": [
+			{"left": 100.0, "right": 300.0, "y": 44.0, "handle": 1},
+		],
+		"walls": [],
+	}
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, transfer_context)
+	_expect(model.standing_plane_handle() == 1, "pet stands on the first window")
+	var covered_context := transfer_context.duplicate(true)
+	covered_context["platforms"] = [
+		{"left": 200.0, "right": 400.0, "y": 44.0, "handle": 2},
+	]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, covered_context)
+	_expect(model.standing_plane_handle() == 2, "a same-height front window adopts the standing handle (no fall)")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "aligned transfer keeps standing")
+	_expect(is_equal_approx(model.position.y, 44.0), "aligned transfer stays on the transferred top edge")
+	# A front window whose top is HIGHER (y smaller, beyond the tolerance) drops the
+	# pet after the standing grace: no same-height plane covers the foot.
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(20.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, transfer_context)
+	var higher_context := transfer_context.duplicate(true)
+	higher_context["platforms"] = [
+		{"left": 200.0, "right": 400.0, "y": -6.0, "handle": 3},
+	]
+	for i in range(18):  # 18 * 100ms = 1.8s, past the 1500ms grace
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, higher_context)
+		if model.subphase == ManualControlModelScript.FALL:
+			break
+	_expect(model.subphase == ManualControlModelScript.FALL, "a higher front window drops the pet after the grace")
+	# --- Fullscreen occlusion: two small windows covered -> the pet falls to the floor ---
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(200.0, 44.0))
+	var small_window_context := {
+		"floor_y": 500.0,
+		"screen": Rect2(0, 0, 1920, 1080),
+		"pet_size": Vector2(360, 360),
+		"platforms": [
+			{"left": 100.0, "right": 500.0, "y": 44.0, "handle": 1},
+		],
+		"walls": [],
+	}
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, small_window_context)
+	_expect(model.standing_plane_handle() == 1, "pet stands on a small window")
+	var swallowed_context := small_window_context.duplicate(true)
+	swallowed_context["platforms"] = []
+	for i in range(120):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, swallowed_context)
+		if model.subphase == ManualControlModelScript.GROUND and is_equal_approx(model.position.y, 500.0):
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND, "fullscreen occlusion drops the pet to the ground")
+	_expect(is_equal_approx(model.position.y, 500.0), "the pet lands on the floor, not on the fullscreen window's top")
+	# --- Flight: only blocks at the side, free over the top ---
+	# Feet above the window's top (top_y >= foot_y) -> the wall is skipped entirely.
+	var over_top_context := context.duplicate(true)
+	over_top_context["walls"] = [
+		{"x": 500.0, "top_y": 450.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	model.reset(Vector2(200.0, 44.0))
+	# The flight tests launch the pet mid-air with no entry surface; opting out of
+	# entry-position preservation stops _adopt_entry_state from forcing a FALL
+	# before the flight branch ever runs (set_preserve_entry_position(true) leaked
+	# in from the transfer tests above).
+	model.set_preserve_entry_position(false)
+	model.set_flight_mode(true)
+	model._wall_release_cooldown_ms = 0.0
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, over_top_context)
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, over_top_context)
+	_expect(not model.has_pending_attach(), "flying with the feet above the window's top passes freely")
+	# Feet level with a taller window's face -> the side blocks and the pet attaches.
+	var side_block_context := context.duplicate(true)
+	side_block_context["walls"] = [
+		{"x": 500.0, "top_y": 350.0, "bottom_y": 856.0, "side": 1, "handle": 8},
+	]
+	model.reset(Vector2(200.0, 44.0))
+	model.set_preserve_entry_position(false)
+	model.set_flight_mode(true)
+	model._wall_release_cooldown_ms = 0.0
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, side_block_context)
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, side_block_context)
+	_expect(model.has_pending_attach(), "flying level with a window side attaches to it")
+	# --- Flight toggle: double-tap up must lift off from any state ---
+	# Mid-fall (even mid-umbrella-fall) -> cancel the fall and take off. The old
+	# set_flight_mode set the flag from FALL without leaving the subphase, so the
+	# toggle looked dead and the pet kept falling.
+	model.reset(Vector2(300.0, 300.0))
+	model.set_preserve_entry_position(false)
+	model.set_flight_mode(true)
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FALL and model.umbrella, "high fall descends with the umbrella")
+	model.set_flight_mode(true)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "double-tap up cancels a fall and lifts off")
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT and not model.umbrella, "flight resumes cleanly, umbrella cleared")
+	# A climb mount leaves flight_mode on while the pet stands on the window top; a
+	# double-tap up must still take off instead of early-returning on the stale flag.
+	model.reset(Vector2(200.0, 44.0))
+	model.set_preserve_entry_position(false)
+	model.flight_mode = true  # simulate the stale flag a mount leaves behind
+	model.set_flight_mode(true)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "double-tap up lifts off even with a stale flight flag")
+	model.set_flight_mode(false)
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(not model.flight_mode, "double-tap down clears the stale flag")
+	# Double-tap up while attached to a wall lifts off and drops the pending attach.
+	model.reset(Vector2(200.0, 44.0))
+	model.set_preserve_entry_position(false)
+	model.set_flight_mode(true)
+	model._wall_release_cooldown_ms = 0.0
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, side_block_context)
+	model.tick(0.5, {"dir_x": 1, "dir_y": 0}, side_block_context)
+	_expect(model.has_pending_attach(), "flying level with a window side attaches to it")
+	model.set_flight_mode(true)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "double-tap up lifts off from an attached wall")
+	_expect(not model.has_pending_attach(), "the pending attach is dropped")
+	model.tick(0.016, {"dir_x": 1, "dir_y": 0}, side_block_context)
+	_expect(model.subphase == ManualControlModelScript.FLIGHT, "the lifted-off pet flies (FLIGHT branch is not gated shut)")
+	# --- Bug A: a window landing plays the full landing animation ---
+	# The floor path lands with a "land" one-shot (via LANDING); the plane path used
+	# to go straight to GROUND with no landing clip, so landing on a small window had
+	# no landing motion and (with the stale clip identity in main.gd) froze on the
+	# last umbrella frame. The plane catch must play the "land" clip too.
+	model.reset(Vector2(300.0, 100.0))
+	model.set_preserve_entry_position(false)
+	model.set_flight_mode(true)
+	model.set_flight_mode(false)  # start a fall above the plane
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "window-landing test falls from above the plane")
+	var plane_land_context := context.duplicate(true)
+	plane_land_context["platforms"] = [
+		{"left": 100.0, "right": 700.0, "y": 300.0, "handle": 7},
+	]
+	var window_landed := false
+	var window_land_clip := ""
+	for i in range(200):
+		var landing_result: Dictionary = model.tick(0.1, {"dir_x": 0, "dir_y": 0}, plane_land_context)
+		if str(landing_result.get("subphase", "")) == "ground":
+			window_landed = true
+			window_land_clip = str(landing_result.get("clip", ""))
+			break
+	_expect(window_landed, "a fall mounts the window plane (subphase ground)")
+	_expect(model.standing_plane_handle() == 7, "the window landing stands on the plane")
+	_expect(window_land_clip == "land", "a window landing plays the landing animation (clip land)")
+	# --- Bug B: dragging the standing window must not squeeze the pet off ---
+	# The standing window's live segments vanishing mid-drag (query hiccup / stale
+	# occluder rects) must HOLD the pet, not fall: the foot has not lost support —
+	# the window is still being carried. Only a STATIC window whose support is really
+	# gone starts the grace-then-fall (matches "脚底完全失去支撑才坠落").
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(100.0, 44.0))  # foot_x = 280 within the plane's [100,300]
+	var stand_context := {
+		"floor_y": 500.0,
+		"screen": Rect2(0, 0, 800, 600),
+		"pet_size": Vector2(360, 360),
+		"platforms": [{"left": 100.0, "right": 300.0, "y": 44.0, "handle": 1}],
+		"walls": [],
+	}
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stand_context)
+	_expect(model.standing_plane_handle() == 1, "pet stands on the window before the drag")
+	var drag_gap := stand_context.duplicate(true)
+	drag_gap["platforms"] = []
+	drag_gap["live_platforms"] = []
+	drag_gap["standing_plane_live_delta"] = 50.0
+	var held := true
+	for i in range(200):  # 200 * 16ms = 3.2s, far past the 1500ms grace
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, drag_gap)
+		if model.subphase != ManualControlModelScript.GROUND:
+			held = false
+			break
+	_expect(held, "a mid-drag vanishing segment does not squeeze the pet off (holds)")
+	_expect(is_equal_approx(model._standing_plane_gone_ms, 0.0), "the drag hold never accrues standing grace")
+	drag_gap["standing_plane_live_delta"] = 0.0  # drag stops; support really gone
+	var fell := false
+	for i in range(200):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, drag_gap)
+		if model.subphase == ManualControlModelScript.FALL:
+			fell = true
+			break
+	_expect(fell, "a static window whose support is gone still falls after the grace")
+	# --- Fix 3: a drag hold must never read as "stuck" ---
+	# Bug B holds the pet while the standing window's segments vanish mid-drag, but the
+	# hold previously skipped walking entirely — with input the pet stayed glued (reads
+	# as 卡死). The user must still be able to walk sideways off the dragging window.
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(100.0, 44.0))  # foot_x = 280 within the plane's [100,300]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stand_context)
+	_expect(model.standing_plane_handle() == 1, "fix3 pet stands on the window before the drag hold")
+	var hold_walk := stand_context.duplicate(true)
+	hold_walk["platforms"] = []
+	hold_walk["live_platforms"] = []
+	hold_walk["standing_plane_live_delta"] = 50.0
+	var hold_start_x := model.position.x
+	for i in range(30):
+		model.tick(0.016, {"dir_x": 1, "dir_y": 0}, hold_walk)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "the drag hold still holds the pet standing")
+	_expect(model.position.x > hold_start_x + 10.0, "the drag hold still lets the pet walk sideways off the window (Fix 3)")
+	var hold_idle_x := model.position.x
+	for i in range(30):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, hold_walk)
+	_expect(is_equal_approx(model.position.x, hold_idle_x), "the drag hold with no input keeps the pet in place (Bug B regression)")
+	# --- Fix 4: a VERTICAL drag must hold, not fall (小窗向上移动一段距离) ---
+	# The Bug B hold gate was X-only (`standing_plane_live_delta`); a vertical drag
+	# moves no X, so the model read the dragged window as STATIC and committed to the
+	# 1500ms grace the instant the top segment was sliced — the pet got "pushed off" by
+	# an upward drag. The Y delta must feed window_moving too.
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(100.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stand_context)
+	_expect(model.standing_plane_handle() == 1, "fix4 pet stands on the window before the vertical drag")
+	var vertical_drag := stand_context.duplicate(true)
+	vertical_drag["platforms"] = []
+	vertical_drag["live_platforms"] = []
+	vertical_drag["standing_plane_live_delta"] = 0.0   # X center does not move during a vertical drag
+	vertical_drag["standing_plane_live_delta_y"] = -50.0  # window dragged UP 50px/tick
+	var vertical_held := true
+	for i in range(200):  # 3.2s, far past the 1500ms grace
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, vertical_drag)
+		if model.subphase != ManualControlModelScript.GROUND:
+			vertical_held = false
+			break
+	_expect(vertical_held, "a vertical drag with a sliced standing segment holds the pet (never pushed off)")
+	_expect(is_equal_approx(model._standing_plane_gone_ms, 0.0), "the vertical-drag hold never accrues standing grace")
+	vertical_drag["standing_plane_live_delta_y"] = 0.0  # drag stops; support really gone
+	var vertical_fell := false
+	for i in range(200):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, vertical_drag)
+		if model.subphase == ManualControlModelScript.FALL:
+			vertical_fell = true
+			break
+	_expect(vertical_fell, "a static window whose support is gone still falls after the grace (vertical axis regression)")
+	# --- Occlusion reshuffle must not teleport the pet ---
+	# _follow_standing_plane follows the standing segment's CENTER. When an
+	# approaching front window first clips the standing window's top, the segment
+	# splits/reshuffles: the foot stays on one fragment, but the fragment's center
+	# differs from the pre-split full segment, so a center-delta follow snaps the pet
+	# sideways (opposite to the approach — the reported "瞬移"). Only a real drag
+	# (span preserved) may move the pet; an occlusion reshuffle (span changes) must
+	# reset the baseline instead.
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(180.0, 44.0))  # foot_x = 360 within A's [100,500]
+	var reshuffle_base := {
+		"floor_y": 500.0,
+		"screen": Rect2(0, 0, 800, 600),
+		"pet_size": Vector2(360, 360),
+		"platforms": [{"left": 100.0, "right": 500.0, "y": 44.0, "handle": 1}],
+		"walls": [],
+	}
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, reshuffle_base)
+	_expect(model.standing_plane_handle() == 1, "pet stands on the window before the occlusion reshuffle")
+	_expect(is_equal_approx(model.position.x, 180.0), "pet starts at its anchor x")
+	# An approaching front window clips A's top from the left: the standable fragment
+	# shrinks to [350,500] (foot still on it). Span 400 -> 150, center 300 -> 425 — a
+	# center-delta follow would snap the pet +125px away from the approach.
+	var reshuffle_clipped := reshuffle_base.duplicate(true)
+	reshuffle_clipped["platforms"] = [{"left": 350.0, "right": 500.0, "y": 44.0, "handle": 1}]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, reshuffle_clipped)
+	_expect(model.subphase == ManualControlModelScript.GROUND, "occlusion reshuffle keeps the pet standing")
+	_expect(is_equal_approx(model.position.x, 180.0), "an occlusion reshuffle does NOT teleport the pet (baseline reset, no snap)")
+	# A real drag (span preserved) still carries the pet.
+	model.reset(Vector2(180.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, reshuffle_base)
+	var drag_span := reshuffle_base.duplicate(true)
+	drag_span["platforms"] = [{"left": 80.0, "right": 480.0, "y": 44.0, "handle": 1}]
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, drag_span)
+	_expect(is_equal_approx(model.position.x, 160.0), "a real window drag (span preserved) still carries the pet")
+	# --- DesktopWorld same-source: Dictionary and named world drive the model identically ---
+	var same_platforms := [
+		{"left": 300.0, "right": 500.0, "y": 44.0, "handle": 8},
+	]
+	var dict_world := {
+		"floor_y": 500.0,
+		"screen": Rect2(0, 0, 800, 600),
+		"pet_size": Vector2(360, 360),
+		"platforms": same_platforms,
+		"walls": [],
+	}
+	var named_world := DesktopWorld.new()
+	named_world.floor_y = 500.0
+	named_world.screen = Rect2(0, 0, 800, 600)
+	named_world.pet_size = Vector2(360, 360)
+	named_world.platforms = same_platforms
+	named_world.walls = []
+	var dict_run: Dictionary = {}
+	var named_run: Dictionary = {}
+	model.reset(Vector2(120.0, 44.0))
+	model.set_preserve_entry_position(true)
+	for i in range(5):
+		dict_run = model.tick(0.1, {"dir_x": 1, "dir_y": 0}, dict_world)
+	model.reset(Vector2(120.0, 44.0))
+	model.set_preserve_entry_position(true)
+	for i in range(5):
+		named_run = model.tick(0.1, {"dir_x": 1, "dir_y": 0}, named_world)
+	_expect(
+		Vector2(dict_run.get("position", Vector2.ZERO)) == Vector2(named_run.get("position", Vector2.ZERO))
+		and str(dict_run.get("subphase", "")) == str(named_run.get("subphase", "")),
+		"Dictionary and DesktopWorld worlds drive the model identically (same-source)"
+	)
+	# --- Staircase hop: walking toward a higher window within hop reach ---
+	# A higher window whose top is within hop_reach of the standing plane is hopped
+	# onto: the walk resolves the other window's wall as a short wall, launches a
+	# hop, and the descending arc lands on the higher plane.
+	var staircase_context := entry_context.duplicate(true)
+	staircase_context["platforms"] = [
+		{"left": 300.0, "right": 500.0, "y": 44.0, "handle": 8},
+		{"left": 400.0, "right": 600.0, "y": -36.0, "handle": 9},
+	]
+	staircase_context["walls"] = [
+		{"x": 400.0, "top_y": 320.0, "bottom_y": 856.0, "side": 1, "handle": 9},
+	]
+	staircase_context["foot_offset_x"] = 180.0
+	staircase_context["foot_offset_y"] = 356.0
+	staircase_context["hop_reach_px"] = 120.0
+	staircase_context["auto_hop_short_walls"] = true
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(120.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, staircase_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "staircase pet stands on the lower window")
+	for i in range(120):
+		model.tick(0.1, {"dir_x": 1, "dir_y": 0}, staircase_context)
+		if model.standing_plane_handle() == 9:
+			break
+	_expect(model.standing_plane_handle() == 9, "walking toward a higher window within hop reach auto-hops onto it")
+	_expect(model.subphase == ManualControlModelScript.GROUND, "staircase hop lands standing on the higher window")
+	# --- Staircase climb: a higher window beyond hop reach is climbed ---
+	# The same walk, but the higher window's top is 200px above the feet (beyond
+	# hop_reach 120): the other window's wall is not short, so the pet climbs its
+	# face and mounts on the top instead of hopping.
+	var climb_staircase := entry_context.duplicate(true)
+	climb_staircase["platforms"] = [
+		{"left": 300.0, "right": 500.0, "y": 44.0, "handle": 8},
+		{"left": 400.0, "right": 600.0, "y": -156.0, "handle": 9},
+	]
+	climb_staircase["walls"] = [
+		{"x": 400.0, "top_y": 200.0, "bottom_y": 856.0, "side": 1, "handle": 9},
+	]
+	climb_staircase["foot_offset_x"] = 180.0
+	climb_staircase["foot_offset_y"] = 356.0
+	climb_staircase["hop_reach_px"] = 120.0
+	climb_staircase["auto_hop_short_walls"] = true
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(120.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, climb_staircase)
+	for i in range(20):
+		model.tick(0.1, {"dir_x": 1, "dir_y": 0}, climb_staircase)
+		if model.has_pending_attach():
+			break
+	_expect(model.has_pending_attach(), "a higher window beyond hop reach triggers a climb instead of a hop")
+	model.finish_attach()
+	_expect(model.subphase == ManualControlModelScript.WALL and model.wall_side == 1, "staircase climb clings to the higher window's face")
+	for i in range(20):
+		model.tick(0.5, {"dir_x": 0, "dir_y": -1}, climb_staircase)
+		if model.has_pending_mount():
+			break
+	_expect(model.has_pending_mount(), "staircase climb mounts at the higher window's top")
+	model.finish_mount()
+	_expect(model.standing_plane_handle() == 9, "staircase climb mount stands on the higher window")
+	# --- Double-tap S/down steps off a platform ---
+	# queue_step_off detaches the grounded pet from the standing window and it falls
+	# toward the nearest lower visible surface: a lower window's top if one is below,
+	# else the floor. It is a no-op on the floor or while airborne.
+	var stepoff_context := entry_context.duplicate(true)
+	stepoff_context["platforms"] = [
+		{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8},
+	]
+	stepoff_context["foot_offset_x"] = 180.0
+	stepoff_context["foot_offset_y"] = 356.0
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stepoff_context)
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 8, "step-off test pet stands on the platform")
+	model.queue_step_off()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stepoff_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "queue_step_off detaches the grounded pet into a fall")
+	model.queue_step_off()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stepoff_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "queue_step_off while airborne is a no-op")
+	for i in range(40):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, stepoff_context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 0, "stepping off a platform with no lower window lands on the floor")
+	_expect(is_equal_approx(model.position.y, 500.0), "step-off lands on the floor")
+	# With a lower window below, the same step-off lands on its top instead.
+	var stepoff_lower := stepoff_context.duplicate(true)
+	stepoff_lower["platforms"] = [
+		{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8},
+		{"left": 600.0, "right": 700.0, "y": 200.0, "handle": 9},
+	]
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, stepoff_lower)
+	model.queue_step_off()
+	for i in range(80):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, stepoff_lower)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 9, "stepping off with a lower window below lands on its top")
+	_expect(is_equal_approx(model.position.y, 200.0), "step-off lands on the lower window's plane y")
+	# --- FALL landing adopts the plane's process_id (regression) ---
+	# Canceling flight (or stepping off) lands via the FALL branch. That landing must
+	# adopt the plane's (handle, process_id) identity: a stale pid left standing fails
+	# the live segment merge, makes _standing_plane_state() return {} and re-lands on
+	# the same plane every grace window — a permanent stuck-on-the-window loop that
+	# also never follows a dragged window. Test planes carry a real process_id to
+	# expose it (the pid-less legacy planes above mask it with a 0 match).
+	var fall_pid_context := entry_context.duplicate(true)
+	fall_pid_context["platforms"] = [
+		{"left": 645.0, "right": 755.0, "y": 44.0, "handle": 8, "process_id": 555},
+		{"left": 600.0, "right": 700.0, "y": 200.0, "handle": 9, "process_id": 4321},
+	]
+	fall_pid_context["foot_offset_x"] = 180.0
+	fall_pid_context["foot_offset_y"] = 356.0
+	model.set_preserve_entry_position(true)
+	model.reset(Vector2(500.0, 44.0))
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, fall_pid_context)
+	_expect(model.standing_plane_handle() == 8 and model.standing_plane_pid() == 555, "pid regression pet stands on the upper plane with its pid")
+	model.queue_step_off()
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, fall_pid_context)
+	_expect(model.subphase == ManualControlModelScript.FALL, "pid regression step-off clears identity and falls")
+	for i in range(80):
+		model.tick(0.1, {"dir_x": 0, "dir_y": 0}, fall_pid_context)
+		if model.subphase == ManualControlModelScript.GROUND:
+			break
+	_expect(model.subphase == ManualControlModelScript.GROUND and model.standing_plane_handle() == 9, "pid regression FALL landing stands on the lower window")
+	_expect(model.standing_plane_pid() == 4321, "FALL landing adopts the plane's process_id (no stale pid)")
+	# With the pid adopted the standing state persists; a stale pid would drop to
+	# FALL and re-land on the same plane every grace window (a stuck loop).
+	var pid_stays_grounded := true
+	for i in range(60):
+		model.tick(0.016, {"dir_x": 0, "dir_y": 0}, fall_pid_context)
+		if model.subphase != ManualControlModelScript.GROUND:
+			pid_stays_grounded = false
+			break
+	_expect(pid_stays_grounded, "pid regression pet stays standing (no stuck re-land loop)")
+	# And the correct identity lets a dragged window carry the pet.
+	var fall_follow := fall_pid_context.duplicate(true)
+	fall_follow["live_platforms"] = [
+		{"left": 700.0, "right": 800.0, "y": 200.0, "handle": 9, "process_id": 4321},
+	]
+	fall_follow["standing_plane_live_delta"] = 100.0
+	model.tick(0.016, {"dir_x": 0, "dir_y": 0}, fall_follow)
+	_expect(is_equal_approx(model.position.x, 600.0), "pid regression pet follows the lower window when dragged")
 
 func _test_roam_planner() -> void:
 	var screens: Array[Rect2] = [Rect2(0.0, 0.0, 800.0, 600.0), Rect2(800.0, 0.0, 800.0, 600.0)]
@@ -1099,6 +2232,21 @@ func _test_roam_planner() -> void:
 	for leg in single:
 		var to: Vector2 = leg.get("to", Vector2.ZERO)
 		_expect(to.x >= 0.0 and to.x <= 800.0 - pet_size.x + 1.0, "single-screen roam legs stay in horizontal bounds")
+
+func _test_ground_relocation_mode() -> void:
+	# Same-tier relocation: jump and walk are both valid for a grounded floor→floor
+	# move, chosen at random with the default 50/50 band.
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.0) == "walk", "grounded same-screen roll 0 walks")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.49) == "walk", "grounded same-screen roll in walk band walks")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.5) == "jump", "roll exactly at the band edge jumps")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.99) == "jump", "grounded same-screen roll past the band jumps")
+	# Walking is only possible grounded on the same screen; everything else jumps.
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, false, 0.0) == "jump", "cross-screen relocation always jumps")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(false, true, 0.0) == "jump", "standing on a window cannot walk to the floor")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(false, false, 0.1) == "jump", "airborne/off-screen relocation jumps")
+	# A custom band is honored.
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.2, 0.3) == "walk", "custom walk band 0.2 walks under 0.3")
+	_expect(RoamPlannerScript.choose_ground_relocation_mode(true, true, 0.3, 0.3) == "jump", "custom walk band edge jumps")
 
 func _roam_screen_for_point(point: Vector2, screens: Array[Rect2]) -> Rect2:
 	for screen in screens:
@@ -1137,6 +2285,12 @@ func _test_control_and_roam_state() -> void:
 	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "throw landing returns idle")
 	machine.dispatch({"type": "DRAG_START"})
 	_expect(machine.dispatch({"type": "DRAG_END"}) == "drag_fall", "dragged normal release falls")
+	# Wall climb: idle + WALL_CLIMB_START → wall_climb, wall_climb + CLIP_END → idle.
+	machine.dispatch({"type": "RESET"})
+	machine.dispatch({"type": "CLIP_END"})
+	_expect(machine.dispatch({"type": "WALL_CLIMB_START"}) == "wall_climb", "wall climb starts from idle")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "wall climb ends to idle")
+	_expect(machine.dispatch({"type": "WALL_CLIMB_START"}) == "wall_climb", "wall climb re-enters")
 
 func _test_window_platforms() -> void:
 	var snapshots := [
@@ -1161,12 +2315,128 @@ func _test_window_platforms() -> void:
 	var tracker := WindowPlatformService.new()
 	tracker.set_native_bridge(null)
 	var ridden := WindowPlatform.from_snapshot(tool_occlusion[1], 0, 700)
+	# The standing point (x=200) is covered by the tool window's top: under the
+	# visible-geometry semantics the rider is reported occluded (window still valid,
+	# no motion, no y-pin) and the caller's grace window decides the drop — the
+	# full-edge fallback is gone.
 	var occluded_track := tracker.track_platform(ridden, tool_occlusion, 200.0)
-	_expect(bool(occluded_track.get("lost", false)) and str(occluded_track.get("reason", "")) == "standing_point_occluded", "rider falls when its exact standing point becomes occluded")
+	_expect(not bool(occluded_track.get("lost", false)) and str(occluded_track.get("status", "")) == "occluded", "occluding the standing point reports an occluded rider, not a lost window")
+	_expect((occluded_track.get("platform") as WindowPlatform).handle == 11, "an occluded rider keeps its current platform (no full-width rebuild)")
+	# The actual drag-squeeze regression: the ridden window is dragged so it passes
+	# under a front window covering the standing point. The rider is reported
+	# occluded (drop after the caller's grace), not carried by a full top edge.
+	var drag_occluded := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 900, 300), "z_order": 0, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	], 400.0, 16.0)
+	_expect(not bool(drag_occluded.get("lost", false)) and str(drag_occluded.get("status", "")) == "occluded", "a drag that keeps the standing point covered reports occluded, not a full-edge follow")
+	_expect(Vector2(drag_occluded.get("delta", Vector2i.ZERO)) == Vector2(300.0, 0.0), "the occluded result still reports the window's drag delta for the grace/fall decision")
+	# A standing point that stays visible while dragging keeps riding (regression
+	# guard: occlusion is about the point, not the motion).
+	var visible_drag := tracker.track_platform(ridden, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(100, 100, 700, 500), "z_order": 0, "visible": true},
+	], 350.0, 16.0)
+	_expect(not bool(visible_drag.get("lost", false)) and str(visible_drag.get("status", "")) == "moved", "a visible standing point keeps riding a dragged window")
+	# --- Live visible top segments: the per-frame standable surface ---
+	# The standing window's live top is its fresh rect minus the cached front
+	# occluders (same slab pass as the refresh), so the foot can only stand on what
+	# is actually visible.
+	var live_tracker := WindowPlatformService.new()
+	live_tracker.set_native_bridge(null)
+	var alone_live := [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 0, "visible": true},
+	]
+	var live_planes := live_tracker.live_top_segment_planes(11, 21, 356.0, alone_live)
+	_expect(live_planes.size() == 1 and is_equal_approx(float(live_planes[0].get("left", -1.0)), 0.0) and is_equal_approx(float(live_planes[0].get("right", -1.0)), 700.0), "a visible standing window yields one live top segment spanning its whole edge")
+	_expect(is_equal_approx(float(live_planes[0].get("y", -1.0)), 100.0 - 356.0), "live segment y is in foot space (window top minus foot offset)")
+	var covered_live := [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 900, 300), "z_order": 0, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	_expect(live_tracker.live_top_segment_planes(11, 21, 356.0, covered_live).is_empty(), "a front window covering the whole top edge leaves no live segment")
+	var partly_live := [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 320, 300), "z_order": 0, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	var partly_planes := live_tracker.live_top_segment_planes(11, 21, 356.0, partly_live)
+	_expect(partly_planes.size() == 1 and is_equal_approx(float(partly_planes[0].get("left", -1.0)), 320.0), "a partially covering front window leaves the uncovered top slab")
+	# --- Live window-rect motion signal ---
+	# A dragged window moves its rect center; a static one does not. The model gates
+	# perch continuity on this signal, not on segment-center deltas (which occlusion
+	# reshuffles pollute).
+	var delta_tracker := WindowPlatformService.new()
+	delta_tracker.set_native_bridge(null)
+	delta_tracker._last_snapshots = [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	_expect(is_equal_approx(delta_tracker.live_rect_delta_x(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]), 0.0), "a static window has zero live rect delta")
+	_expect(is_equal_approx(delta_tracker.live_rect_delta_x(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	]), 300.0), "a dragged window reports its rect center delta")
+	# --- Fix 1: a live-only window with no cached reference is NOT being dragged ---
+	# When the standing window's handle exists in the live snapshots but was filtered
+	# out of the last refresh (_last_snapshots), the old code subtracted the zero rect
+	# center (0,0) and reported the live center (hundreds of px) as drag motion. The
+	# model consumed that as window_moving and the drag hold pinned the pet mid-air
+	# forever (两小窗交界卡死). A window with no cached reference must read as zero
+	# motion: its top face is not being carried, so the model falls through the grace
+	# instead of freezing.
+	var live_only := WindowPlatformService.new()
+	live_only.set_native_bridge(null)
+	live_only._last_snapshots = []
+	_expect(is_equal_approx(live_only.live_rect_delta_x(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	]), 0.0), "a live-only window with no cached snapshot reports zero motion (Fix 1)")
+	# A cached snapshot belonging to another handle must not bleed into this delta.
+	live_only._last_snapshots = [
+		{"handle": 99, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	_expect(is_equal_approx(live_only.live_rect_delta_x(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	]), 0.0), "a cached snapshot for another handle still reads zero motion for the target (Fix 1)")
+	# --- Fix 4: vertical drag reports Y motion so the model does not read it as static ---
+	# live_rect_delta_x is X-only; a VERTICAL drag leaves it ~0, so the model used to
+	# treat an upward-dragged window as STATIC and dropped the pet through the
+	# occlusion grace the instant the top segment was sliced (小窗向上移动一段距离).
+	# live_rect_delta_y mirrors the X axis so the window_moving gate sees the drag.
+	_expect(is_equal_approx(delta_tracker.live_rect_delta_y(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
+	]), 0.0), "a static window has zero vertical live rect delta")
+	# Rect2i(0, 0, 700, 500) center.y = 250 vs cached center.y = 350 -> -100 (moved up).
+	_expect(is_equal_approx(delta_tracker.live_rect_delta_y(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 0, 700, 500), "z_order": 1, "visible": true},
+	]), -100.0), "an upward-dragged window reports its vertical rect center delta")
+	_expect(is_equal_approx(delta_tracker.live_rect_delta_y(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 200, 700, 500), "z_order": 1, "visible": true},
+	]), 100.0), "a downward-dragged window reports a positive vertical delta")
+	var live_only_y := WindowPlatformService.new()
+	live_only_y.set_native_bridge(null)
+	live_only_y._last_snapshots = []
+	_expect(is_equal_approx(live_only_y.live_rect_delta_y(11, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 0, 700, 500), "z_order": 1, "visible": true},
+	]), 0.0), "a live-only window with no cached snapshot reports zero vertical motion (Fix 4)")
 	var reused_track := tracker.track_platform(ridden, [
 		{"handle": 11, "process_id": 999, "rect": Rect2i(0, 100, 700, 500), "z_order": 0, "visible": true},
 	], 400.0)
 	_expect(bool(reused_track.get("lost", false)), "reused HWND with another process id is rejected")
+	# A big rect delta across a slow tick is a continuous fast drag, not a
+	# teleport: the rider must stay glued even when DWM's stale rect or a frame
+	# hitch makes one tick cover hundreds of pixels. Only an instant reposition
+	# far beyond any human drag speed drops the rider.
+	var long_gap_drag := tracker.track_platform(ridden, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(700, 100, 700, 500), "z_order": 0, "visible": true},
+	], 400.0, 200.0)
+	_expect(not bool(long_gap_drag.get("lost", false)), "a 700px drag over a 200ms tick gap still follows")
+	var hard_flick := tracker.track_platform(ridden, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(1500, 100, 700, 500), "z_order": 0, "visible": true},
+	], 400.0, 16.0)
+	_expect(not bool(hard_flick.get("lost", false)), "an 1500px flick over a 16ms tick follows (drag speed, not teleport)")
+	var instant_jump := tracker.track_platform(ridden, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(3200, 100, 700, 500), "z_order": 0, "visible": true},
+	], 400.0, 16.0)
+	_expect(bool(instant_jump.get("lost", false)) and str(instant_jump.get("reason", "")) == "teleported", "an instant reposition far beyond drag speed is a teleport")
 	var native_service := WindowPlatformService.new()
 	_expect(native_service.native_available(), "Windows test baseline loads the native GDExtension")
 	var native_bridge: Variant = ClassDB.instantiate("WindowsWindowEnumerator")
@@ -1179,6 +2449,376 @@ func _test_window_platforms() -> void:
 		if snapshot is Dictionary and not str(snapshot.get("title", "")).is_empty():
 			titles_suppressed = false
 	_expect(titles_suppressed, "disabling title awareness prevents native title collection")
+
+func _test_window_bodies() -> void:
+	var snapshots := [
+		{"handle": 1, "process_id": 10, "rect": Rect2i(100, 100, 500, 400), "z_order": 0, "visible": true},
+		{"handle": 2, "process_id": 20, "rect": Rect2i(0, 100, 800, 500), "z_order": 1, "visible": true},
+		{"handle": 3, "process_id": 999, "rect": Rect2i(0, 300, 500, 400), "z_order": 2, "visible": true},
+		{"handle": 4, "process_id": 30, "rect": Rect2i(0, 500, 400, 300), "z_order": 3, "visible": true, "minimized": true},
+	]
+	var bodies := WindowPlatformService.build_bodies(snapshots, 999, 160, 12)
+	_expect(bodies.size() == 2, "own-process and minimized windows contribute no body")
+	var w1: WindowBody = bodies[0]
+	var w2: WindowBody = bodies[1]
+	_expect(w1.handle == 1 and w1.fragments.size() == 1 and w1.fragments[0] == Rect2i(100, 100, 500, 400), "front window keeps its full visible body")
+	_expect(w1.top_segments.size() == 1 and w1.top_segments[0].position == Vector2i(100, 100) and w1.top_segments[0].end.x == 600, "front window top segment spans its whole top edge")
+	# W2 is occluded on the left by W1: the visible body is the right slab plus the
+	# strip below the occluder (the 100px-wide left slab is below min_width and dropped).
+	_expect(w2.handle == 2 and w2.fragments.size() == 2, "covered window exposes right slab and below-occluder strip")
+	var w2_has_right_slab := false
+	var w2_has_bottom_band := false
+	for fragment in w2.fragments:
+		if fragment == Rect2i(600, 100, 200, 400):
+			w2_has_right_slab = true
+		if fragment == Rect2i(0, 500, 800, 100):
+			w2_has_bottom_band = true
+	_expect(w2_has_right_slab and w2_has_bottom_band, "occlusion slab split is exact")
+	# The visible top segment matches the platform's top-edge interval exactly.
+	_expect(w2.top_segments.size() == 1 and w2.top_segments[0].position.x == 600 and w2.top_segments[0].end.x == 800, "body top segment matches the platform segment range")
+	# Two fragments expose four vertical walls (each side of each fragment).
+	var edges := w1.fragment_wall_edges()
+	_expect(edges.size() == 2, "single fragment exposes two walls")
+	_expect(edges[0].get("x") == 100 and edges[0].get("side") == 1, "left wall sits on the fragment left edge and blocks +x motion")
+	_expect(edges[1].get("x") == 600 and edges[1].get("side") == -1, "right wall sits on the fragment right edge and blocks -x motion")
+	_expect(int(edges[0].get("process_id", -1)) == 10 and int(edges[1].get("process_id", -1)) == 10, "wall edges carry the window's process id")
+	_expect(w2.fragment_wall_edges().size() == 4, "occluded window exposes four visible walls")
+	var planes := w2.standable_planes(170.0)
+	_expect(planes.size() == 1 and is_equal_approx(float(planes[0].get("y", -1.0)), -70.0) and float(planes[0].get("left", -1.0)) == 600.0 and float(planes[0].get("right", -1.0)) == 800.0, "standable plane offsets the foot above the window top")
+	_expect(int(planes[0].get("process_id", -1)) == 20, "standable planes carry the window's process id")
+	# A fully occluded window yields no body at all.
+	var stacked := [
+		{"handle": 20, "process_id": 30, "rect": Rect2i(0, 0, 1000, 800), "z_order": 0, "visible": true},
+		{"handle": 21, "process_id": 31, "rect": Rect2i(100, 100, 200, 200), "z_order": 1, "visible": true},
+	]
+	var stacked_bodies := WindowPlatformService.build_bodies(stacked, -1, 160, 12)
+	_expect(stacked_bodies.size() == 1 and stacked_bodies[0].handle == 20, "fully occluded window contributes no body")
+	# The size cap excludes oversized windows from both platforms and bodies.
+	var cap_snapshots := [
+		{"handle": 30, "process_id": 40, "rect": Rect2i(0, 0, 1600, 1000), "z_order": 0, "visible": true},
+		{"handle": 31, "process_id": 41, "rect": Rect2i(1650, 50, 200, 200), "z_order": 1, "visible": true},
+	]
+	var work_area := Rect2i(0, 0, 1920, 1080)
+	var capped_bodies := WindowPlatformService.build_bodies(cap_snapshots, -1, 160, 12, work_area, 0.7)
+	_expect(capped_bodies.size() == 1 and capped_bodies[0].handle == 31, "window larger than 70% of the work area is excluded from collision")
+	var capped_platforms := WindowPlatformService.build_platforms(cap_snapshots, -1, 160, 12, false, 0.7, work_area)
+	_expect(capped_platforms.size() == 1 and capped_platforms[0].handle == 31, "oversized window is excluded from platforms too for consistency")
+	# The collision toggle independently empties bodies while platforms survive.
+	var disabled_bodies := WindowPlatformService.build_bodies(snapshots, 999, 160, 12, Rect2i(), 0.0, false)
+	_expect(disabled_bodies.is_empty(), "disabled collision toggle yields no bodies")
+	var service := WindowPlatformService.new()
+	# The fullscreen scenario: a fullscreen window (area ratio > 0.7) excludes
+	# ITSELF as a platform but still occludes — so two small windows covered by it
+	# lose their top edges entirely and NO standable surface remains.
+	var fullscreen_snapshots := [
+		{"handle": 81, "process_id": 91, "rect": Rect2i(0, 0, 1920, 1080), "z_order": 0, "visible": true},
+		{"handle": 82, "process_id": 92, "rect": Rect2i(100, 100, 400, 300), "z_order": 1, "visible": true},
+		{"handle": 83, "process_id": 93, "rect": Rect2i(600, 100, 400, 300), "z_order": 1, "visible": true},
+	]
+	var fs_platforms := WindowPlatformService.build_platforms(fullscreen_snapshots, -1, 160, 12, false, 0.7, Rect2i(0, 0, 1920, 1080))
+	_expect(fs_platforms.is_empty(), "a fullscreen window occludes every other top edge (no standable planes)")
+	# Transient windows: a freshly-appeared (< min_age) window's top is not a
+	# standable plane; occlusion and walls are unaffected by this gate.
+	var transient_planes := [
+		{"left": 100.0, "right": 300.0, "y": 44.0, "handle": 90},
+		{"left": 400.0, "right": 600.0, "y": 44.0, "handle": 91},
+	]
+	var gated := WindowPlatformService.gate_transient_planes(transient_planes, {90: 1000.0, 91: 3000.0}, 4000.0, 2000.0)
+	_expect(gated.size() == 1 and int((gated[0] as Dictionary).get("handle", 0)) == 90, "a window present for less than min_age is excluded from the standing list")
+	_expect(WindowPlatformService.gate_transient_planes(transient_planes, {}, 4000.0, 2000.0).is_empty(), "an unobserved window is treated as brand new (excluded)")
+	# live_wall_edge must use the fragment-wall edge convention (side=+1 left face,
+	# side=-1 right face): feeding the opposite edge would park the pet on the far
+	# side of the window — the "teleport to the other side" regression.
+	var climb_snapshots := [
+		{"handle": 70, "process_id": 90, "rect": Rect2i(500, 300, 120, 200), "z_order": 0, "visible": true},
+	]
+	var left_edge := service.live_wall_edge(70, 90, 1, climb_snapshots)
+	_expect(is_equal_approx(float(left_edge.get("x", -1.0)), 500.0), "live_wall_edge side=+1 reports the window's left face")
+	_expect(is_equal_approx(float(left_edge.get("bottom_y", -1.0)), 500.0), "live_wall_edge carries the window's vertical extent")
+	var right_edge := service.live_wall_edge(70, 90, -1, climb_snapshots)
+	_expect(is_equal_approx(float(right_edge.get("x", -1.0)), 620.0), "live_wall_edge side=-1 reports the window's right face")
+	_expect(int(right_edge.get("process_id", -1)) == 90, "live_wall_edge carries the window identity")
+	_expect(service.live_wall_edge(999, 999, 1, climb_snapshots).is_empty(), "live_wall_edge returns {} for a missing window")
+
+func _test_n_way_occlusion() -> void:
+	# n-way chain: three windows, each occluded by the one in front. The middle
+	# window is split by the front strip into two visible fragments and therefore
+	# two top-edge segments, so the geometry covers an n-polygon overlap in a plane.
+	var chain := [
+		{"handle": 1, "process_id": 10, "rect": Rect2i(300, 0, 100, 500), "z_order": 0, "visible": true},
+		{"handle": 2, "process_id": 20, "rect": Rect2i(0, 0, 800, 500), "z_order": 1, "visible": true},
+		{"handle": 3, "process_id": 30, "rect": Rect2i(900, 0, 200, 500), "z_order": 2, "visible": true},
+	]
+	var chain_entries := WindowPlatformService.compute_visible_fragments(chain, -1, 160, 12)
+	_expect(chain_entries.size() == 3, "n-way chain yields one entry per eligible window")
+	_expect((chain_entries[0].get("top_segments", []) as Array).size() == 1, "front window keeps a single top segment")
+	var middle_top: Array = chain_entries[1].get("top_segments", [])
+	_expect(middle_top.size() == 2, "middle window is split into two top segments")
+	_expect(
+		(middle_top[0] as Rect2i) == Rect2i(0, 0, 300, 500) and (middle_top[1] as Rect2i) == Rect2i(400, 0, 400, 500),
+		"middle window's split top segments match the visible intervals"
+	)
+	_expect((chain_entries[2].get("top_segments", []) as Array).size() == 1, "back window keeps its full top segment")
+	var chain_platforms := WindowPlatformService.build_platforms(chain, -1, 160, 12)
+	_expect(chain_platforms.size() == 4, "n-way chain yields four standable platforms")
+	var middle_segment_lefts: Array[int] = []
+	for platform in chain_platforms:
+		if platform.handle == 2:
+			middle_segment_lefts.append(platform.segment_left())
+	middle_segment_lefts.sort()
+	_expect(middle_segment_lefts == [0, 400], "middle window's platforms span both visible intervals")
+	var chain_bodies := WindowPlatformService.build_bodies(chain, -1, 160, 12)
+	_expect(chain_bodies.size() == 3, "n-way chain yields three collision bodies")
+	for body in chain_bodies:
+		if body.handle == 2:
+			_expect(body.fragments.size() == 2 and body.fragment_wall_edges().size() == 4, "split window exposes two fragments and four walls")
+	# Order independence: the occlusion pass sorts by z_order, so a shuffled input
+	# array yields the same per-window visible area (rect \ union of occluders).
+	var reversed_chain := []
+	for index in range(chain.size() - 1, -1, -1):
+		reversed_chain.append(chain[index])
+	for handle in [1, 2, 3]:
+		var ordered_area := _fragment_area_sum(chain_entries, handle)
+		var shuffled_area := _fragment_area_sum(WindowPlatformService.compute_visible_fragments(reversed_chain, -1, 160, 12), handle)
+		_expect(ordered_area == shuffled_area and ordered_area > 0, "visible area is order-independent for window %d" % handle)
+	# Hole: a small front window fully inside a larger back window splits the back
+	# window into bands; the top edge cracks into left-of-hole and right-of-hole
+	# segments and the hole's vertical sides become inner walls.
+	var hole := [
+		{"handle": 2, "process_id": 20, "rect": Rect2i(300, 100, 200, 100), "z_order": 0, "visible": true},
+		{"handle": 1, "process_id": 10, "rect": Rect2i(100, 100, 700, 400), "z_order": 1, "visible": true},
+	]
+	var hole_entries := WindowPlatformService.compute_visible_fragments(hole, -1, 160, 12)
+	var back: Dictionary = hole_entries[1]
+	var back_top: Array = back.get("top_segments", [])
+	_expect(back_top.size() == 2, "a window with a hole in its top edge cracks into two top segments")
+	_expect(
+		(back_top[0] as Rect2i) == Rect2i(100, 100, 200, 100) and (back_top[1] as Rect2i) == Rect2i(500, 100, 300, 100),
+		"hole window's top segments are left-of-hole and right-of-hole"
+	)
+	_expect((back.get("fragments", []) as Array).size() == 3, "hole window breaks into three visible fragments")
+	var hole_platforms := WindowPlatformService.build_platforms(hole, -1, 160, 12)
+	_expect(hole_platforms.size() == 3, "the back window's two segments plus the hole window itself yield three platforms")
+	var hole_body: WindowBody = null
+	for body in WindowPlatformService.build_bodies(hole, -1, 160, 12):
+		if body.handle == 1:
+			hole_body = body
+	_expect(hole_body != null, "the back window still contributes a collision body")
+	var hole_has_cave_walls := false
+	var hole_has_bottom_band := false
+	for edge in hole_body.fragment_wall_edges():
+		if (float(edge.get("x", 0.0)) == 300.0 and int(edge.get("side", 0)) == -1) \
+			or (float(edge.get("x", 0.0)) == 500.0 and int(edge.get("side", 0)) == 1):
+			hole_has_cave_walls = true
+	for fragment in hole_body.fragments:
+		if fragment == Rect2i(100, 200, 700, 300):
+			hole_has_bottom_band = true
+	_expect(hole_has_cave_walls, "the hole's vertical sides become inner walls")
+	_expect(hole_has_bottom_band, "the band below the hole stays solid")
+	# No top edge, only walls: a window whose top edge is fully covered still
+	# contributes a collision body (walls) but no standable platform.
+	var no_top := [
+		{"handle": 1, "process_id": 10, "rect": Rect2i(0, 0, 800, 200), "z_order": 0, "visible": true},
+		{"handle": 2, "process_id": 20, "rect": Rect2i(0, 0, 800, 500), "z_order": 1, "visible": true},
+	]
+	var no_top_bodies := WindowPlatformService.build_bodies(no_top, -1, 160, 12)
+	_expect(no_top_bodies.size() == 2, "a window with its top edge fully covered still has a body")
+	var no_top_platforms := WindowPlatformService.build_platforms(no_top, -1, 160, 12)
+	_expect(no_top_platforms.size() == 1 and no_top_platforms[0].handle == 1, "a window with its top edge fully covered yields no platform")
+	for body in no_top_bodies:
+		if body.handle == 2:
+			_expect(body.fragments.size() == 1 and (body.fragments[0] as Rect2i) == Rect2i(0, 200, 800, 300), "the covered window's visible body is the band below the occluder")
+	# Sliver semantics: a window left with only a sub-minimum-width visible slit is
+	# dropped from both bodies and platforms — the slit is passable.
+	var sliver := [
+		{"handle": 1, "process_id": 10, "rect": Rect2i(100, 0, 800, 500), "z_order": 0, "visible": true},
+		{"handle": 2, "process_id": 20, "rect": Rect2i(0, 0, 900, 500), "z_order": 1, "visible": true},
+	]
+	_expect(WindowPlatformService.build_bodies(sliver, -1, 160, 12).size() == 1, "a sub-minimum-width visible slit contributes no body")
+	_expect(WindowPlatformService.build_platforms(sliver, -1, 160, 12).size() == 1, "a sub-minimum-width visible slit contributes no platform")
+	var wide_sliver_bodies := WindowPlatformService.build_bodies(sliver, -1, 1, 12)
+	_expect(wide_sliver_bodies.size() == 2 and (wide_sliver_bodies[1].fragments[0] as Rect2i) == Rect2i(0, 0, 100, 500), "the same slit survives with a wider minimum width, confirming the width threshold is what drops it")
+
+func _fragment_area_sum(entries: Array, handle: int) -> int:
+	var total := 0
+	for entry in entries:
+		if not entry is Dictionary:
+			continue
+		var snapshot: Dictionary = (entry as Dictionary).get("snapshot", {})
+		if int(snapshot.get("handle", 0)) != handle:
+			continue
+		for fragment in (entry as Dictionary).get("fragments", []):
+			if fragment is Rect2i:
+				total += (fragment as Rect2i).size.x * (fragment as Rect2i).size.y
+	return total
+
+func _test_wall_resolver() -> void:
+	var R := PetWallResolverScript
+	# The collision body is foot-anchored and rises PET_COLLISION_SIZE.y above the feet.
+	var body := R.collision_rect(Vector2(400.0, 800.0))
+	_expect(body == Rect2(345.0, 630.0, 110.0, 170.0), "collision rect anchors the feet at the box bottom-center")
+	# Walking right into a window's left face: side=+1 matches dx=+1 and blocks.
+	var walls := [
+		{"x": 600.0, "top_y": 300.0, "bottom_y": 800.0, "side": 1, "handle": 1},
+	]
+	var blocked := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(620.0, 800.0), walls, 800.0)
+	_expect(int(blocked.get("handle", 0)) == 1 and not bool(blocked.get("short", true)), "rightward walk into a tall wall finds the wall and is not short")
+	# A wall entry with process_id passes the identity through to the caller.
+	var pid_walls := [
+		{"x": 600.0, "top_y": 300.0, "bottom_y": 800.0, "side": 1, "handle": 1, "process_id": 4321},
+	]
+	var pid_hit := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(620.0, 800.0), pid_walls, 800.0)
+	_expect(int(pid_hit.get("process_id", -1)) == 4321, "blocking wall passes the window's process id through")
+	# A missing pid on the wall entry reads as 0 for legacy callers.
+	var legacy_hit := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(620.0, 800.0), walls, 800.0)
+	_expect(int(legacy_hit.get("process_id", -1)) == 0, "a wall without a process id defaults to 0")
+	var resolved := R.resolve_horizontal(Vector2(400.0, 800.0), Vector2(620.0, 800.0), walls, 800.0)
+	_expect(is_equal_approx((resolved.get("position", Vector2()) as Vector2).x, 545.0), "rightward walk parks the foot flush against the wall face")
+	# Walking left into a window's right face: side=-1 matches dx=-1 and blocks.
+	var left_walls := [
+		{"x": 200.0, "top_y": 300.0, "bottom_y": 800.0, "side": -1, "handle": 2},
+	]
+	var left_resolved := R.resolve_horizontal(Vector2(400.0, 800.0), Vector2(100.0, 800.0), left_walls, 800.0)
+	_expect(is_equal_approx((left_resolved.get("position", Vector2()) as Vector2).x, 255.0), "leftward walk parks the foot flush against the wall face")
+	# A window raised above the pet's head is walked under: its bottom stays above body_top.
+	var raised := [
+		{"x": 600.0, "top_y": 200.0, "bottom_y": 500.0, "side": 1, "handle": 3},
+	]
+	var under := R.resolve_horizontal(Vector2(400.0, 800.0), Vector2(650.0, 800.0), raised, 800.0)
+	_expect(is_equal_approx((under.get("position", Vector2()) as Vector2).x, 650.0) and (under.get("wall", {}) as Dictionary).is_empty(), "a raised window is walked under")
+	# Short-wall threshold flips within WALL_HOP_REACH_PX of the floor.
+	var short_walls := [
+		{"x": 500.0, "top_y": 700.0, "bottom_y": 800.0, "side": 1, "handle": 4},
+		{"x": 500.0, "top_y": 500.0, "bottom_y": 800.0, "side": 1, "handle": 5},
+	]
+	var short_hit := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(520.0, 800.0), [short_walls[0]], 800.0)
+	_expect(int(short_hit.get("handle", 0)) == 4 and bool(short_hit.get("short", false)), "a wall within hop reach is flagged short")
+	var tall_hit := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(520.0, 800.0), [short_walls[1]], 800.0)
+	_expect(int(tall_hit.get("handle", 0)) == 5 and not bool(tall_hit.get("short", true)), "a taller wall is not flagged short")
+	# Moving away, moving in the opposite direction, or standing still is never blocked.
+	var away := R.resolve_horizontal(Vector2(620.0, 800.0), Vector2(400.0, 800.0), walls, 800.0)
+	_expect(is_equal_approx((away.get("position", Vector2()) as Vector2).x, 400.0) and (away.get("wall", {}) as Dictionary).is_empty(), "moving away from a wall is not blocked")
+	var stationary := R.find_blocking_wall(Vector2(400.0, 800.0), Vector2(400.0, 800.0), walls, 800.0)
+	_expect(stationary.is_empty(), "standing still never hits a wall")
+	_expect(R.is_blocked(Vector2(400.0, 800.0), Vector2(620.0, 800.0), walls, 800.0), "is_blocked reports the crossing")
+	_expect(not R.is_blocked(Vector2(400.0, 800.0), Vector2(620.0, 800.0), [], 800.0), "an empty wall set never blocks")
+
+func _test_window_event_debounce() -> void:
+	var debouncer := WindowEventDebouncerScript.new()
+	_expect(debouncer.poll(100.0) == INF, "no bridge never schedules a refresh")
+	var bridge := FakeEventBridge.new()
+	debouncer.set_bridge(bridge)
+	_expect(debouncer.poll(100.0) == INF, "a clean bridge does not schedule a refresh")
+	# First dirty event schedules a refresh at now + debounce.
+	bridge.dirty_value = true
+	bridge.handle_value = 0
+	_expect(is_equal_approx(debouncer.poll(100.0), 180.0), "a dirty event schedules the debounced refresh")
+	# The pending deadline is sticky: a drag flood keeps the original deadline.
+	bridge.dirty_value = true
+	_expect(is_equal_approx(debouncer.poll(110.0), 180.0), "a second dirty event keeps the original deadline")
+	bridge.dirty_value = false
+	_expect(is_equal_approx(debouncer.poll(120.0), 180.0), "a clean poll still reports the pending deadline")
+	# Acknowledging after the refresh clears the sticky deadline.
+	debouncer.acknowledge()
+	_expect(debouncer.poll(200.0) == INF, "acknowledging clears the pending deadline")
+	# Ridden-handle events are skipped (the 33ms platform-track loop covers them).
+	debouncer.set_ridden_handle(5)
+	bridge.dirty_value = true
+	bridge.handle_value = 5
+	_expect(debouncer.poll(300.0) == INF, "events for the ridden window are skipped")
+	bridge.dirty_value = true
+	bridge.handle_value = 7
+	_expect(is_equal_approx(debouncer.poll(300.0), 380.0), "a non-ridden window event schedules a refresh")
+	debouncer.acknowledge()
+	debouncer.set_ridden_handle(0)
+	# start/stop forward to the bridge when present.
+	debouncer.start_event_hook()
+	debouncer.stop_event_hook()
+	_expect(bridge.start_calls == 1 and bridge.stop_calls == 1, "start/stop forward to the native bridge")
+	# Native smoke: the real bridge exposes the hook API (existence only, no hook start).
+	var native_bridge: Variant = ClassDB.instantiate("WindowsWindowEnumerator")
+	_expect(
+		native_bridge != null
+		and native_bridge.has_method("start_event_hook")
+		and native_bridge.has_method("stop_event_hook")
+		and native_bridge.has_method("is_event_hook_active")
+		and native_bridge.has_method("consume_dirty_flag")
+		and native_bridge.has_method("get_dirty_handle")
+		and native_bridge.has_method("set_event_hook_tracked_handles"),
+		"native bridge exposes the event-hook API"
+	)
+
+
+class FakeEventBridge:
+	extends RefCounted
+	var dirty_value := false
+	var handle_value := 0
+	var start_calls := 0
+	var stop_calls := 0
+	func consume_dirty_flag() -> bool:
+		var value := dirty_value
+		dirty_value = false
+		return value
+	func get_dirty_handle() -> int:
+		return handle_value
+	func start_event_hook() -> void:
+		start_calls += 1
+	func stop_event_hook() -> void:
+		stop_calls += 1
+	func set_event_hook_tracked_handles(handles: Array) -> void:
+		pass
+
+
+func _test_ride_feedback() -> void:
+	var ctrl := RideFeedbackControllerScript.new()
+	# The first observation only primes the controller.
+	var first := ctrl.update(1000.0, Rect2i(100, 200, 400, 300), Rect2i(100, 200, 400, 300), 300.0, 200.0, 500.0)
+	_expect(first.is_empty(), "first observation only primes the ride feedback")
+	# Moving the window >2px starts a session and fires start_move, not a wobble.
+	var events := ctrl.update(1100.0, Rect2i(100, 200, 400, 300), Rect2i(150, 200, 400, 300), 350.0, 250.0, 550.0)
+	_expect(_has_kind(events, "start_move"), "a ridden window displacement reacts once")
+	_expect(not _has_kind(events, "wobble"), "a slow displacement is not a wobble")
+	# A fast drag sustained past the threshold wobbles.
+	events = ctrl.update(1300.0, Rect2i(150, 200, 400, 300), Rect2i(300, 200, 400, 300), 500.0, 250.0, 550.0)
+	_expect(_has_kind(events, "wobble"), "a fast sustained drag wobbles")
+	# Stopping starts the settle silence; the settle event waits for 1500ms.
+	events = ctrl.update(1700.0, Rect2i(300, 200, 400, 300), Rect2i(300, 200, 400, 300), 500.0, 250.0, 550.0)
+	_expect(not _has_kind(events, "settle"), "settle waits for the silence window")
+	events = ctrl.update(3300.0, Rect2i(300, 200, 400, 300), Rect2i(300, 200, 400, 300), 500.0, 250.0, 550.0)
+	_expect(_has_kind(events, "settle"), "a quiet window settles and clears the session")
+	# A new drag session inside the 10s cooldown does not re-react.
+	events = ctrl.update(3600.0, Rect2i(300, 200, 400, 300), Rect2i(320, 200, 400, 300), 520.0, 250.0, 550.0)
+	_expect(not _has_kind(events, "start_move"), "a second drag session inside the cooldown stays quiet")
+	# Resizing while the foot stays on the segment only reports resize.
+	events = ctrl.update(4000.0, Rect2i(320, 200, 400, 300), Rect2i(320, 200, 420, 300), 520.0, 220.0, 540.0)
+	_expect(_has_kind(events, "resize"), "a window resize while riding reacts")
+	_expect(not _has_kind(events, "restance"), "a foot still on the segment needs no restand")
+	# Resizing so the foot leaves the segment restands to the nearest inside x.
+	events = ctrl.update(4500.0, Rect2i(320, 200, 420, 300), Rect2i(320, 200, 300, 300), 520.0, 320.0, 480.0)
+	_expect(_has_kind(events, "resize") and _has_kind(events, "restance"), "a resized segment nudges the pet back on")
+	_expect(is_equal_approx(_kind_value(events, "restance", "x", -1.0), 480.0), "restand clamps to the nearest inside x")
+	# An unmount resets the cooldown: a fresh mount re-reacts to its first move
+	# immediately instead of waiting out the 10s window.
+	ctrl.reset()
+	events = ctrl.update(6000.0, Rect2i(100, 200, 400, 300), Rect2i(100, 200, 400, 300), 300.0, 200.0, 500.0)
+	_expect(events.is_empty(), "a fresh mount after reset primes the controller again")
+	events = ctrl.update(6100.0, Rect2i(100, 200, 400, 300), Rect2i(140, 200, 400, 300), 340.0, 200.0, 500.0)
+	_expect(_has_kind(events, "start_move"), "a remount after reset reacts to the first move immediately")
+
+
+func _has_kind(events: Array, kind: String) -> bool:
+	for value in events:
+		if value is Dictionary and str(value.get("kind", "")) == kind:
+			return true
+	return false
+
+
+func _kind_value(events: Array, kind: String, key: String, fallback: float) -> float:
+	for value in events:
+		if value is Dictionary and str(value.get("kind", "")) == kind:
+			return float(value.get(key, fallback))
+	return fallback
+
 
 func _load_json(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)

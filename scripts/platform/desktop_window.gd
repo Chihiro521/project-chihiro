@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS := {
 	"title_awareness": true,
 	"action_sounds": true,
 	"sfx_volume": 0.72,
+	"window_collision": true,
 }
 
 var _window: Window

@@ -14,8 +14,11 @@
 #include <windows.h>
 #include <dwmapi.h>
 
+#include <atomic>
 #include <cstdint>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace godot {
@@ -27,6 +30,109 @@ struct EnumerationContext {
 	int32_t z_order = 0;
 	bool include_titles = true;
 };
+
+// --- WinEventHook state ----------------------------------------------------
+// The hook worker thread never touches Godot APIs: WinEventProc only flips
+// atomics (plus the mutex-guarded tracked-handle set), so delivery under
+// WINEVENT_OUTOFCONTEXT is safe on its own thread. The GDScript side polls
+// consume_dirty_flag()/get_dirty_handle() every frame and debounces.
+struct EventHookState {
+	std::atomic<bool> dirty{false};
+	std::atomic<int64_t> last_handle{0};
+	std::atomic<bool> active{false};
+	std::atomic<DWORD> worker_thread_id{0};
+	std::thread worker;
+	HWINEVENTHOOK hook = nullptr;
+	std::mutex tracked_mutex;
+	std::vector<int64_t> tracked;
+};
+static EventHookState g_event_hook;
+
+void CALLBACK win_event_proc(
+		HWINEVENTHOOK hook,
+		DWORD event,
+		HWND window,
+		LONG id_object,
+		LONG id_child,
+		DWORD event_thread,
+		DWORD event_time) {
+	(void)hook;
+	(void)event;
+	(void)event_thread;
+	(void)event_time;
+	if (id_object != OBJID_WINDOW || id_child != CHILDID_SELF) {
+		return;
+	}
+	if (window == nullptr || !IsWindow(window)) {
+		return;
+	}
+	if (GetAncestor(window, GA_ROOT) != window) {
+		return; // only top-level windows matter to the pet world
+	}
+	const int64_t handle = static_cast<int64_t>(reinterpret_cast<intptr_t>(window));
+	{
+		std::lock_guard<std::mutex> lock(g_event_hook.tracked_mutex);
+		if (!g_event_hook.tracked.empty()) {
+			bool relevant = false;
+			for (const int64_t candidate : g_event_hook.tracked) {
+				if (candidate == handle) {
+					relevant = true;
+					break;
+				}
+			}
+			if (!relevant) {
+				return;
+			}
+		}
+	}
+	g_event_hook.last_handle = handle;
+	g_event_hook.dirty = true;
+}
+
+void event_hook_worker() {
+	// Register the thread id before installing the hook so stop_event_hook() can
+	// always wake us with PostThreadMessageW even if SetWinEventHook stalls.
+	g_event_hook.worker_thread_id = GetCurrentThreadId();
+	g_event_hook.hook = SetWinEventHook(
+			EVENT_OBJECT_CREATE,
+			EVENT_OBJECT_UNCLOAKED,
+			nullptr,
+			win_event_proc,
+			0,
+			0,
+			WINEVENT_OUTOFCONTEXT);
+	if (g_event_hook.hook == nullptr) {
+		g_event_hook.active = false;
+		return;
+	}
+	g_event_hook.active = true;
+	MSG message;
+	while (GetMessageW(&message, nullptr, 0, 0) > 0) {
+		if (message.message == WM_APP) {
+			break;
+		}
+		TranslateMessage(&message);
+		DispatchMessageW(&message);
+	}
+	UnhookWinEvent(g_event_hook.hook);
+	g_event_hook.hook = nullptr;
+	g_event_hook.active = false;
+}
+
+// Wakes and joins the worker thread (up to ~200ms if the thread is still
+// starting). Safe to call when no hook is running.
+void shutdown_hook_worker() {
+	for (int attempt = 0; attempt < 200 && g_event_hook.worker_thread_id.load() == 0; ++attempt) {
+		Sleep(1);
+	}
+	const DWORD thread_id = g_event_hook.worker_thread_id.exchange(0);
+	if (thread_id != 0) {
+		PostThreadMessageW(thread_id, WM_APP, 0, 0);
+	}
+	if (g_event_hook.worker.joinable()) {
+		g_event_hook.worker.join();
+	}
+}
 
 String from_wide(const std::wstring &value) {
 	if (value.empty()) {
@@ -165,6 +271,12 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_current_process_id"), &WindowsWindowEnumerator::get_current_process_id);
 	ClassDB::bind_method(D_METHOD("set_window_rect", "handle", "x", "y", "width", "height"), &WindowsWindowEnumerator::set_window_rect);
 	ClassDB::bind_method(D_METHOD("atomic_replace_file", "temporary_path", "target_path"), &WindowsWindowEnumerator::atomic_replace_file);
+	ClassDB::bind_method(D_METHOD("start_event_hook"), &WindowsWindowEnumerator::start_event_hook);
+	ClassDB::bind_method(D_METHOD("stop_event_hook"), &WindowsWindowEnumerator::stop_event_hook);
+	ClassDB::bind_method(D_METHOD("is_event_hook_active"), &WindowsWindowEnumerator::is_event_hook_active);
+	ClassDB::bind_method(D_METHOD("consume_dirty_flag"), &WindowsWindowEnumerator::consume_dirty_flag);
+	ClassDB::bind_method(D_METHOD("get_dirty_handle"), &WindowsWindowEnumerator::get_dirty_handle);
+	ClassDB::bind_method(D_METHOD("set_event_hook_tracked_handles", "handles"), &WindowsWindowEnumerator::set_event_hook_tracked_handles);
 }
 
 Array WindowsWindowEnumerator::enumerate_windows(int32_t max_count, bool include_titles) const {
@@ -213,6 +325,51 @@ bool WindowsWindowEnumerator::atomic_replace_file(const String &temporary_path, 
 			temporary.c_str(),
 			target.c_str(),
 			MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+}
+
+bool WindowsWindowEnumerator::start_event_hook() {
+	if (g_event_hook.active.load()) {
+		return true;
+	}
+	if (g_event_hook.worker.joinable()) {
+		g_event_hook.worker.join();
+	}
+	g_event_hook.dirty = false;
+	g_event_hook.last_handle = 0;
+	g_event_hook.worker_thread_id = 0;
+	g_event_hook.worker = std::thread(event_hook_worker);
+	return true;
+}
+
+void WindowsWindowEnumerator::stop_event_hook() {
+	shutdown_hook_worker();
+	g_event_hook.dirty = false;
+	g_event_hook.last_handle = 0;
+}
+
+bool WindowsWindowEnumerator::is_event_hook_active() const {
+	return g_event_hook.active.load();
+}
+
+bool WindowsWindowEnumerator::consume_dirty_flag() {
+	return g_event_hook.dirty.exchange(false);
+}
+
+int64_t WindowsWindowEnumerator::get_dirty_handle() const {
+	return g_event_hook.last_handle.load();
+}
+
+void WindowsWindowEnumerator::set_event_hook_tracked_handles(const Array &handles) {
+	std::lock_guard<std::mutex> lock(g_event_hook.tracked_mutex);
+	g_event_hook.tracked.clear();
+	g_event_hook.tracked.reserve(static_cast<size_t>(handles.size()));
+	for (int64_t i = 0; i < handles.size(); ++i) {
+		g_event_hook.tracked.push_back(static_cast<int64_t>(handles[i]));
+	}
+}
+
+void stop_window_event_hook_global() {
+	shutdown_hook_worker();
 }
 
 } // namespace godot

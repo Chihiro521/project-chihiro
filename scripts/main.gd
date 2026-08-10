@@ -13,6 +13,9 @@ const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
 const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
 const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
 const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
+const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd")
+const WindowEventDebouncerScript := preload("res://scripts/core/window_event_debouncer.gd")
+const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
 const IDLE_BLINK_MIN_MS := 2400.0
 const IDLE_BLINK_MAX_MS := 5200.0
 const IDLE_WANDER_MIN_MS := 15000.0
@@ -24,6 +27,11 @@ const MIN_EDGE_TRAVERSE_DISTANCE := 12.0
 const LIFE_SAVE_INTERVAL_MS := 30000.0
 const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
 const SPEECH_FOLLOW_INTERVAL_MS := 33.0
+## How often the ridden window's rect is re-sampled while standing on it. The
+## per-tick cost is one native single-window query plus a cached-snapshot
+## platform rebuild, so aligning with the display refresh (16ms/60Hz) keeps the
+## pet glued to the window without meaningful overhead.
+const PLATFORM_TRACK_INTERVAL_MS := 16.0
 const RAPID_POKE_WINDOW_MS := 10000.0
 const ROUGH_DRAG_SPEED_PX_PER_SECOND := 1200.0
 const SLIDE_GROUND_THRESHOLD := 20.0
@@ -44,9 +52,28 @@ const MANUAL_GRAVITY := 1600.0
 const MANUAL_JUMP_VY := -520.0
 const MANUAL_WALL_THRESHOLD := 40.0
 const MANUAL_DOUBLE_TAP_MS := 300.0
+## Slightly higher jump apex under keyboard control, so a manual staircase hop
+## clears a short wall the autonomous hop also clears. Applied only to the manual
+## tick (the autonomous climb shares the context but keeps the base jump_vy).
+const MANUAL_CONTROL_JUMP_BOOST := 1.1
+## Riding grace before a foot covered by a front window drops the rider: a transient
+## mid-drag occlusion (cached occluder rects stale) recovers at the refresh cadence,
+## a persistent occlusion commits to the fall. Must exceed the 500ms world-refresh
+## cadence so a stale occluder clears before the grace fires (1500ms = 3x); it also
+## absorbs transient UI (tooltips/menus) that covers a standing point for ~0.5-1.5s.
+## Same value as the model's standing grace (OCCLUSION_GRACE_MS) — one rule for both.
+const RIDER_OCCLUSION_GRACE_MS := ManualControlModelScript.OCCLUSION_GRACE_MS
 const CONTROL_QUIP_PROBABILITY := 0.4
 const CONTROL_LONG_MS := 30000.0
 const CONTROL_COMBO_MS := 800.0
+const WINDOW_FOOT_OFFSET_X := 180.0
+const WINDOW_FOOT_OFFSET_Y := 356.0
+const WINDOW_HOP_REACH_PX := 120.0
+## A window must exist for this long before its top is accepted as a standing
+## surface, so a freshly-appeared popup (a toast, a tooltip, a splash) is never
+## stood on. Only the standing list is gated — occlusion and walls always follow
+## visible rendering.
+const WINDOW_STAND_MIN_AGE_MS := 2000.0
 
 const MENU_HEAD_PAT := 1
 const MENU_POKE := 2
@@ -72,6 +99,7 @@ const MENU_COMPANION_30 := 21
 const MENU_COMPANION_60 := 22
 const MENU_FREE_ROAM := 23
 const MENU_MANUAL_CONTROL := 24
+const MENU_WINDOW_COLLISION := 25
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -83,6 +111,7 @@ const TRAY_ACTION_SOUNDS := 111
 const TRAY_ACTION_CATALOG := 112
 const TRAY_MECHANISM_DASHBOARD := 113
 const TRAY_MANUAL_CONTROL := 114
+const TRAY_WINDOW_COLLISION := 115
 
 @onready var sprite_player: PetSpritePlayer = $SpritePlayer
 @onready var desktop: DesktopWindowBridge = $DesktopWindow
@@ -107,6 +136,8 @@ var developer_state_store := PetStateStore.new("user://little_chihiro_state_dev.
 var dialogue_director := PetDialogueDirector.new(21013)
 var dialogue_scheduler := DialogueSchedulerScript.new()
 var window_platform_service := WindowPlatformService.new()
+var window_event_debouncer := WindowEventDebouncerScript.new()
+var ride_feedback_controller := RideFeedbackControllerScript.new()
 var habitat_model := HabitatModelScript.new()
 var ecology_clock := EcologyClockScript.new()
 var ecology_profile: Dictionary = {}
@@ -126,6 +157,11 @@ var edge_preparing := false
 var edge_preparation_token := 0
 var press: Dictionary = {}
 var platforms: Array[WindowPlatform] = []
+var window_bodies: Array[WindowBody] = []
+## The one world the pet's platformer moves through (see desktop_world.gd): the
+## riding/roam loop and the manual/autonomous-climb model both consume THIS object,
+## refreshed from the WindowPlatformService occlusion pass.
+var desktop_world := DesktopWorld.new()
 var active_platform: WindowPlatform = null
 var pending_platform: WindowPlatform = null
 var platform_walk_motion: Dictionary = {}
@@ -182,6 +218,7 @@ var speech_bubbles_enabled := true
 var title_awareness := true
 var action_sounds := true
 var sfx_volume := 0.72
+var window_collision_enabled := true
 var gaze_engaged := false
 var smoothed_cursor: Variant = null
 var suspended := false
@@ -197,6 +234,12 @@ var next_debug_update := 0.0
 var next_life_save := 0.0
 var next_window_refresh := 0.0
 var next_platform_track := 0.0
+var _last_platform_track_at := -1.0
+var last_platform_lost_reason := ""
+var _rider_occlusion_ms := 0.0
+## First-seen time (ms, Time.get_ticks_msec) per window handle, for the transient
+## standing gate in _rebuild_platform_planes.
+var _window_first_seen_ms: Dictionary = {}
 var next_platform_swap := 0.0
 var next_mechanism_dashboard_update := 0.0
 var next_speech_follow := 0.0
@@ -214,8 +257,32 @@ var _last_control_reverse := false
 var _last_control_subphase := ""
 var _wall_frozen := false
 var _control_fall_started_at := -1.0
+# Set when a manual-control umbrella phase clip (open/float/close) finishes while
+# its phase is still current; _apply_control_clip re-issues the clip so the fall
+# keeps animating instead of freezing on the last frame of the phase.
+var _umbrella_control_dirty := false
+# True while the control result is an umbrella descent. The umbrella branch never
+# updates _last_control_clip/_last_control_segment, so on leaving the descent the
+# identity guard could swallow the post-landing clip (e.g. idle -> idle) and leave
+# the sprite frozen on the last umbrella frame; see leaving_umbrella in
+# _apply_control_clip.
+var _umbrella_control_active := false
 var roam_active := false
 var roam_session: Dictionary = {}
+# Ecology-travel walk leg: a same-tier alternative to the jump arc for grounded
+# floor relocation. Driven in _update_ecology_walk while machine.state == "roam_walk";
+# on arrival the pet reaches idle and _on_transition completes the travel step,
+# exactly like the jump path. Cleared by _stop_roam so any interrupt drops it.
+var ecology_walk_motion: Dictionary = {}
+var _climb_model: Variant = null
+var _ride_reaction_active := false
+var _ride_reaction_clip := ""
+var wall_climb_session: Dictionary = {}
+## Last-seen rect for the manual-standing feedback session, so the ride feedback
+## controller can compare against a real previous frame instead of the current one.
+var _manual_feedback_handle := 0
+var _manual_feedback_prev_rect := Rect2i()
+var _manual_feedback_last_at := -INF
 
 func _ready() -> void:
 	desktop.configure()
@@ -227,6 +294,8 @@ func _ready() -> void:
 	window_platform_service.capture_titles = title_awareness
 	action_sounds = bool(settings.get("action_sounds", true))
 	sfx_volume = float(settings.get("sfx_volume", 0.72))
+	window_collision_enabled = bool(settings.get("window_collision", true))
+	window_platform_service.set_collision_enabled(window_collision_enabled)
 	sfx_player.configure(action_sounds, sfx_volume)
 	manifest = PetManifestData.load_from_file(SKIN_MANIFEST)
 	if not manifest.is_valid():
@@ -249,6 +318,9 @@ func _ready() -> void:
 	desktop.set_size(pet_window_size)
 	_refresh_habitat_screens()
 	work_area = Rect2(desktop.get_work_area())
+	window_platform_service.set_work_area(Rect2i(work_area))
+	window_event_debouncer.set_bridge(window_platform_service.native_bridge())
+	window_event_debouncer.start_event_hook()
 	var restored = desktop.load_position()
 	position = restored if restored is Vector2 else _default_position()
 	position = _clamp_position(position, false)
@@ -265,6 +337,9 @@ func _process(delta: float) -> void:
 	if not started:
 		return
 	var now := _now_ms()
+	var event_deadline := window_event_debouncer.poll(now)
+	if event_deadline < INF:
+		next_window_refresh = minf(next_window_refresh, event_deadline)
 	_update_window_platforms(now)
 	_update_life_systems(delta, now)
 	_update_dialogue_system(now)
@@ -279,8 +354,12 @@ func _process(delta: float) -> void:
 	_update_motion(now)
 	if machine.state == "manual_control":
 		_update_manual_control(delta, now)
+	elif machine.state == "wall_climb":
+		_update_autonomous_climb(delta, now)
 	elif roam_active:
 		_update_roam(now)
+	elif not ecology_walk_motion.is_empty():
+		_update_ecology_walk(now)
 	_update_edge_patrol(now)
 	_update_drag_idle(now)
 	if machine.state == "drag_slide":
@@ -315,6 +394,11 @@ func _process(delta: float) -> void:
 			"needs": needs_model.snapshot() if needs_model != null else {},
 			"scores": behavior_director.last_candidates if behavior_director != null else [],
 			"platform": active_platform.stable_id() if active_platform != null else "",
+			"world": {
+				"platforms": platforms.size(),
+				"bodies": window_bodies.size(),
+				"walls": desktop_world.walls.size(),
+			},
 			"bubble": speech_bubble.snapshot(),
 			"dialogue": {
 				"ambient_seconds": dialogue_scheduler.seconds_until_attempt(now),
@@ -382,6 +466,7 @@ func _notification(what: int) -> void:
 		_save_position()
 		_save_user_settings()
 		_save_life_state()
+		window_event_debouncer.stop_event_hook()
 		get_tree().quit()
 
 func _setup_menus() -> void:
@@ -407,6 +492,7 @@ func _setup_menus() -> void:
 	menu.add_check_item("光标跟随", MENU_CURSOR_TRACKING)
 	menu.add_check_item("气泡台词", MENU_SPEECH_BUBBLES)
 	menu.add_check_item("读取窗口标题", MENU_TITLE_AWARENESS)
+	menu.add_check_item("窗口碰撞", MENU_WINDOW_COLLISION)
 	menu.add_check_item("动作音效", MENU_ACTION_SOUNDS)
 	menu.add_item("人格机制…（F8）", MENU_MECHANISM_DASHBOARD)
 	menu.add_item("动作总览…（F9）", MENU_ACTION_CATALOG)
@@ -422,6 +508,7 @@ func _setup_menus() -> void:
 	tray_menu.add_check_item("光标跟随", TRAY_CURSOR_TRACKING)
 	tray_menu.add_check_item("气泡台词", TRAY_SPEECH_BUBBLES)
 	tray_menu.add_check_item("读取窗口标题", TRAY_TITLE_AWARENESS)
+	tray_menu.add_check_item("窗口碰撞", TRAY_WINDOW_COLLISION)
 	tray_menu.add_check_item("动作音效", TRAY_ACTION_SOUNDS)
 	tray_menu.add_separator()
 	tray_menu.add_item("人格机制", TRAY_MECHANISM_DASHBOARD)
@@ -446,6 +533,9 @@ func _sync_menu_checks() -> void:
 		for id: int in [MENU_TITLE_AWARENESS, TRAY_TITLE_AWARENESS]:
 			var index: int = popup.get_item_index(id)
 			if index >= 0: popup.set_item_checked(index, title_awareness)
+		for id: int in [MENU_WINDOW_COLLISION, TRAY_WINDOW_COLLISION]:
+			var index: int = popup.get_item_index(id)
+			if index >= 0: popup.set_item_checked(index, window_collision_enabled)
 		for id: int in [MENU_ACTION_SOUNDS, TRAY_ACTION_SOUNDS]:
 			var index: int = popup.get_item_index(id)
 			if index >= 0: popup.set_item_checked(index, action_sounds)
@@ -539,6 +629,12 @@ func _on_menu_id_pressed(id: int) -> void:
 			sfx_player.configure(action_sounds, sfx_volume)
 			_save_user_settings()
 			_sync_menu_checks()
+		MENU_WINDOW_COLLISION, TRAY_WINDOW_COLLISION:
+			window_collision_enabled = not window_collision_enabled
+			window_platform_service.set_collision_enabled(window_collision_enabled)
+			window_platform_service.refresh_bodies()
+			_save_user_settings()
+			_sync_menu_checks()
 		MENU_DEBUG_OVERLAY:
 			debug_overlay.toggle()
 			_sync_menu_checks()
@@ -598,6 +694,7 @@ func _save_user_settings() -> void:
 		"title_awareness": title_awareness,
 		"action_sounds": action_sounds,
 		"sfx_volume": sfx_volume,
+		"window_collision": window_collision_enabled,
 	})
 	if save_error != OK:
 		push_warning("无法保存桌宠设置：%s" % error_string(save_error))
@@ -938,13 +1035,68 @@ func _run_ecology_travel(step: Dictionary) -> bool:
 		_:
 			return false
 	target = habitat_model.clamp_pet_position(target, Vector2(pet_window_size), true)
-	active_platform = null
-	pending_platform = null
-	platform_walk_motion.clear()
-	_prepare_motion(target, clampf(position.distance_to(target) * 1.5, 850.0, 2600.0), 84.0, false)
+	# Same-tier relocation: jump and walk are both valid modes for a grounded
+	# floor→floor move, chosen at random. Platform targets (handled above) always
+	# hop because the pet cannot walk up onto a window.
+	var on_floor := active_platform == null
+	var same_screen := habitat_model.route_mode(position, target, Vector2(pet_window_size)) == "walk"
+	_unmount_from_window()
+	if RoamPlannerScript.choose_ground_relocation_mode(on_floor, same_screen, randf()) == "walk":
+		return _start_ecology_floor_walk(target)
+	_prepare_motion(target, _travel_duration_ms(position.distance_to(target)), 84.0, false)
 	var needs_turn := _prepare_travel_facing(target.x)
 	machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
 	return machine.state in ["turn", "takeoff", "float"]
+
+## Starts an ecology-travel walk leg (the grounded floor→floor counterpart to the
+## jump arc). Reuses the roam_walk state so the patrol_floor clip plays; the motion
+## is driven by ecology_walk_motion, and arrival at idle makes _on_transition
+## complete the travel step — no completion bookkeeping needed here.
+func _start_ecology_floor_walk(target: Vector2) -> bool:
+	motion.clear()
+	ecology_walk_motion = {
+		"from": position,
+		"to": target,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(600.0, position.distance_to(target) / RoamPlannerScript.GROUND_SPEED * 1000.0),
+	}
+	_prepare_travel_facing(target.x)
+	facing = pending_facing
+	machine.dispatch({"type": "ROAM_WALK_START"})
+	if machine.state != "roam_walk":
+		ecology_walk_motion = {}
+		return false
+	return true
+
+## Drives the ecology-travel walk leg: lerp along the floor toward the target and
+## stop early when a window wall blocks the path. Any state change out of roam_walk
+## (drag, poke, manual control, platform loss) drops the walk without completing the
+## step — the interruption path already paused/finished the routine.
+func _update_ecology_walk(now: float) -> void:
+	if machine.state != "roam_walk":
+		ecology_walk_motion = {}
+		return
+	var duration := maxf(1.0, float(ecology_walk_motion.get("duration_ms", 1.0)))
+	var progress := clampf((now - float(ecology_walk_motion.get("started_at", now))) / duration, 0.0, 1.0)
+	var from := Vector2(ecology_walk_motion.get("from", position))
+	var to := Vector2(ecology_walk_motion.get("to", position))
+	var previous_position := position
+	position = _clamp_position(from.lerp(to, progress), false)
+	_apply_position()
+	if not desktop_world.walls.is_empty() and progress < 1.0:
+		var wall := _blocked_walk_wall(previous_position, position)
+		if not wall.is_empty():
+			var side := int(wall.get("side", 0))
+			var wall_x := float(wall.get("x", 0.0))
+			var body_edge := wall_x - (WINDOW_FOOT_OFFSET_X + side * PetWallResolverScript.BODY_HALF_WIDTH)
+			position = _clamp_position(Vector2(body_edge, position.y), false)
+			_apply_position()
+			ecology_walk_motion = {}
+			machine.dispatch({"type": "CLIP_END"})
+			return
+	if progress >= 1.0:
+		ecology_walk_motion = {}
+		machine.dispatch({"type": "CLIP_END"})
 
 func _foreground_platform() -> WindowPlatform:
 	var foreground := window_platform_service.foreground_snapshot()
@@ -1113,7 +1265,10 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 			"stable_title": last_novel_window_title if title_awareness else "",
 			"title_awareness": title_awareness,
 			"platform_count": platforms.size(),
+			"body_count": window_bodies.size(),
+			"wall_count": desktop_world.walls.size(),
 			"active_platform": active_platform.stable_id() if active_platform != null else "",
+			"last_lost": last_platform_lost_reason,
 		},
 		"dialogue": {
 			"event_cooldown_seconds": event_cooldown_seconds,
@@ -1136,6 +1291,7 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 			"speech_bubbles": speech_bubbles_enabled,
 			"title_awareness": title_awareness,
 			"action_sounds": action_sounds,
+			"window_collision": window_collision_enabled,
 			"ecology_rate": ecology_clock.rate(),
 			"developer_state": using_developer_state,
 		},
@@ -1146,6 +1302,9 @@ func _start_autonomous_intent(intent: Dictionary) -> bool:
 		return false
 	if str(intent.get("id", "")) == "window_walk":
 		intent = _prepare_platform_walk(intent)
+		if intent.is_empty():
+			# The pace was redirected to a hop/climb/fly encounter; nothing to begin.
+			return true
 	elif idle_pose_facing != 0:
 		var handoff_clip := "idle_%s_enter" % _facing_segment(idle_pose_facing)
 		if manifest.has_clip(handoff_clip):
@@ -1330,13 +1489,189 @@ func _platform_still_valid(platform: WindowPlatform) -> bool:
 			return true
 	return false
 
+## Rebuilds the collision lists of the shared DesktopWorld: walls come from the
+## solid bodies (gated by the collision toggle); the standable planes come from the
+## always-on WindowPlatform list so manual mode can stand on windows even when
+## collision is disabled, matching the riding path. Planes are already
+## occlusion-subtracted; the standing model additionally merges the standing
+## window's per-frame live visible segments, so an occluded standing point is never
+## kept on an injected full-width plane.
+func _flatten_collision_world(now_ms: float) -> void:
+	desktop_world.walls = []
+	if window_collision_enabled:
+		for body in window_bodies:
+			desktop_world.walls.append_array(body.fragment_wall_edges())
+	_rebuild_platform_planes(now_ms)
+
+
+## Standable planes from the platform list (WindowPlatform, always on). Each plane
+## is the occlusion-subtracted top segment in the model's foot space, carrying the
+## (handle, process_id) identity so the model can distinguish windows. Transient
+## windows (present < WINDOW_STAND_MIN_AGE_MS) are excluded from the STANDING list
+## only — occlusion and walls always follow visible rendering.
+func _rebuild_platform_planes(now_ms: float) -> void:
+	var planes: Array = []
+	for platform in platforms:
+		planes.append({
+			"left": float(platform.segment_left()),
+			"right": float(platform.segment_right()),
+			"y": float(platform.top_edge.position.y) - WINDOW_FOOT_OFFSET_Y,
+			"handle": platform.handle,
+			"process_id": platform.process_id,
+		})
+	desktop_world.platforms = WindowPlatformService.gate_transient_planes(planes, _window_first_seen_ms, now_ms, WINDOW_STAND_MIN_AGE_MS)
+
+
+## Records when each window handle was first seen this session, so a freshly
+## appeared popup is not stood on until it has existed for WINDOW_STAND_MIN_AGE_MS.
+## Handles that left the platform set are dropped (a re-appear counts as new).
+func _observe_window_first_seen(now: float) -> void:
+	var present: Dictionary = {}
+	for platform in platforms:
+		present[platform.handle] = true
+		if not _window_first_seen_ms.has(platform.handle):
+			_window_first_seen_ms[platform.handle] = now
+	var stale: Array = []
+	for handle in _window_first_seen_ms:
+		if not present.has(handle):
+			stale.append(handle)
+	for handle in stale:
+		_window_first_seen_ms.erase(handle)
+
+
+func _platform_for_identity(handle: int, pid: int) -> WindowPlatform:
+	for platform in platforms:
+		if platform.handle == handle and platform.process_id == pid:
+			return platform
+	return null
+
+
+## The window the pet is currently standing on: the ridden platform, the pending
+## travel target, or the model's standing plane (manual control / wall climb).
+## Null when the pet is not committed to any window.
+func _standing_platform() -> WindowPlatform:
+	if active_platform != null:
+		return active_platform
+	if pending_platform != null:
+		return pending_platform
+	if manual_control_model != null:
+		var handle: int = manual_control_model.standing_plane_handle()
+		if handle != 0:
+			return _platform_for_identity(handle, manual_control_model.standing_plane_pid())
+	return null
+
+
+## Handle of whatever window the pet stands on, 0 when none. Used by the event
+## debouncer so dragging the standing window does not trigger redundant rebuilds.
+func _standing_window_identity() -> int:
+	var platform := _standing_platform()
+	return platform.handle if platform != null else 0
+
+
+func _wall_handle_present(handle: int) -> bool:
+	for edge in desktop_world.walls:
+		if int(edge.get("handle", 0)) == handle:
+			return true
+	return false
+
+
+## Maps ride-feedback events onto existing animation assets and dialogue lines.
+## Reaction clips are transient: they play over the ride clip and the model's
+## CLIP_END restores the ride (or idle pose) instead of ending the platform state.
+func _apply_ride_feedback_events(events: Array) -> void:
+	for value in events:
+		if not value is Dictionary:
+			continue
+		var kind := str(value.get("kind", ""))
+		match kind:
+			"start_move":
+				_play_ride_reaction("react")
+				_emit_dialogue("window_move")
+			"wobble":
+				_play_ride_reaction("look_around")
+			"settle":
+				_play_ride_reaction("idle_breathe")
+			"resize":
+				_play_ride_reaction("look_around")
+				_emit_dialogue("window_resize")
+			"restance":
+				position.x = float(value.get("x", _pet_foot_global().x)) - WINDOW_FOOT_OFFSET_X
+				_apply_position()
+
+
+## Feeds one frame of ride feedback for a standing window and maps the reaction
+## events onto animations and dialogue. Shared by the riding track loop and the
+## manual-standing loop so every standing mode reacts the same way.
+func _feed_standing_feedback(now: float, platform: WindowPlatform, prev_rect: Rect2i) -> void:
+	if platform == null:
+		return
+	_apply_ride_feedback_events(ride_feedback_controller.update(
+		now,
+		prev_rect,
+		platform.rect,
+		_pet_foot_global().x,
+		float(platform.segment_left()),
+		float(platform.segment_right()),
+	))
+
+
+## Feeds ride feedback while the manual model stands on a window (keyboard
+## control or wall-climb mount) with no ridden platform. The previous rect is
+## cached per standing window; a gap larger than 2.5s re-baselines so leaving
+## and re-approaching the same window is not read as a drag.
+func _feed_manual_standing_feedback(now: float, platform: WindowPlatform) -> void:
+	if platform == null:
+		return
+	if platform.handle != _manual_feedback_handle or now - _manual_feedback_last_at > 2500.0:
+		_manual_feedback_handle = platform.handle
+		_manual_feedback_prev_rect = platform.rect
+	var prev_rect := _manual_feedback_prev_rect
+	_feed_standing_feedback(now, platform, prev_rect)
+	_manual_feedback_prev_rect = platform.rect
+	_manual_feedback_last_at = now
+
+
+func _is_standing_on_model_plane() -> bool:
+	return manual_control_model != null and manual_control_model.standing_plane_handle() != 0
+
+
+func _play_ride_reaction(clip_name: String) -> void:
+	if not manifest.has_clip(clip_name):
+		return
+	if active_platform == null and not _is_standing_on_model_plane():
+		return
+	_ride_reaction_active = true
+	_ride_reaction_clip = clip_name
+	sprite_player.play_clip(clip_name)
+
+
+## Floor plane in FOOT space, for the resolver which reasons about feet.
+func _foot_floor() -> float:
+	return _floor_y() + WINDOW_FOOT_OFFSET_Y
+
+
+func _blocked_walk_wall(previous_position: Vector2, next_position: Vector2) -> Dictionary:
+	if desktop_world.walls.is_empty():
+		return {}
+	return PetWallResolverScript.find_blocking_wall(
+		_pet_foot_global(previous_position),
+		_pet_foot_global(next_position),
+		desktop_world.walls,
+		_foot_floor(),
+	)
+
 func _update_window_platforms(now: float) -> void:
+	window_event_debouncer.set_ridden_handle(_standing_window_identity())
 	if now >= next_window_refresh:
 		next_window_refresh = now + 500.0
+		window_event_debouncer.acknowledge()
 		var previous_handles := {}
 		for platform in platforms:
 			previous_handles[platform.handle] = true
 		platforms = window_platform_service.refresh()
+		window_bodies = window_platform_service.last_bodies()
+		_observe_window_first_seen(now)
+		_flatten_collision_world(now)
 		for platform in platforms:
 			if not previous_handles.has(platform.handle):
 				needs_model.apply_event("novel_window")
@@ -1357,24 +1692,58 @@ func _update_window_platforms(now: float) -> void:
 					needs_model.apply_event("novel_window")
 				if stable_title != last_stable_window_title and _emit_dialogue("window_title"):
 					last_stable_window_title = stable_title
-	if (active_platform != null or pending_platform != null) and now >= next_platform_track:
-		next_platform_track = now + 33.0
-		if active_platform != null:
-			var tracking := window_platform_service.track_platform(active_platform, null, _pet_foot_global().x)
+	var standing := _standing_platform()
+	if standing != null and now >= next_platform_track:
+		# The gap since the last tick scales the teleport threshold inside the
+		# service: a fast drag across a hitched/stale-rect tick must still follow.
+		var track_elapsed_ms := now - _last_platform_track_at if _last_platform_track_at > 0.0 else -1.0
+		_last_platform_track_at = now
+		next_platform_track = now + PLATFORM_TRACK_INTERVAL_MS
+		if pending_platform != null:
+			_track_pending_platform(track_elapsed_ms)
+		else:
+			var tracking := window_platform_service.track_platform(standing, null, _pet_foot_global().x, track_elapsed_ms)
 			if bool(tracking.get("lost", false)):
-				_drop_from_platform(str(tracking.get("reason", "missing")))
-			else:
-				var delta := Vector2(tracking.get("delta", Vector2i.ZERO))
-				active_platform = tracking.get("platform") as WindowPlatform
-				if not delta.is_zero_approx():
+				_on_standing_window_lost(standing, tracking, track_elapsed_ms)
+			elif active_platform != null:
+				# The standing point is covered by a front window: hold position (no
+				# follow, no y-pin) and, after the grace, drop. A transient mid-drag
+				# occlusion recovers once the occluder rects refresh; a persistent one
+				# is a real occlusion, so the rider falls instead of riding a hidden edge.
+				if str(tracking.get("status", "")) == "occluded":
+					if track_elapsed_ms > 0.0:
+						_rider_occlusion_ms += track_elapsed_ms
+					if _rider_occlusion_ms >= RIDER_OCCLUSION_GRACE_MS:
+						_rider_occlusion_ms = 0.0
+						_drop_from_platform("occluded")
+					return
+				_rider_occlusion_ms = 0.0
+				var prev_rect := standing.rect
+				var fresh := tracking.get("platform") as WindowPlatform
+				var center_delta := fresh.center().x - standing.center().x
+				active_platform = fresh
+				_feed_standing_feedback(now, fresh, prev_rect)
+				# Riding follows the window: the visible-segment center displacement
+				# (drag + resize both move it, matching the model's center-delta
+				# follow) plus an absolute foot pin to the window's top edge.
+				# Manual standing follows inside the model, so it never reaches
+				# this branch.
+				if not is_zero_approx(center_delta):
 					_observe_ecology("moving_platform")
+					var delta := Vector2(center_delta, 0.0)
 					position += delta
 					if not platform_walk_motion.is_empty():
-						platform_walk_motion.from = Vector2(platform_walk_motion.from) + delta
-						platform_walk_motion.to = Vector2(platform_walk_motion.to) + delta
-					_apply_position()
-		elif pending_platform != null:
-			_track_pending_platform()
+						platform_walk_motion.from += delta
+						platform_walk_motion.to += delta
+				# Pin the foot with the CURRENT pose's offset, not the standing
+				# constant: riding clips like the window sit keep their feet at a
+				# different supportContactY offset (e.g. ~261 vs 356 for standing).
+				# A hardcoded standing pin fights _on_sprite_frame_changed's live
+				# per-frame correction and the pet vibrates vertically on the ledge.
+				position.y = float(fresh.top_edge.position.y) - _riding_foot_offset_y()
+				_apply_position()
+			else:
+				_feed_manual_standing_feedback(now, tracking.get("platform") as WindowPlatform)
 	if machine.state == "platform_walk" and not platform_walk_motion.is_empty():
 		_update_platform_walk(now)
 	if active_platform != null and machine.state == "idle" and auto_wander and now >= next_platform_swap:
@@ -1392,6 +1761,32 @@ func _prepare_platform_walk(intent: Dictionary) -> Dictionary:
 	if right <= left:
 		return intent
 	var target_x := right if foot.x < (left + right) / 2.0 else left
+	# A taller window rising beside the paced segment is an encounter like any roam
+	# wall: hop onto a short one, climb a reachable tall one, or fly over. The
+	# resolver floor is the platform top (the pet's feet), so `short` is relative to
+	# the ledge, not the ground. The standing window's own fragment edges are not
+	# climb targets — they are just the paced segment's boundaries.
+	var blocked := PetWallResolverScript.find_blocking_wall(
+		foot,
+		Vector2(target_x, foot.y),
+		desktop_world.walls,
+		foot.y,
+		WINDOW_HOP_REACH_PX,
+	)
+	if not blocked.is_empty() and int(blocked.get("handle", 0)) != active_platform.handle:
+		if bool(blocked.get("short", false)):
+			var hop_platform := _platform_for_identity(int(blocked.get("handle", 0)), int(blocked.get("process_id", 0)))
+			if hop_platform != null:
+				roam_session.redirect = {"kind": "hop", "platform": hop_platform}
+				_advance_or_schedule_wander()
+				return {}
+		var wall_top_y := float(blocked.get("top_y", 0.0))
+		if wall_top_y - WINDOW_FOOT_OFFSET_Y >= work_area.position.y and _has_wall_climb_assets():
+			roam_session.redirect = {"kind": "climb", "wall": blocked}
+		else:
+			roam_session.redirect = {"kind": "fly", "wall": blocked}
+		_advance_or_schedule_wander()
+		return {}
 	var walk_facing := 1 if target_x > foot.x else -1
 	var clip_name := "patrol_floor_right" if walk_facing > 0 else "patrol_floor_left"
 	var result := intent.duplicate(true)
@@ -1427,36 +1822,119 @@ func _travel_to_platform(platform: WindowPlatform) -> bool:
 	pending_platform = platform
 	active_platform = null
 	platform_walk_motion.clear()
-	_prepare_motion(target, clampf(position.distance_to(target) * 1.5, 850.0, 1800.0), 82.0, false)
+	_prepare_motion(target, _travel_duration_ms(position.distance_to(target)), 82.0, false)
 	var needs_turn := _prepare_travel_facing(target.x)
 	machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
 	sfx_player.play("window_hop")
 	return true
 
-func _drop_from_platform(_reason: String) -> void:
-	if active_platform == null:
-		return
+## Unmounts the pet from whatever window it is standing on (riding platform,
+## pending travel target, or platform-walk motion) and clears the ride-feedback
+## session. Every mode that abandons a window — drag, roam, edge patrol, manual
+## control entry, ecology travel, slides and throws — routes through this one
+## function so the "leave a window" rule is defined once.
+func _unmount_from_window() -> void:
 	active_platform = null
 	pending_platform = null
 	platform_walk_motion.clear()
+	ride_feedback_controller.reset()
+	_manual_feedback_handle = 0
+	_manual_feedback_prev_rect = Rect2i()
+	_manual_feedback_last_at = -INF
+
+
+## Unified flight-travel duration: distance-proportional with a fixed clamp band.
+func _travel_duration_ms(distance: float) -> float:
+	return clampf(distance * 1.5, 850.0, 2200.0)
+
+
+## Unified falling duration: base plus distance, matching umbrella fall timing.
+func _fall_duration_ms(fall_distance: float) -> float:
+	return clampf(380.0 + fall_distance * 0.7, 420.0, 1700.0)
+
+
+## Unified throw-arc duration.
+func _throw_arc_duration_ms(distance: float) -> float:
+	return clampf(distance / 900.0 * 1000.0, 400.0, 1400.0)
+
+
+## Unified handling when the standing window disappears or teleports away.
+## Riding drops immediately; manual/wall-climb standing is owned by the model's
+## grace window, so the loss is only logged here and the model decides the fall.
+func _on_standing_window_lost(standing: WindowPlatform, tracking: Dictionary, elapsed_ms: float) -> void:
+	_log_ride_drop("track", {
+		"reason": str(tracking.get("reason", "missing")),
+		"platform_rect": standing.rect,
+		"snapshot_rect": (tracking.get("snapshot", {}) as Dictionary).get("rect", Rect2i()),
+		"delta": tracking.get("delta", Vector2i.ZERO),
+		"elapsed_ms": elapsed_ms,
+		"standing_x": _pet_foot_global().x,
+		"z_order": standing.z_order,
+	})
+	if active_platform != null:
+		_drop_from_platform(str(tracking.get("reason", "missing")))
+
+
+func _drop_from_platform(_reason: String) -> void:
+	if active_platform == null:
+		return
+	last_platform_lost_reason = _reason
+	_log_ride_drop("drop", {"reason": _reason})
+	_unmount_from_window()
 	resumable_platform_intent.clear()
 	_interrupt_action("platform_lost")
 	var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
 	var fall_distance := maxf(0.0, floor_target.y - position.y)
 	drag_fall_mode = "umbrella" if PetUmbrellaFall.should_use(fall_distance, _has_umbrella_family()) else "direct"
-	_prepare_motion(floor_target, clampf(420.0 + fall_distance * 0.7, 480.0, 1700.0), 0.0)
+	_prepare_motion(floor_target, _fall_duration_ms(fall_distance), 0.0)
 	machine.dispatch({"type": "PLATFORM_LOST"})
 	_emit_dialogue("window_lost")
 
-func _track_pending_platform() -> void:
+
+## Empirical diagnostic: append one line per ride drop so a drag-induced drop can
+## be attributed from the log instead of guessed at. Written to an absolute path
+## because the pet is usually run from the exported exe. Remove after diagnosis.
+func _log_ride_drop(tag: String, info: Dictionary) -> void:
+	var line := "[%s] %s drop=%s pos=%s foot=%s state=%s platforms=%d bodies=%d collision=%s"
+	line = line % [
+		str(_now_ms()),
+		tag,
+		str(info.get("reason", "")),
+		str(position),
+		str(_pet_foot_global()),
+		str(machine.state),
+		platforms.size(),
+		window_bodies.size(),
+		str(window_collision_enabled),
+	]
+	for key in info:
+		if key == "reason":
+			continue
+		line += " %s=%s" % [str(key), str(info[key])]
+	var file := FileAccess.open("D:/workspace/project-chihiro/build/ride_drop.log", FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_line(line)
+	file.close()
+
+func _track_pending_platform(elapsed_ms: float = -1.0) -> void:
 	if pending_platform == null or motion.is_empty():
 		return
 	var target_foot_x := _pet_foot_global(Vector2(motion.get("to", position))).x
-	var tracking := window_platform_service.track_platform(pending_platform, null, target_foot_x)
+	var tracking := window_platform_service.track_platform(pending_platform, null, target_foot_x, elapsed_ms)
 	if bool(tracking.get("lost", false)):
+		_log_ride_drop("pending", {
+			"reason": str(tracking.get("reason", "missing")),
+			"platform_rect": pending_platform.rect,
+			"snapshot_rect": (tracking.get("snapshot", {}) as Dictionary).get("rect", Rect2i()),
+			"delta": tracking.get("delta", Vector2i.ZERO),
+			"elapsed_ms": elapsed_ms,
+			"standing_x": target_foot_x,
+			"z_order": pending_platform.z_order,
+		})
 		pending_platform = null
 		var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
-		_prepare_motion(floor_target, clampf(position.distance_to(floor_target) * 1.2, 480.0, 1400.0), 0.0)
+		_prepare_motion(floor_target, _fall_duration_ms(position.distance_to(floor_target)), 0.0)
 		_emit_dialogue("window_lost")
 		return
 	var delta := Vector2(tracking.get("delta", Vector2i.ZERO))
@@ -1488,25 +1966,31 @@ func _pet_foot_global(at_position: Variant = null) -> Vector2:
 	var legacy_inset := 0.0 if not (clip.get("supportContactY", []) as Array).is_empty() else 4.0
 	return resolved_position + dock + support_offset + Vector2(0.0, legacy_inset)
 
+
+## Y offset from the pet box top to the current pose's foot, shared with the
+## riding pin (PetRenderBox.foot_offset_y). Riding pins the foot with this live
+## offset; the standing constant (WINDOW_FOOT_OFFSET_Y = 356) only matches
+## standing/walking clips, and a hardcoded pin fights the per-frame foot
+## correction on riding poses like the window sit (supportContactY keeps the
+## sitting feet higher).
+func _riding_foot_offset_y() -> float:
+	return PetRenderBox.foot_offset_y(
+		manifest.clip(sprite_player.current_clip),
+		sprite_player.current_frame,
+		Vector2(pet_window_size),
+		PetRenderBox.character_scale(manifest),
+	)
+
 func _position_for_platform(platform: WindowPlatform, foot_x: float) -> Vector2:
 	var local_foot := _pet_foot_global(Vector2.ZERO)
 	return Vector2(foot_x - local_foot.x, float(platform.top_edge.position.y) - local_foot.y)
 
-func _crossed_platform(previous_position: Vector2, next_position: Vector2) -> WindowPlatform:
-	var previous_foot := _pet_foot_global(previous_position)
-	var next_foot := _pet_foot_global(next_position)
-	if next_foot.y <= previous_foot.y:
-		return null
-	var selected: WindowPlatform = null
-	var selected_top := INF
-	for platform in platforms:
-		var top := float(platform.top_edge.position.y)
-		if top >= previous_foot.y and top <= next_foot.y and platform.contains_x(next_foot.x) and top < selected_top:
-			selected = platform
-			selected_top = top
-	return selected
-
 func _on_transition(from: String, to: String, _event: Dictionary) -> void:
+	# Any state transition plays its own clip, interrupting a ride/window reaction
+	# mid-play. Drop the reaction bookkeeping so a stale flag cannot gate the next
+	# state's clip logic (e.g. manual control's _apply_control_clip yielding).
+	_ride_reaction_active = false
+	_ride_reaction_clip = ""
 	wander_deadline = -1.0
 	blink_deadline = -1.0
 	idle_side_pose_deadline = -1.0
@@ -1628,8 +2112,23 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		manual_control_model.finish_detach()
 		_emit_control_quip("control_detach")
 		return
+	if machine.state == "manual_control" and manual_control_model != null and manual_control_model.has_pending_mount() and clip_name == manual_control_model.mount_clip():
+		manual_control_model.finish_mount()
+		_emit_dialogue("window_land")
+		_observe_ecology("window_land")
+		return
+	if machine.state == "wall_climb":
+		_handle_wall_climb_clip_completed(clip_name)
+		return
 	if machine.state == "manual_control" and manual_control_model != null and manual_control_model.subphase == "fall" and clip_name == "drag_fall":
 		sprite_player.play_clip("drag_fall", true, _facing_segment(facing))
+		return
+	if machine.state == "manual_control" and clip_name in ["umbrella_open", "umbrella_float", "umbrella_close"]:
+		# An umbrella phase clip finished while the phase is still current. Flag it
+		# so the next control tick re-issues the phase; the umbrella fall has long
+		# phases (float can last hundreds of ms) and without this the sprite would
+		# freeze on the last frame until the phase changes.
+		_umbrella_control_dirty = true
 		return
 	if head_pat_refused and machine.state == "head_pat" and clip_name in ["head_pat_refuse", "react"]:
 		head_pat_refused = false
@@ -1679,6 +2178,16 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		machine.dispatch({"type": "CLIP_END"})
 		_start_direct_behavior("window_land_recover")
 		return
+	if _ride_reaction_active and clip_name == _ride_reaction_clip:
+		_ride_reaction_active = false
+		_ride_reaction_clip = ""
+		if machine.state == "manual_control" or machine.state == "wall_climb":
+			_restore_control_clip_after_reaction()
+		elif action_session.is_active():
+			_play_action_session_clip()
+		else:
+			_play_idle_pose()
+		return
 	machine.dispatch({"type": "CLIP_END"})
 
 func _on_clip_changed(name: String, previous_name: String) -> void:
@@ -1697,6 +2206,19 @@ func _on_sprite_frame_changed(_frame_index: int, _frame_count: int) -> void:
 	_apply_position()
 
 func _on_sprite_loop_boundary(clip_name: String, _segment: String, _completed_cycle: int) -> void:
+	# A looping reaction clip (e.g. idle_breathe for a settle) would never fire
+	# clip_completed, so end the reaction after one cycle and restore like a
+	# one-shot reaction does.
+	if _ride_reaction_active and clip_name == _ride_reaction_clip:
+		_ride_reaction_active = false
+		_ride_reaction_clip = ""
+		if machine.state == "manual_control" or machine.state == "wall_climb":
+			_restore_control_clip_after_reaction()
+		elif action_session.is_active():
+			_play_action_session_clip()
+		else:
+			_play_idle_pose()
+		return
 	if not action_session.is_active() or action_session.current_phase() != "loop" or action_session.current_clip() != clip_name:
 		return
 	if action_session.on_loop_boundary(int(_now_ms())):
@@ -1783,9 +2305,7 @@ func _evaluate_press_intent(global: Vector2, now: float) -> void:
 	elif next == "drag":
 		head_pat_deadline = -1.0
 		_interrupt_action("dragging")
-		active_platform = null
-		pending_platform = null
-		platform_walk_motion.clear()
+		_unmount_from_window()
 		motion.clear()
 		var samples: Array = press.samples
 		samples.append({"point": global, "time": now})
@@ -1827,7 +2347,7 @@ func _finish_press(cancelled: bool) -> void:
 				fall_distance,
 				float(manifest.behavior_value("umbrellaFallMinDurationMs", 1000.0)),
 				float(manifest.behavior_value("umbrellaFallMaxDurationMs", 2200.0)),
-			) if use_umbrella else clampf(360.0 + fall_distance * 0.7, 420.0, 720.0)
+			) if use_umbrella else _fall_duration_ms(fall_distance)
 			drag_fall_mode = "umbrella" if use_umbrella else "direct"
 			umbrella_visual_phase = ""
 			_prepare_motion(target, fall_duration, 0.0)
@@ -1952,13 +2472,15 @@ func _trigger_manual_control() -> void:
 
 func _enter_manual_control() -> void:
 	_cancel_edge_patrol()
-	active_platform = null
-	pending_platform = null
-	platform_walk_motion.clear()
+	_unmount_from_window()
 	motion.clear()
 	_stop_roam()
 	if manual_control_model == null:
 		manual_control_model = ManualControlModelScript.new()
+	# Entering control must keep the pet exactly where it is: the model adopts the
+	# plane it already stands on (or falls from the current height) instead of
+	# snapping to the floor on the first tick.
+	manual_control_model.set_preserve_entry_position(true)
 	manual_control_model.reset(position)
 	var durations := _control_oneshot_durations()
 	if not durations.is_empty():
@@ -1981,7 +2503,36 @@ func _exit_manual_control() -> void:
 	desktop.set_unfocusable(true)
 	_last_control_clip = ""
 	_last_control_segment = ""
-	machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+	var resume := _resolve_resume(interaction_resume)
+	# Exiting control mid-air (the pet fell off a ledge or was knocked loose during
+	# the session) must not resume a ground state: that would park the pet hovering
+	# at the exit position. Hand it off as a fall from where it actually stands so
+	# the exit keeps the same position while the normal physics take over.
+	if manual_control_model != null and manual_control_model.standing_plane_handle() == 0:
+		if manual_control_model.subphase in ["fall", "flight", "wall", "jump"] and position.y < _floor_y() - 2.0:
+			resume = "drag_fall"
+	_handoff_manual_platform()
+	machine.dispatch({"type": "INTERACTION_END", "resume": resume})
+
+## When manual control ends with the pet standing on a window (the model tracks
+## the standing plane), hand the platform over so riding/tracking resume. Off a
+## platform the pet just keeps its current position.
+func _handoff_manual_platform() -> void:
+	if manual_control_model == null:
+		return
+	var handle: int = manual_control_model.standing_plane_handle()
+	if handle == 0:
+		return
+	var pid: int = manual_control_model.standing_plane_pid()
+	var platform := _platform_for_identity(handle, pid)
+	if platform == null:
+		return
+	active_platform = platform
+	# Anchor to the platform's top edge without clamping to the work area: the
+	# window may sit at or past the screen edge and the pet must stand on it.
+	position = _position_for_platform(platform, _pet_foot_global().x)
+	_apply_position()
+	_save_position()
 
 func _handle_manual_up_tap() -> void:
 	if manual_control_model == null:
@@ -2001,11 +2552,17 @@ func _handle_manual_down_tap() -> void:
 		return
 	if _now_ms() - manual_last_down_tap <= MANUAL_DOUBLE_TAP_MS:
 		manual_last_down_tap = -INF
-		manual_control_model.set_flight_mode(false)
-		if _now_ms() - manual_last_flight_enter_ms <= CONTROL_COMBO_MS:
-			_emit_control_quip("control_combo")
+		if manual_control_model.flight_mode:
+			manual_control_model.set_flight_mode(false)
+			if _now_ms() - manual_last_flight_enter_ms <= CONTROL_COMBO_MS:
+				_emit_control_quip("control_combo")
+			else:
+				_emit_control_quip("control_fly_cancel")
 		else:
-			_emit_control_quip("control_fly_cancel")
+			# Not flying: double-tap down detaches from the standing window platform
+			# and falls to the nearest lower surface (a lower window top or the floor).
+			manual_control_model.queue_step_off()
+			_emit_control_quip("control_step_off")
 	else:
 		manual_last_down_tap = _now_ms()
 
@@ -2022,30 +2579,156 @@ func _update_manual_control(delta: float, now: float) -> void:
 		dir_y -= 1
 	if Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S):
 		dir_y += 1
-	var screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
-	var result: Dictionary = manual_control_model.tick(delta, {"dir_x": dir_x, "dir_y": dir_y}, {
-		"floor_y": _floor_y(),
-		"screen": screen,
-		"pet_size": Vector2(pet_window_size),
-		"walk_speed": MANUAL_WALK_SPEED,
-		"flight_speed": MANUAL_FLIGHT_SPEED,
-		"climb_speed": MANUAL_CLIMB_SPEED,
-		"gravity": MANUAL_GRAVITY,
-		"jump_vy": MANUAL_JUMP_VY,
-		"wall_threshold": MANUAL_WALL_THRESHOLD,
-		"umbrella_available": _has_umbrella_family(),
-	})
+	var world := _build_desktop_world()
+	# Manual jump is slightly stronger than the autonomous one so a staircase hop
+	# clears a short wall the pet would otherwise scrape; the autonomous climb
+	# omits jump_boost (defaults to 1.0) and keeps the base jump height.
+	var result: Dictionary = manual_control_model.tick(delta, {"dir_x": dir_x, "dir_y": dir_y, "jump_boost": MANUAL_CONTROL_JUMP_BOOST}, world)
 	position = _clamp_position(Vector2(result.get("position", position)), false)
+	_apply_control_clip(result, now, dir_y)
+	if not _control_long_emitted and _control_started_at >= 0.0 and now - _control_started_at >= CONTROL_LONG_MS:
+		_control_long_emitted = true
+		_emit_control_quip("control_long")
+	if int(result.get("landed_platform_handle", 0)) != 0:
+		_emit_dialogue("window_land")
+		_observe_ecology("window_land")
+
+## Fills the shared DesktopWorld (the same object the riding/roam loop refreshes)
+## with the per-frame live sources and the model's fixed parameters. The collision
+## lists (world.platforms / world.walls) were refreshed on the window-refresh
+## cadence by _flatten_collision_world / _rebuild_platform_planes. Both the
+## keyboard control mode and the autonomous wall climb drive the model with this
+## ONE world object.
+func _build_desktop_world() -> DesktopWorld:
+	desktop_world.floor_y = _floor_y()
+	desktop_world.screen = habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
+	desktop_world.pet_size = Vector2(pet_window_size)
+	desktop_world.umbrella_available = _has_umbrella_family()
+	desktop_world.live_wall = _live_climb_wall()
+	desktop_world.live_platforms = _live_standing_segments()
+	desktop_world.live_delta_x = _live_standing_rect_delta()
+	desktop_world.live_delta_y = _live_standing_rect_delta_y()
+	desktop_world.climb_contact = _climb_contact_offsets()
+	return desktop_world
+
+
+## Pet-window-space x of the character's wall-facing (hand) edge for each climb
+## clip. The model parks the pet window at `wall_x - contact`, so the hands touch
+## the window's wall face while climbing. Without this the collision body (110px,
+## narrower than the 360px pet window) would park the sprite floating inside — or
+## past — the pane. Both climb clips anchor their hand edge to the same texture
+## column, so the attach corner clips align seamlessly at the same contact x.
+func _climb_contact_offsets() -> Dictionary:
+	var size := Vector2(pet_window_size)
+	var result := {}
+	for spec in [
+		{"side": 1, "clip": "patrol_wall_right_a", "edge": 1.0},
+		{"side": -1, "clip": "patrol_wall_left_a", "edge": 0.0},
+	]:
+		var clip := manifest.clip(str(spec.get("clip", "")))
+		var bounds: Dictionary = clip.get("visualBounds", {})
+		if clip.is_empty() or bounds.is_empty():
+			continue
+		var edge_texture_x := float(bounds.get("x", 0.0)) + float(bounds.get("width", 0.0)) * float(spec.get("edge", 1.0))
+		var canvas: Dictionary = clip.get("canvas", manifest.canvas())
+		var anchor: Dictionary = clip.get("anchor", {"x": 0.5, "y": 0.96})
+		var dock := PetRenderBox.dock_point(
+			size,
+			PetRenderBox.render_dock(clip),
+			PetRenderBox.render_dock_inset(clip),
+		)
+		var window_x := dock.x + (edge_texture_x - float(anchor.get("x", 0.5)) * float(canvas.get("width", 512.0))) * PetRenderBox.character_scale(manifest)
+		result[int(spec.get("side", 0))] = window_x
+	return result
+
+
+## Per-frame wall edge for the window the pet is currently climbing, so a dragged
+## window carries it smoothly instead of teleporting at the refresh cadence.
+## Manual control and the autonomous climb drive separate model instances, so pick
+## the active one by state. Returns {} when not climbing or the window is gone/not
+## eligible.
+func _live_climb_wall() -> Dictionary:
+	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
+	if model == null:
+		return {}
+	var handle: int = model.climbing_wall_handle()
+	if handle == 0:
+		return {}
+	return window_platform_service.live_wall_edge(handle, model.climbing_wall_pid(), model.wall_side)
+
+
+## Per-frame VISIBLE standable segments for the window the pet is standing on in
+## control mode: the window's live rect minus the cached front occluders, so a
+## dragged window carries it smoothly AND an occluded standing point drops instead
+## of riding the hidden full edge. Returns [] when not standing or the window is
+## gone/not eligible/fully covered.
+func _live_standing_segments() -> Array:
+	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
+	if model == null:
+		return []
+	var handle: int = model.standing_plane_handle()
+	if handle == 0:
+		return []
+	return window_platform_service.live_top_segment_planes(handle, model.standing_plane_pid(), WINDOW_FOOT_OFFSET_Y)
+
+
+## Per-frame horizontal displacement of the standing window's live rect center —
+## whether the window is being dragged right now. Feeds the model's perch-continuity
+## gate so a drag trusts the perch segment while static occlusion re-anchors.
+func _live_standing_rect_delta() -> float:
+	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
+	if model == null:
+		return 0.0
+	var handle: int = model.standing_plane_handle()
+	if handle == 0:
+		return 0.0
+	return window_platform_service.live_rect_delta_x(handle)
+
+
+## Per-frame VERTICAL displacement of the standing window's live rect center. A
+## vertical drag moves no X (live_rect_delta_x stays ~0), so this is the signal that
+## keeps the model from reading an upward drag as a static window and dropping the
+## pet through the occlusion grace.
+func _live_standing_rect_delta_y() -> float:
+	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
+	if model == null:
+		return 0.0
+	var handle: int = model.standing_plane_handle()
+	if handle == 0:
+		return 0.0
+	return window_platform_service.live_rect_delta_y(handle)
+
+## Drives the sprite from a model tick result: facing, clip/segment switching,
+## wall-loop reverse/freeze bookkeeping, subphase reactions and umbrella phases.
+## Shared by keyboard control and the autonomous climb so both stay in sync.
+func _apply_control_clip(result: Dictionary, now: float, dir_y: int) -> void:
 	var result_facing := int(result.get("facing", facing))
 	if result_facing != facing:
 		facing = result_facing
 		_set_direction(1)
+	if _ride_reaction_active and sprite_player.current_clip == _ride_reaction_clip:
+		# A window move/resize reaction is playing over the control clip. Yield
+		# so it is not stomped; _on_clip_completed restores the control clip.
+		# If the reaction clip was interrupted (e.g. a state transition played a
+		# different clip), the flag is stale and the control clip must proceed.
+		_apply_position()
+		return
 	var subphase := str(result.get("subphase", ""))
 	var clip := str(result.get("clip", "idle"))
 	var segment := str(result.get("segment", ""))
 	var umbrella_fall := subphase == "fall" and bool(result.get("umbrella", false))
+	var leaving_umbrella := _umbrella_control_active and not umbrella_fall
+	_umbrella_control_active = umbrella_fall
 	var is_wall_loop := clip == "patrol_wall_left_a" or clip == "patrol_wall_right_a"
 	if not umbrella_fall:
+		_umbrella_control_dirty = false
+		if leaving_umbrella:
+			# The umbrella branch above never updated the clip identity, so a landing
+			# that returns to the same pre-fall clip (e.g. idle -> idle) would be
+			# identity-guarded out and the sprite would freeze on the last umbrella
+			# frame. Force the clip to re-issue on the way out.
+			_last_control_clip = ""
+			_last_control_segment = ""
 		if clip != _last_control_clip or segment != _last_control_segment:
 			_last_control_clip = clip
 			_last_control_segment = segment
@@ -2086,11 +2769,30 @@ func _update_manual_control(delta: float, now: float) -> void:
 			_wall_frozen = false
 		var fall_duration := maxf(1.0, float(result.get("fall_duration_ms", 1000.0)))
 		var phase := PetUmbrellaFall.phase(maxf(0.0, now - _control_fall_started_at), fall_duration)
-		_play_umbrella_phase(phase)
-	if not _control_long_emitted and _control_started_at >= 0.0 and now - _control_started_at >= CONTROL_LONG_MS:
-		_control_long_emitted = true
-		_emit_control_quip("control_long")
+		if _umbrella_control_dirty:
+			# The phase clip finished; re-issue it so the descent keeps animating
+			# (the phase itself is unchanged, which _play_umbrella_phase would skip).
+			_umbrella_control_dirty = false
+			_play_umbrella_phase(phase, true)
+		else:
+			_play_umbrella_phase(phase)
 	_apply_position()
+
+## Re-issues the control clip the manual model was driving when a window-move
+## reaction preempted it. Uses the cached clip/segment/reverse identity, so a
+## clip change during the reaction is corrected on the next model tick.
+func _restore_control_clip_after_reaction() -> void:
+	var clip := _last_control_clip
+	var segment := _last_control_segment
+	if _wall_frozen:
+		sprite_player.set_manual_frame(-1)
+		_wall_frozen = false
+	if clip.is_empty():
+		_play_idle_pose()
+	elif segment.is_empty():
+		sprite_player.play_clip(clip, false, "", _last_control_reverse)
+	else:
+		sprite_player.play_clip(clip, false, segment, _last_control_reverse)
 
 func _head_avatar_texture() -> Texture2D:
 	if manifest == null:
@@ -2263,15 +2965,14 @@ func _drag_velocity_px_per_ms(samples: Array) -> Vector2:
 func _start_ground_slide(velocity: Vector2) -> void:
 	slide_speed = velocity.x * 1000.0 * SLIDE_VELOCITY_FACTOR
 	motion.clear()
-	active_platform = null
-	pending_platform = null
+	_unmount_from_window()
 	machine.dispatch({"type": "SLIDE_START"})
 
 func _start_air_throw(velocity: Vector2) -> void:
 	var screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
 	var throw_height := clampf(-velocity.y * 1000.0 * THROW_HEIGHT_FACTOR, THROW_MIN_HEIGHT, THROW_MAX_HEIGHT)
 	var apex := Vector2(position.x + velocity.x * THROW_DRIFT_FACTOR, screen.position.y - throw_height)
-	var duration := clampf(position.distance_to(apex) / 900.0 * 1000.0, 400.0, 1400.0)
+	var duration := _throw_arc_duration_ms(position.distance_to(apex))
 	motion = {
 		"from": position,
 		"to": apex,
@@ -2279,8 +2980,7 @@ func _start_air_throw(velocity: Vector2) -> void:
 		"duration_ms": maxf(1.0, duration),
 		"arc_height": 0.0,
 	}
-	active_platform = null
-	pending_platform = null
+	_unmount_from_window()
 	throw_session = {
 		"descending": false,
 		"descent_target": Vector2(apex.x, _floor_y()),
@@ -2316,10 +3016,26 @@ func _update_drag_throw(now: float) -> void:
 			umbrella_visual_phase = ""
 			_prepare_motion(_clamp_position(descent_target, true), descent_duration, 0.0)
 	else:
+		var previous_position := position
 		position = Vector2(motion.get("from", position)).lerp(Vector2(motion.get("to", position)), PetUmbrellaFall.descent_progress(progress))
 		_apply_position()
 		var phase := PetUmbrellaFall.phase(elapsed, duration)
 		_play_umbrella_phase(phase)
+		# The descent can catch a window top: the throw used to fall only to the
+		# floor, but the shared landing rule lets it land on a window on the way down.
+		var plane := ManualControlModelScript.land_on_platform(previous_position.y, position.y, _pet_foot_global(position).x, desktop_world.platforms)
+		var landed_platform := _platform_for_identity(int(plane.get("handle", 0)), int(plane.get("process_id", 0))) if not plane.is_empty() else null
+		if landed_platform != null:
+			position = _position_for_platform(landed_platform, _pet_foot_global(position).x)
+			active_platform = landed_platform
+			motion.clear()
+			throw_session.clear()
+			_apply_position()
+			_save_position()
+			_emit_dialogue("window_land")
+			_observe_ecology("window_land")
+			machine.dispatch({"type": "ARRIVE"})
+			return
 		if progress >= 1.0:
 			motion.clear()
 			throw_session.clear()
@@ -2499,9 +3215,7 @@ func _trigger_wander() -> void:
 func _start_random_roam() -> void:
 	if machine.state != "idle" or not pending_front_intent.is_empty():
 		return
-	active_platform = null
-	pending_platform = null
-	platform_walk_motion.clear()
+	_unmount_from_window()
 	motion.clear()
 	roam_active = true
 	roam_session = {
@@ -2533,9 +3247,7 @@ func _dispatch_roam_leg(index: int) -> void:
 	roam_session.walk_motion = {}
 	var leg: Dictionary = legs[index]
 	var leg_type := str(leg.get("type", "fly"))
-	active_platform = null
-	pending_platform = null
-	platform_walk_motion.clear()
+	_unmount_from_window()
 	motion.clear()
 	match leg_type:
 		"walk":
@@ -2568,8 +3280,21 @@ func _update_roam(now: float) -> void:
 		if not walk_motion.is_empty():
 			var duration := maxf(1.0, float(walk_motion.get("duration_ms", 1.0)))
 			var progress := clampf((now - float(walk_motion.get("started_at", now))) / duration, 0.0, 1.0)
-			position = Vector2(walk_motion.from).lerp(Vector2(walk_motion.to), progress)
+			var from := Vector2(walk_motion.get("from", position))
+			var to := Vector2(walk_motion.get("to", position))
+			var previous_position := position
+			position = _clamp_position(from.lerp(to, progress), false)
 			_apply_position()
+			if not desktop_world.walls.is_empty() and progress < 1.0:
+				var wall := _blocked_walk_wall(previous_position, position)
+				if not wall.is_empty():
+					var side := int(wall.get("side", 0))
+					var wall_x := float(wall.get("x", 0.0))
+					var body_edge := wall_x - (WINDOW_FOOT_OFFSET_X + side * PetWallResolverScript.BODY_HALF_WIDTH)
+					position = _clamp_position(Vector2(body_edge, position.y), false)
+					_apply_position()
+					_handle_roam_wall(wall)
+					return
 			if progress >= 1.0:
 				roam_session.walk_motion = {}
 				machine.dispatch({"type": "CLIP_END"})
@@ -2585,6 +3310,22 @@ func _update_roam(now: float) -> void:
 				_prepare_motion(_clamp_position(drop_to, true), drop_duration, 0.0)
 
 func _advance_or_schedule_wander() -> void:
+	var redirect: Dictionary = roam_session.get("redirect", {})
+	if not redirect.is_empty():
+		roam_session.redirect = {}
+		_stop_roam()
+		var kind := str(redirect.get("kind", ""))
+		if kind == "hop" and machine.state == "idle":
+			var platform: Variant = redirect.get("platform", null)
+			if platform is WindowPlatform:
+				_travel_to_platform(platform)
+				return
+		if kind == "climb":
+			_start_autonomous_climb(redirect.get("wall", {}))
+			return
+		if kind == "fly":
+			_fly_over_wall(redirect.get("wall", {}))
+			return
 	if roam_active and not roam_session.is_empty():
 		var legs: Array = roam_session.get("legs", [])
 		var next_index: int = int(roam_session.get("index", -1)) + 1
@@ -2598,6 +3339,145 @@ func _advance_or_schedule_wander() -> void:
 func _stop_roam() -> void:
 	roam_active = false
 	roam_session = {}
+	# Any stop also drops an in-flight ecology walk (interrupt, manual control entry,
+	# or the roam terminal branch); the walk is only ever finished via its own
+	# CLIP_END reaching idle.
+	ecology_walk_motion = {}
+
+func _has_wall_climb_assets() -> bool:
+	return (
+		manifest.has_clip("patrol_floor_to_wall_left_a")
+		and manifest.has_clip("patrol_floor_to_wall_right_a")
+		and manifest.has_clip("patrol_wall_left_a")
+		and manifest.has_clip("patrol_wall_right_a")
+		and manifest.has_clip("window_land_recover")
+	)
+
+## A roam walk leg ran into a wall: hop onto a short window, climb a reachable
+## tall one, or phase over one too high to mount. The redirect is consumed when
+## the roam_walk clip ends and the pet reaches idle.
+func _handle_roam_wall(wall: Dictionary) -> void:
+	var wall_handle := int(wall.get("handle", 0))
+	var wall_top_y := float(wall.get("top_y", 0.0))
+	if bool(wall.get("short", false)):
+		var platform := _platform_for_identity(wall_handle, int(wall.get("process_id", 0)))
+		if platform != null:
+			roam_session.redirect = {"kind": "hop", "platform": platform}
+			machine.dispatch({"type": "CLIP_END"})
+			return
+	if wall_top_y - WINDOW_FOOT_OFFSET_Y >= work_area.position.y and _has_wall_climb_assets():
+		roam_session.redirect = {"kind": "climb", "wall": wall}
+		machine.dispatch({"type": "CLIP_END"})
+		return
+	roam_session.redirect = {"kind": "fly", "wall": wall}
+	machine.dispatch({"type": "CLIP_END"})
+
+## Fallback when a wall is too tall to mount: arc over to the far side. The
+## descent still resolves platforms, so a low top may be landed on instead.
+func _fly_over_wall(wall: Dictionary) -> void:
+	var side := int(wall.get("side", 0))
+	var wall_x := float(wall.get("x", 0.0))
+	var land_x := wall_x + side * 160.0
+	var floor_target := _clamp_position(Vector2(land_x, _floor_y()), true)
+	_prepare_motion(floor_target, _travel_duration_ms(position.distance_to(floor_target)), 90.0, false)
+	var needs_turn := _prepare_travel_facing(floor_target.x)
+	machine.dispatch({"type": "WANDER", "needs_turn": needs_turn})
+
+## Drives the shared control model through a wall climb. Phase is event-driven:
+## the model walks toward the wall (approach), attaches, climbs (climb), and
+## mounts at the top; clip completions advance the session in _on_clip_completed.
+func _start_autonomous_climb(wall: Dictionary) -> void:
+	if wall.is_empty():
+		_finish_autonomous_climb()
+		return
+	if _climb_model == null:
+		_climb_model = ManualControlModelScript.new()
+	_climb_model.reset(position)
+	var durations := _control_oneshot_durations()
+	if not durations.is_empty():
+		_climb_model.configure_oneshot_durations(durations)
+	var side := int(wall.get("side", 0))
+	_last_control_clip = ""
+	_last_control_segment = ""
+	_last_control_reverse = false
+	_last_control_subphase = ""
+	_wall_frozen = false
+	wall_climb_session = {
+		"wall": wall,
+		"platform": _platform_for_identity(int(wall.get("handle", 0)), int(wall.get("process_id", 0))),
+		"dir_x": side,
+		"dir_y": 0,
+		"started_at": _now_ms(),
+	}
+	machine.dispatch({"type": "WALL_CLIMB_START"})
+
+func _update_autonomous_climb(delta: float, now: float) -> void:
+	if _climb_model == null or wall_climb_session.is_empty():
+		_abort_autonomous_climb()
+		return
+	var wall_handle := int((wall_climb_session.get("wall", {}) as Dictionary).get("handle", 0))
+	if wall_handle != 0 and not _wall_handle_present(wall_handle):
+		_abort_autonomous_climb()
+		return
+	# While the mount clip plays, stop driving the model: _start_mount put it back
+	# on GROUND, so a live tick would walk the pet sideways along the wall top.
+	# The mount clip is bounded and completes via _on_clip_completed, so the
+	# timeout below only bounds the approach+climb, never the mount itself.
+	if _climb_model.has_pending_mount():
+		return
+	if now - float(wall_climb_session.get("started_at", now)) > 8000.0:
+		_abort_autonomous_climb()
+		return
+	var dir_x := int(wall_climb_session.get("dir_x", 1))
+	var dir_y := int(wall_climb_session.get("dir_y", 0))
+	var result: Dictionary = _climb_model.tick(delta, {"dir_x": dir_x, "dir_y": dir_y}, _build_desktop_world())
+	position = _clamp_position(Vector2(result.get("position", position)), false)
+	_apply_control_clip(result, now, dir_y)
+	if str(result.get("subphase", "")) == "fall":
+		_abort_autonomous_climb()
+
+func _handle_wall_climb_clip_completed(clip_name: String) -> void:
+	if _climb_model == null or wall_climb_session.is_empty():
+		_abort_autonomous_climb()
+		return
+	if _climb_model.has_pending_attach() and clip_name == _climb_model.attach_clip():
+		_climb_model.finish_attach()
+		wall_climb_session.phase = "climb"
+		wall_climb_session.dir_y = -1
+		return
+	if _climb_model.has_pending_mount() and clip_name == _climb_model.mount_clip():
+		_finish_autonomous_climb()
+		return
+	# Walk/wall loops and stray clips do not advance the session; the next tick
+	# keeps walking/climbing from the model's current state.
+
+func _finish_autonomous_climb() -> void:
+	if _climb_model == null:
+		return
+	_climb_model.finish_mount()
+	var session := wall_climb_session
+	wall_climb_session = {}
+	var platform: Variant = session.get("platform", null)
+	if platform is WindowPlatform:
+		active_platform = platform
+		# Anchor to the platform's top edge without clamping to the work area so
+		# the pet can stand on a window at/past the screen edge.
+		position = _position_for_platform(platform, _pet_foot_global().x)
+		_apply_position()
+		_save_position()
+		_emit_dialogue("window_land")
+		_observe_ecology("window_land")
+	else:
+		position = _clamp_position(position, false)
+		_apply_position()
+	machine.dispatch({"type": "CLIP_END"})
+
+func _abort_autonomous_climb() -> void:
+	wall_climb_session = {}
+	position = _clamp_position(Vector2(position.x, _floor_y()), true)
+	_apply_position()
+	if machine.state == "wall_climb":
+		machine.dispatch({"type": "CLIP_END"})
 
 func _recenter() -> void:
 	if machine.state == "menu_wait":
@@ -2648,7 +3528,8 @@ func _update_motion(now: float) -> void:
 	next.x += sway
 	next.y -= 4.0 * float(motion.arc_height) * progress * (1.0 - progress)
 	if pending_platform == null and (machine.state == "drag_fall" or progress >= 0.62):
-		var landed_platform := _crossed_platform(previous_position, next)
+		var plane := ManualControlModelScript.land_on_platform(previous_position.y, next.y, _pet_foot_global(next).x, desktop_world.platforms)
+		var landed_platform := _platform_for_identity(int(plane.get("handle", 0)), int(plane.get("process_id", 0))) if not plane.is_empty() else null
 		if landed_platform != null:
 			position = _position_for_platform(landed_platform, _pet_foot_global(next).x)
 			active_platform = landed_platform
@@ -2712,11 +3593,15 @@ func _play_drag_fall() -> void:
 func _has_umbrella_family() -> bool:
 	return manifest.has_clip("umbrella_open") and manifest.has_clip("umbrella_float") and manifest.has_clip("umbrella_close")
 
-func _play_umbrella_phase(phase: String) -> void:
-	if phase == umbrella_visual_phase: return
+func _play_umbrella_phase(phase: String, force := false) -> void:
+	var first_time := phase != umbrella_visual_phase
+	if not force and not first_time: return
 	umbrella_visual_phase = phase
-	if phase == "open": sfx_player.play("umbrella_open")
-	elif phase == "close": sfx_player.play("umbrella_close")
+	# SFX only on the real phase change; a forced re-issue of the same phase clip
+	# (re-issuing a finished clip so the fall keeps animating) must not re-pop.
+	if first_time:
+		if phase == "open": sfx_player.play("umbrella_open")
+		elif phase == "close": sfx_player.play("umbrella_close")
 	_set_direction(1)
 	_play_segment_or_clip("umbrella_%s" % phase, _facing_segment(facing))
 
@@ -2771,6 +3656,17 @@ func _floor_y() -> float:
 	return work_area.end.y - pet_window_size.y
 
 func _clamp_position(value: Vector2, force_floor: bool) -> Vector2:
+	if active_platform != null:
+		# Standing on a window: the window's top edge is the anchor, so the pet
+		# may legitimately sit outside the work area (the window was dragged to
+		# or past the screen edge). Clamping here would pull the pet off the
+		# ledge and drop it onto the floor, so riding never clamps.
+		return value
+	if (machine.state == "manual_control" or machine.state == "wall_climb") and _is_standing_on_model_plane():
+		# Manual/wall-climb standing on a window: same rule as riding. The model
+		# anchors to the plane's absolute top edge, which may sit past the screen
+		# edge; clamping would drag the pet off the ledge.
+		return value
 	if habitat_model != null:
 		return habitat_model.clamp_pet_position(value, Vector2(pet_window_size), force_floor)
 	var maximum := work_area.end - Vector2(pet_window_size)
@@ -2858,9 +3754,7 @@ func _resolve_edge_patrol_box_size() -> Vector2i:
 func _trigger_edge_patrol() -> void:
 	if machine.state != "idle" or edge_preparing:
 		return
-	active_platform = null
-	pending_platform = null
-	platform_walk_motion.clear()
+	_unmount_from_window()
 	var route_box := _resolve_edge_patrol_box_size()
 	var variant := "b" if randf() < clampf(float(manifest.behavior_value("wallClimbVariantBChance", 0.5)), 0.0, 1.0) else "a"
 	var clips := EdgePatrolPlanner.clips_for_variant(variant)
@@ -3005,8 +3899,22 @@ func _update_edge_patrol(now: float) -> void:
 	var elapsed := minf(float(edge_session.duration_ms), maxf(0.0, float(edge_session.traverse_elapsed_ms) + now - float(edge_session.started_at)))
 	var progress := _traverse_movement_progress(pose, elapsed, float(edge_session.duration_ms))
 	sprite_player.set_playback_elapsed(elapsed)
+	var previous_position := position
 	position = _clamp_position(Vector2(edge_session.from).lerp(Vector2(edge_session.to), progress), false)
 	_apply_position()
+	# A window sitting on the bottom edge blocks the traverse: park flush against
+	# it and end the patrol instead of clipping through the solid body.
+	if str(pose.get("edge", "")) == "bottom" and not desktop_world.walls.is_empty() and progress < 1.0:
+		var wall := _blocked_walk_wall(previous_position, position)
+		if not wall.is_empty():
+			var side := int(wall.get("side", 0))
+			var wall_x := float(wall.get("x", 0.0))
+			var body_edge := wall_x - (WINDOW_FOOT_OFFSET_X + side * PetWallResolverScript.BODY_HALF_WIDTH)
+			position = _clamp_position(Vector2(body_edge, position.y), false)
+			_apply_position()
+			_cancel_edge_patrol()
+			machine.dispatch({"type": "EDGE_PATROL_END"})
+			return
 	if progress >= 1.0: _advance_edge_patrol()
 
 func _traverse_movement_progress(pose: Dictionary, elapsed_ms: float, duration_ms: float) -> float:
