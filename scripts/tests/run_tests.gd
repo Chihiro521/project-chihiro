@@ -340,6 +340,8 @@ func _test_state_machine() -> void:
 	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "icon collect clip end returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "icon_collect"}) == "icon_collect", "icon collect re-enters")
 	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "icon collect returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "icon_transfer"}) == "icon_transfer", "icon transfer enters its gift/reclaim state")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "icon transfer clip end returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "platform_sit"}) == "platform_sit", "platform action enters platform state")
 	_expect(machine.dispatch({"type": "PLATFORM_LOST"}) == "drag_fall", "platform loss preempts into fall")
 	_expect(machine.dispatch({"type": "ARRIVE"}) == "land", "platform fall can land")
