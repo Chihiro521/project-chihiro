@@ -45,6 +45,7 @@ func _run() -> void:
 	_test_wall_resolver()
 	_test_window_platforms()
 	_test_pet_z_occlusion_threshold()
+	_test_icon_visibility_and_reach()
 	_test_window_bodies()
 	_test_n_way_occlusion()
 	_test_window_event_debounce()
@@ -679,7 +680,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 265, "dialogue catalog contains 265 lines")
+	_expect(dialogue.line_count() == 271, "dialogue catalog contains 271 lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
@@ -2522,6 +2523,75 @@ func _test_pet_z_occlusion_threshold() -> void:
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
 	], 300.0)
 	_expect(not bool(fallback_track.get("lost", false)) and str(fallback_track.get("status", "")) == "occluded", "without pet z the old full-occlusion behavior is preserved")
+
+func _test_icon_visibility_and_reach() -> void:
+	# _occluding_rects / _is_point_obscured / _is_icon_visible on a bare pet
+	# instance whose window service is stubbed with synthetic snapshots. The real
+	# static filter (is_foreground_snapshot_valid) and the pet-z occlusion rule
+	# both apply, matching the service-level tests above.
+	var pet := preload("res://scripts/main.gd").new()
+	var fake := _FakeWindowSnapshotService.new()
+	pet.window_platform_service = fake
+	# 1. A foreground window (z below the pet's always-on-top) covers the point.
+	fake.snapshots = [_window_snapshot(101, 1, Rect2i(0, 0, 200, 200))]
+	fake.self_z = 2
+	_expect(pet._is_point_obscured(Vector2(100, 100)), "icon covered by a foreground window is obscured")
+	_expect(not pet._is_point_obscured(Vector2(500, 500)), "icon outside every window is visible")
+	# 2. A window behind the pet (z >= pet z, not maximized) does not occlude.
+	fake.snapshots = [_window_snapshot(102, 5, Rect2i(0, 0, 200, 200))]
+	fake.self_z = 3
+	_expect(not pet._is_point_obscured(Vector2(50, 50)), "window behind the pet's z-order does not occlude")
+	# 3. A maximized window always occludes, even behind the pet's z-order.
+	fake.snapshots = [_window_snapshot(103, 5, Rect2i(0, 0, 200, 200), true)]
+	fake.self_z = 3
+	_expect(pet._is_point_obscured(Vector2(50, 50)), "a maximized window occludes even above the pet's z-order")
+	_expect(not pet._is_icon_visible(Vector2(50, 50)), "an icon under a maximized window is not visible (visibility gate)")
+	# 4. Reach band around the window origin + hand anchor.
+	pet.position = Vector2(1000, 700)
+	_expect(pet._icon_reachable_from_position(pet.position, Vector2(1000, 730)), "icon at hand height is within reach")
+	_expect(not pet._icon_reachable_from_position(pet.position, Vector2(1000, 520)), "icon high above the hand is out of reach")
+	_expect(not pet._icon_reachable_from_position(pet.position, Vector2(1000, 810)), "icon far below the hand is out of reach")
+	_expect(pet._icon_reachable_from_position(pet.position, Vector2(1180, 700)), "icon within the body's horizontal slack is reachable")
+	_expect(not pet._icon_reachable_from_position(pet.position, Vector2(1600, 700)), "icon far to the side is out of reach")
+	# 5. Mode selection rolls among viable modes and rejects an empty set.
+	var modes := [
+		{"mode": "walk", "at": Vector2.ZERO},
+		{"mode": "fly", "at": Vector2.ZERO},
+	]
+	var picked: Dictionary = {}
+	for _i in range(50):
+		picked = pet._pick_approach_mode(modes)
+	_expect(str(picked.get("mode", "")) in ["walk", "fly"], "mode selection returns a viable mode")
+	_expect(pet._pick_approach_mode([]).is_empty(), "no viable modes selects none")
+	pet.free()
+
+func _window_snapshot(handle: int, z_order: int, rect: Rect2i, maximized := false) -> Dictionary:
+	return {
+		"handle": handle,
+		"process_id": 99000 + handle,
+		"visible": true,
+		"minimized": false,
+		"cloaked": false,
+		"shell_window": false,
+		"class_name": "",
+		"z_order": z_order,
+		"maximized": maximized,
+		"rect": rect,
+	}
+
+class _FakeWindowSnapshotService extends WindowPlatformService:
+	## Duck-typed window service for the visibility predicates: the pet instance
+	## holds it in a WindowPlatformService-typed field, so the fake subclasses it
+	## and only overrides the snapshot/z getters the predicates read.
+	var snapshots: Array = []
+	var self_z := 0
+	var self_pid := 90001
+	func last_snapshots() -> Array:
+		return snapshots
+	func self_z_order() -> int:
+		return self_z
+	func self_process_id() -> int:
+		return self_pid
 
 func _test_window_bodies() -> void:
 	var snapshots := [
