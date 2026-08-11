@@ -266,6 +266,13 @@
     {"id":"icon_collect_005","text":"借走一下。用完还你。","events":["icon_collect"],"tags":["icon","collect"]},
     {"id":"icon_collect_006","text":"乱放的代价，就是被收走。","events":["icon_collect"],"tags":["icon","collect","tease"]},
 
+    {"id":"icon_miss_001","text":"这位置超出我的手臂范围，够不到。","events":["icon_miss"],"tags":["icon","miss"]},
+    {"id":"icon_miss_002","text":"够不到，可惜了。下次摆近点。","events":["icon_miss"],"tags":["icon","miss","tease"]},
+    {"id":"icon_miss_003","text":"目标被挡住了，看不见就不太好下手。","events":["icon_miss"],"tags":["icon","miss","tease"]},
+    {"id":"icon_miss_004","text":"被遮蔽的样本，不在我采样范围内。","events":["icon_miss"],"tags":["icon","miss","science"]},
+    {"id":"icon_miss_005","text":"距离太远，飞行预算超支，放弃这次。","events":["icon_miss"],"tags":["icon","miss","science"]},
+    {"id":"icon_miss_006","text":"收回计划。你最好庆幸图标还在原位。","events":["icon_miss"],"relationship_tiers":["familiar","trust","close"],"tags":["icon","miss","tease"]},
+
     {"id":"icon_arrange_001","text":"就放这里，比你原来的位置合理。","events":["icon_arrange"],"tags":["icon","arrange","tease"]},
     {"id":"icon_arrange_002","text":"摆好了，现在桌面像样了。","events":["icon_arrange"],"tags":["icon","arrange"]},
     {"id":"icon_arrange_003","text":"重新分配坐标，秩序回归。","events":["icon_arrange"],"tags":["icon","arrange","science"]},

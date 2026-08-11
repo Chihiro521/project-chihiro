@@ -133,7 +133,7 @@
         "id": "icon_collect", "clip": "straighten_bag", "fallback_clip": "react", "state": "icon_collect",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 90000,
         "preconditions": {
-          "requires_all": ["icon_collection", "desktop_listview_available", "has_desktop_icons", "bag_not_full"],
+          "requires_all": ["icon_collection", "desktop_listview_available", "has_desktop_icons", "has_reachable_icons", "bag_not_full"],
           "requires_any_clips": ["straighten_bag", "tidy_clothes", "guard_bag_annoyed", "react"],
           "relationship": {"min": "trusted"},
           "needs": {"energy": {"min": 28}}
