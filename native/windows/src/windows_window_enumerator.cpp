@@ -15,6 +15,7 @@
 #include <commctrl.h>
 #include <dwmapi.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <mutex>
@@ -338,7 +339,15 @@ void shutdown_cursor_capture_worker() {
 // every move is reversible.
 
 HWND desktop_def_view() {
-	HWND def_view = FindWindowExW(FindWindowW(L"Progman", nullptr), nullptr, L"SHELLDLL_DefView", nullptr);
+	// Only follow the Progman branch when Progman actually exists. Falling back
+	// to an unscoped top-level FindWindowExW here can match an unrelated
+	// Explorer window's SHELLDLL_DefView, whose SysListView32 is a *file list*,
+	// not the desktop — moving icons there would corrupt a normal window.
+	HWND progman = FindWindowW(L"Progman", nullptr);
+	HWND def_view = nullptr;
+	if (progman != nullptr) {
+		def_view = FindWindowExW(progman, nullptr, L"SHELLDLL_DefView", nullptr);
+	}
 	if (def_view != nullptr) {
 		return def_view;
 	}
@@ -376,6 +385,94 @@ POINT desktop_listview_screen_origin(HWND list_view) {
 	}
 	return origin;
 }
+
+// --- Desktop icon names + positions via remote buffers ---------------------
+// The desktop icon list is the SysListView32 under the shell's DefView. Its
+// comctl32 handlers for LVM_GETITEMTEXTW and LVM_GETITEMPOSITION write to the
+// pointer carried in the message; when that address is unmapped in explorer's
+// process the write faults and takes Explorer.EXE down (faulting module
+// comctl32.dll, reproduced on Win11 26100 / comctl32 6.10.26100.8875). So no
+// message may carry a pointer into our address space.
+//
+// Instead the LVITEM, its text buffer and the POINT array are all allocated
+// inside explorer's own process (VirtualAllocEx) and the results are copied
+// back with ReadProcessMemory. Reading names this way is also authoritative:
+// we get exactly the display names the desktop shows (微信, not 微信.lnk) and
+// each name stays aligned with its own position by construction — no shell
+// namespace, no sort-order guessing. Writes (LVM_SETITEMPOSITION) carry pure
+// scalars and remain safe on their own.
+class DesktopListViewReader {
+public:
+	std::vector<std::wstring> names;
+	std::vector<POINT> positions;
+	bool ok = false;
+
+	DesktopListViewReader(HWND list_view) {
+		if (list_view == nullptr) {
+			return;
+		}
+		const int count = static_cast<int>(SendMessageW(list_view, LVM_GETITEMCOUNT, 0, 0));
+		if (count <= 0) {
+			return;
+		}
+		DWORD pid = 0;
+		GetWindowThreadProcessId(list_view, &pid);
+		if (pid == 0) {
+			return;
+		}
+		HANDLE process = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, FALSE, pid);
+		if (process == nullptr) {
+			return;
+		}
+		constexpr int TEXT_MAX = 512;
+		const SIZE_T lvitem_bytes = sizeof(LVITEMW);
+		const SIZE_T text_bytes = static_cast<SIZE_T>(TEXT_MAX) * sizeof(wchar_t);
+		const SIZE_T pos_bytes = static_cast<SIZE_T>(count) * sizeof(POINT);
+		BYTE *remote = static_cast<BYTE *>(VirtualAllocEx(process, nullptr, lvitem_bytes + text_bytes + pos_bytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+		if (remote == nullptr) {
+			CloseHandle(process);
+			return;
+		}
+		LVITEMW *remote_lvitem = reinterpret_cast<LVITEMW *>(remote);
+		wchar_t *remote_text = reinterpret_cast<wchar_t *>(remote + lvitem_bytes);
+		POINT *remote_pos = reinterpret_cast<POINT *>(remote + lvitem_bytes + text_bytes);
+
+		LVITEMW stub = {};
+		stub.iSubItem = 0;
+		stub.cchTextMax = TEXT_MAX;
+		stub.pszText = remote_text;
+		WriteProcessMemory(process, remote_lvitem, &stub, sizeof(stub), nullptr);
+
+		names.assign(static_cast<size_t>(count), std::wstring());
+		positions.assign(static_cast<size_t>(count), POINT{0, 0});
+
+		std::vector<wchar_t> text_local(TEXT_MAX, L'\0');
+		bool text_ok = true;
+		for (int index = 0; index < count; ++index) {
+			SendMessageW(list_view, LVM_GETITEMTEXTW, static_cast<WPARAM>(index), reinterpret_cast<LPARAM>(remote_lvitem));
+			std::fill(text_local.begin(), text_local.end(), L'\0');
+			SIZE_T read = 0;
+			if (!ReadProcessMemory(process, remote_text, text_local.data(), text_bytes, &read)) {
+				text_ok = false;
+				break;
+			}
+			names[static_cast<size_t>(index)] = std::wstring(text_local.data());
+		}
+
+		bool pos_ok = false;
+		if (text_ok) {
+			for (int index = 0; index < count; ++index) {
+				SendMessageW(list_view, LVM_GETITEMPOSITION, static_cast<WPARAM>(index), reinterpret_cast<LPARAM>(remote_pos + index));
+			}
+			SIZE_T read = 0;
+			pos_ok = ReadProcessMemory(process, remote_pos, positions.data(), pos_bytes, &read) && read == pos_bytes;
+		}
+
+		VirtualFreeEx(process, remote, 0, MEM_RELEASE);
+		CloseHandle(process);
+		ok = text_ok && pos_ok;
+	}
+};
 
 } // namespace
 
@@ -555,24 +652,17 @@ Array WindowsWindowEnumerator::enumerate_desktop_icons() const {
 		return result;
 	}
 	const POINT origin = desktop_listview_screen_origin(list_view);
-	const int count = static_cast<int>(SendMessageW(list_view, LVM_GETITEMCOUNT, 0, 0));
-	for (int index = 0; index < count; ++index) {
-		wchar_t buffer[1024] = {};
-		LVITEMW item = {};
-		item.iSubItem = 0;
-		item.pszText = buffer;
-		item.cchTextMax = static_cast<int>(sizeof(buffer) / sizeof(wchar_t));
-		const LRESULT written = SendMessageW(list_view, LVM_GETITEMTEXTW, index, reinterpret_cast<LPARAM>(&item));
-		if (written <= 0) {
-			continue;
-		}
-		POINT position = {0, 0};
-		const LRESULT got = SendMessageW(list_view, LVM_GETITEMPOSITION, index, reinterpret_cast<LPARAM>(&position));
-		if (got == 0) {
-			continue;
+	DesktopListViewReader reader(list_view);
+	if (!reader.ok) {
+		return result;
+	}
+	for (size_t index = 0; index < reader.names.size(); ++index) {
+		const POINT position = reader.positions[index];
+		if (position.x == 0 && position.y == 0) {
+			continue; // slot never filled (icon removed mid-read)
 		}
 		Dictionary entry;
-		entry["name"] = from_wide(std::wstring(buffer, static_cast<size_t>(written)));
+		entry["name"] = from_wide(reader.names[index]);
 		entry["x"] = static_cast<int64_t>(position.x) + origin.x;
 		entry["y"] = static_cast<int64_t>(position.y) + origin.y;
 		result.push_back(entry);
@@ -588,20 +678,14 @@ bool WindowsWindowEnumerator::set_desktop_icon_position(const String &name, int3
 	const POINT origin = desktop_listview_screen_origin(list_view);
 	const int client_x = screen_x - origin.x;
 	const int client_y = screen_y - origin.y;
+	DesktopListViewReader reader(list_view);
+	if (!reader.ok) {
+		return false;
+	}
 	const std::wstring target = to_wide(name);
-	const int count = static_cast<int>(SendMessageW(list_view, LVM_GETITEMCOUNT, 0, 0));
-	for (int index = 0; index < count; ++index) {
-		wchar_t buffer[1024] = {};
-		LVITEMW item = {};
-		item.iSubItem = 0;
-		item.pszText = buffer;
-		item.cchTextMax = static_cast<int>(sizeof(buffer) / sizeof(wchar_t));
-		const LRESULT written = SendMessageW(list_view, LVM_GETITEMTEXTW, index, reinterpret_cast<LPARAM>(&item));
-		if (written <= 0) {
-			continue;
-		}
-		if (_wcsicmp(buffer, target.c_str()) == 0) {
-			return SendMessageW(list_view, LVM_SETITEMPOSITION, index, MAKELPARAM(client_x, client_y)) != FALSE;
+	for (size_t index = 0; index < reader.names.size(); ++index) {
+		if (_wcsicmp(reader.names[index].c_str(), target.c_str()) == 0) {
+			return SendMessageW(list_view, LVM_SETITEMPOSITION, static_cast<WPARAM>(index), MAKELPARAM(client_x, client_y)) != FALSE;
 		}
 	}
 	return false;
