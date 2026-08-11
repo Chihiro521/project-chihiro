@@ -18,9 +18,10 @@ class Poller extends Node:
 	var icon_x := 0
 	var icon_y := 0
 	var pid := 0
-	var state := "start"         # start → hide → wait_gone → restore → wait_back → done
+	var state := "start"         # start → hide → wait_gone → restore → wait_back → position → done
 	var next_ms := 0
 	var deadline_ms := 0
+	var position_deadline_ms := 0
 	var started_ms := 0
 	var failed := false
 
@@ -56,6 +57,8 @@ class Poller extends Node:
 				_restore_icon()
 			"wait_back":
 				_wait_back()
+			"position":
+				_position_icon()
 			"done":
 				_done_pass()
 
@@ -109,13 +112,31 @@ class Poller extends Node:
 	func _wait_back() -> void:
 		if bridge.desktop_icon_present(icon_name):
 			print("[pass_idx %d] '%s' reappeared after %.1fs" % [pass_idx + 1, icon_name, (Time.get_ticks_msec() - (deadline_ms - TIMEOUT_MS)) / 1000.0])
-			if not bridge.set_desktop_icon_position(icon_name, icon_x, icon_y):
-				print("WARN: set_desktop_icon_position returned false")
-			state = "done"
+			position_deadline_ms = Time.get_ticks_msec() + TIMEOUT_MS
+			state = "position"
 			return
 		if Time.get_ticks_msec() > deadline_ms:
 			print("FAIL: icon did not reappear after restore (pass_idx %d)" % (pass_idx + 1))
 			_fail()
+
+	func _position_icon() -> void:
+		if bridge.set_desktop_icon_position(icon_name, icon_x, icon_y):
+			var actual := _find_icon()
+			if not actual.is_empty():
+				var actual_x := int(actual.get("x", 0))
+				var actual_y := int(actual.get("y", 0))
+				if abs(actual_x - icon_x) <= 8 and abs(actual_y - icon_y) <= 8:
+					state = "done"
+					return
+		if Time.get_ticks_msec() > position_deadline_ms:
+			print("FAIL: icon did not accept its original position after restore")
+			_fail()
+
+	func _find_icon() -> Dictionary:
+		for item in bridge.enumerate_desktop_icons():
+			if item is Dictionary and str(item.get("name", "")) == icon_name:
+				return item
+		return {}
 
 	func _done_pass() -> void:
 		var pid_now := int(bridge.desktop_explorer_process_id())

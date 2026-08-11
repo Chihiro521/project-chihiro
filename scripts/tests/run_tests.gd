@@ -46,6 +46,7 @@ func _run() -> void:
 	_test_window_platforms()
 	_test_pet_z_occlusion_threshold()
 	_test_icon_visibility_and_reach()
+	_test_icon_storage_rules()
 	_test_window_bodies()
 	_test_n_way_occlusion()
 	_test_window_event_debounce()
@@ -2565,6 +2566,31 @@ func _test_icon_visibility_and_reach() -> void:
 		picked = pet._pick_approach_mode(modes)
 	_expect(str(picked.get("mode", "")) in ["walk", "fly"], "mode selection returns a viable mode")
 	_expect(pet._pick_approach_mode([]).is_empty(), "no viable modes selects none")
+	pet.free()
+
+func _test_icon_storage_rules() -> void:
+	var pet := preload("res://scripts/main.gd").new()
+	pet.icon_bag_entries = [
+		{"name": "one"},
+		{"name": "two"},
+		{"name": "three"},
+	]
+	_expect(pet._bag_carry_count() == 3, "all hidden bag entries consume the three-slot capacity")
+	var names := pet._carried_icon_names()
+	_expect(names.size() == 3 and names.has("one") and names.has("three"), "carried icon names enumerate every hidden bag entry")
+	var timing_ranges_valid := true
+	for _i in range(32):
+		var entry: Dictionary = pet._new_icon_bag_entry("timed_%d" % _i, {"x": 10, "y": 20}, "test")
+		var hold_ms := float(entry.get("release_at_ms", 0.0)) - float(entry.get("acquired_at_ms", 0.0))
+		var kind := str(entry.get("kind", ""))
+		if kind == "keepsake":
+			timing_ranges_valid = timing_ranges_valid and hold_ms >= pet.ICON_KEEPSAKE_HOLD_MIN_MS and hold_ms <= pet.ICON_KEEPSAKE_HOLD_MAX_MS
+		else:
+			timing_ranges_valid = timing_ranges_valid and kind == "ordinary" and hold_ms >= pet.ICON_ORDINARY_HOLD_MIN_MS and hold_ms <= pet.ICON_ORDINARY_HOLD_MAX_MS
+	_expect(timing_ranges_valid, "ordinary and keepsake release timers stay in their configured ranges")
+	pet.icon_collect_icon = {"name": "one", "original": {"x": 10, "y": 20}}
+	pet._return_in_flight_icon()
+	_expect(pet.icon_collect_icon.is_empty() and pet._icon_bag_entry_index("one") >= 0, "interrupting collection never removes a journaled hidden icon")
 	pet.free()
 
 func _window_snapshot(handle: int, z_order: int, rect: Rect2i, maximized := false) -> Dictionary:
