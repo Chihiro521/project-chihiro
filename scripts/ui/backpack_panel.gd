@@ -60,13 +60,13 @@ func _build_ui() -> void:
 	var divider := HSeparator.new()
 	column.add_child(divider)
 
-	column.add_child(_section_label("她包里的", "已被她收走、还没放回去的图标。"))
+	column.add_child(_section_label("她包里的", "当前仍被她收纳、尚未重新放下的图标。"))
 	_bag_rows_box = _scroll_list(column, 170.0)
 
 	var middle_divider := HSeparator.new()
 	column.add_child(middle_divider)
 
-	column.add_child(_section_label("桌面上的", "点击“给她”，或直接把桌面图标拖到她身上；送给她后会播放收纳动画，并跨会话留在包里。"))
+	column.add_child(_section_label("桌面上的", "点击“给她”，或直接把桌面图标拖到她身上；送给她后会播放收纳动画，并在本次运行中暂时收纳。"))
 	_desktop_rows_box = _scroll_list(column, -1.0)
 
 	var footer := HBoxContainer.new()
@@ -107,17 +107,13 @@ func _scroll_list(parent: VBoxContainer, fixed_height: float) -> VBoxContainer:
 
 func _rebuild_bag_rows(bag_entries: Array, capacity: int) -> void:
 	_clear_rows(_bag_rows_box)
-	# Only carried (stashed) icons live in the bag list. Icons she placed back on
-	# the desktop are still tracked for exit-restore but are visible on the desktop.
-	var carried: Array = []
-	for entry in bag_entries:
-		if entry is Dictionary and not bool(entry.get("placed", false)):
-			carried.append(entry)
-	_capacity_label.text = "容量 %d / %d" % [carried.size(), capacity]
-	if carried.is_empty():
+	# Every entry is currently hidden in the rendered desktop. Once she places an
+	# icon down, it is removed from the journal and therefore disappears here.
+	_capacity_label.text = "容量 %d / %d" % [bag_entries.size(), capacity]
+	if bag_entries.is_empty():
 		_bag_rows_box.add_child(_empty_row("包里是空的。"))
 	else:
-		for entry in carried:
+		for entry in bag_entries:
 			var icon_name := str(entry.get("name", ""))
 			if icon_name.is_empty():
 				continue
@@ -128,7 +124,7 @@ func _rebuild_bag_rows(bag_entries: Array, capacity: int) -> void:
 				Color("#72e6a1") if keepsake else Color("#8fb4da"),
 				"要回",
 				_on_reclaim_pressed.bind(icon_name),
-				"放回原位。藏品会从她包里移除，普通借用立即归还。",
+				"从她包里取出，放在小千寻当前脚边。",
 			))
 	_restore_button.disabled = bag_entries.is_empty()
 
@@ -140,8 +136,7 @@ func _rebuild_desktop_rows(desktop_icons: Array, bag_entries: Array, capacity: i
 		if not entry is Dictionary:
 			continue
 		bag_names[str(entry.get("name", ""))] = true
-		if not bool(entry.get("placed", false)):
-			carried_count += 1
+		carried_count += 1
 	var full := carried_count >= capacity
 	var listed := 0
 	for item in desktop_icons:
@@ -157,7 +152,7 @@ func _rebuild_desktop_rows(desktop_icons: Array, bag_entries: Array, capacity: i
 			Color("#92a6ba"),
 			"给她",
 			_on_give_pressed.bind(icon_name),
-			"" if full else "送给她，变成跨会话保留的藏品。",
+			"" if full else "送给她；她会随机决定暂时收纳多久。",
 			full,
 		))
 	if listed == 0:
