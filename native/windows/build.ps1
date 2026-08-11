@@ -10,9 +10,6 @@ $nativeRoot = $PSScriptRoot
 $repoRoot = Split-Path -Parent (Split-Path -Parent $nativeRoot)
 $apiPath = Join-Path $nativeRoot 'extension_api.json'
 
-if (-not (Test-Path -LiteralPath $GodotConsole)) {
-    throw "Godot 4.7.1 console executable not found: $GodotConsole"
-}
 if (-not (Test-Path -LiteralPath $VsDevShell)) {
     throw "Visual Studio developer shell not found: $VsDevShell"
 }
@@ -21,6 +18,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $nativeRoot 'godot-cpp\SConstruct'))
 }
 
 if (-not (Test-Path -LiteralPath $apiPath)) {
+    # The Godot console is only needed to (re)generate extension_api.json;
+    # skip the check entirely when the api file already exists.
+    if (-not (Test-Path -LiteralPath $GodotConsole)) {
+        throw "Godot 4.7.1 console executable not found: $GodotConsole"
+    }
     Push-Location -LiteralPath $nativeRoot
     try {
         & $GodotConsole --headless --dump-extension-api
@@ -34,6 +36,7 @@ if (-not (Test-Path -LiteralPath $apiPath)) {
 }
 
 . $VsDevShell -Arch amd64 -HostArch amd64
+$env:PROCESSOR_ARCHITECTURE = 'AMD64'
 $env:UV_CACHE_DIR = Join-Path $repoRoot '.cache\uv'
 Push-Location -LiteralPath $nativeRoot
 try {

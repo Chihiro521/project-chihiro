@@ -41,6 +41,19 @@ public:
 	bool set_desktop_icon_position(const String &name, int32_t screen_x, int32_t screen_y) const;
 	bool desktop_listview_available() const;
 
+	// Hiding a desktop icon broadcasts SHCNE_DELETE for its desktop-namespace
+	// pidl: the same notification explorer sends when a file is really deleted,
+	// so the desktop view drops the icon while the .lnk and its saved position
+	// stay intact on disk. Any shell refresh re-enumerates the namespace and
+	// re-adds it at its original spot. refresh_desktop_icons() asks the shell to
+	// re-enumerate (the light restore); force_desktop_icon_refresh() is the
+	// guaranteed fallback (toggles "show desktop icons").
+	bool hide_desktop_icon(const String &name) const;
+	bool desktop_icon_present(const String &name) const;
+	void refresh_desktop_icons() const;
+	void force_desktop_icon_refresh() const;
+	int64_t desktop_explorer_process_id() const;
+
 	// SetWinEventHook machinery. The worker thread only flips atomics; the
 	// GDScript side polls consume_dirty_flag()/get_dirty_handle() each frame.
 	bool start_event_hook();

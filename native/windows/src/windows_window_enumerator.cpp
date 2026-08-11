@@ -14,10 +14,16 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <dwmapi.h>
+#include <shlobj.h>
+#include <shlguid.h>
+#include <shobjidl.h>
+#include <objbase.h>
+#include <oleauto.h>
 
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
+#include <cwchar>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -377,7 +383,6 @@ HWND desktop_list_view() {
 	}
 	return FindWindowExW(def_view, nullptr, L"SysListView32", nullptr);
 }
-
 POINT desktop_listview_screen_origin(HWND list_view) {
 	POINT origin = {0, 0};
 	if (list_view != nullptr) {
@@ -474,6 +479,54 @@ public:
 	}
 };
 
+// Resolve a desktop item's display name to the child pidl the shell view
+// understands. Enumerates the desktop namespace (SHGetDesktopFolder) — the same
+// items the desktop view displays — and returns the matching pidl (CoTaskMem
+// allocated) or nullptr. The pidl is relative to the desktop folder, exactly
+// what SHChangeNotify(SHCNF_IDLIST) and the view expect.
+LPITEMIDLIST desktop_child_pidl_by_name(const std::wstring &target) {
+	if (target.empty()) {
+		return nullptr;
+	}
+	IShellFolder *desktop = nullptr;
+	if (FAILED(SHGetDesktopFolder(&desktop)) || desktop == nullptr) {
+		return nullptr;
+	}
+	LPITEMIDLIST found = nullptr;
+	IEnumIDList *enum_ids = nullptr;
+	if (SUCCEEDED(desktop->EnumObjects(nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &enum_ids)) && enum_ids != nullptr) {
+		LPITEMIDLIST pidl = nullptr;
+		ULONG fetched = 0;
+		while (enum_ids->Next(1, &pidl, &fetched) == S_OK && fetched == 1) {
+			STRRET str = {};
+			wchar_t name_buf[512] = {};
+			if (SUCCEEDED(desktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &str))) {
+				if (str.uType == STRRET_WSTR && str.pOleStr != nullptr) {
+					wcsncpy(name_buf, str.pOleStr, 511);
+					name_buf[511] = L'\0';
+					CoTaskMemFree(str.pOleStr);
+				} else if (str.uType == STRRET_CSTR) {
+					MultiByteToWideChar(CP_ACP, 0, str.cStr, -1, name_buf, 512);
+				} else if (str.uType == STRRET_OFFSET) {
+					const wchar_t *off = reinterpret_cast<const wchar_t *>(reinterpret_cast<const char *>(pidl) + str.uOffset);
+					wcsncpy(name_buf, off, 511);
+					name_buf[511] = L'\0';
+				}
+			}
+			if (_wcsicmp(name_buf, target.c_str()) == 0) {
+				found = pidl;
+				pidl = nullptr;
+				break;
+			}
+			CoTaskMemFree(pidl);
+			pidl = nullptr;
+		}
+		enum_ids->Release();
+	}
+	desktop->Release();
+	return found;
+}
+
 } // namespace
 
 void WindowsWindowEnumerator::_bind_methods() {
@@ -499,6 +552,11 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("enumerate_desktop_icons"), &WindowsWindowEnumerator::enumerate_desktop_icons);
 	ClassDB::bind_method(D_METHOD("set_desktop_icon_position", "name", "screen_x", "screen_y"), &WindowsWindowEnumerator::set_desktop_icon_position);
 	ClassDB::bind_method(D_METHOD("desktop_listview_available"), &WindowsWindowEnumerator::desktop_listview_available);
+	ClassDB::bind_method(D_METHOD("hide_desktop_icon", "name"), &WindowsWindowEnumerator::hide_desktop_icon);
+	ClassDB::bind_method(D_METHOD("desktop_icon_present", "name"), &WindowsWindowEnumerator::desktop_icon_present);
+	ClassDB::bind_method(D_METHOD("refresh_desktop_icons"), &WindowsWindowEnumerator::refresh_desktop_icons);
+	ClassDB::bind_method(D_METHOD("force_desktop_icon_refresh"), &WindowsWindowEnumerator::force_desktop_icon_refresh);
+	ClassDB::bind_method(D_METHOD("desktop_explorer_process_id"), &WindowsWindowEnumerator::desktop_explorer_process_id);
 }
 
 Array WindowsWindowEnumerator::enumerate_windows(int32_t max_count, bool include_titles) const {
@@ -693,6 +751,83 @@ bool WindowsWindowEnumerator::set_desktop_icon_position(const String &name, int3
 
 bool WindowsWindowEnumerator::desktop_listview_available() const {
 	return desktop_list_view() != nullptr;
+}
+
+bool WindowsWindowEnumerator::hide_desktop_icon(const String &name) const {
+	const std::wstring target = to_wide(name);
+	if (target.empty()) {
+		return false;
+	}
+	// Hiding = SHCNE_DELETE broadcast: the same shell notification explorer emits
+	// when a desktop file is really deleted, so the desktop view drops the icon —
+	// while the .lnk and its saved position stay untouched on disk. Reversible by
+	// any shell refresh (refresh_desktop_icons / force_desktop_icon_refresh),
+	// which re-enumerates the namespace and re-adds the item at its old slot.
+	HRESULT co = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	bool sent = false;
+	LPITEMIDLIST pidl = desktop_child_pidl_by_name(target);
+	if (pidl != nullptr) {
+		SHChangeNotify(SHCNE_DELETE, SHCNF_IDLIST | SHCNF_FLUSH, pidl, nullptr);
+		sent = true;
+		CoTaskMemFree(pidl);
+	}
+	if (co == S_OK) {
+		CoUninitialize();
+	}
+	return sent;
+}
+
+bool WindowsWindowEnumerator::desktop_icon_present(const String &name) const {
+	HWND list_view = desktop_list_view();
+	if (list_view == nullptr) {
+		return false;
+	}
+	const std::wstring target = to_wide(name);
+	if (target.empty()) {
+		return false;
+	}
+	DesktopListViewReader reader(list_view);
+	if (!reader.ok) {
+		return false;
+	}
+	for (size_t index = 0; index < reader.names.size(); ++index) {
+		if (_wcsicmp(reader.names[index].c_str(), target.c_str()) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void WindowsWindowEnumerator::refresh_desktop_icons() const {
+	// SHCNE_ASSOCCHANGED requires SHCNF_IDLIST (the docs: "SHCNF_IDLIST must be
+	// specified"); SHCNF_FLUSH is a modifier that blocks until the notification
+	// has been delivered. This asks the shell to re-enumerate the desktop
+	// namespace, which re-adds items hidden via SHCNE_DELETE (hide_desktop_icon).
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSH, nullptr, nullptr);
+}
+
+void WindowsWindowEnumerator::force_desktop_icon_refresh() const {
+	// Guaranteed rebuild: toggling the shell's own "show desktop icons" setting
+	// tears the desktop view down and recreates it from the namespace, re-adding
+	// every removed slot. Heavy, so it is only the fallback when the light
+	// SHCNE_ASSOCCHANGED refresh does not re-add within the poller's timeout.
+	SHELLSTATE state = {};
+	SHGetSetSettings(&state, SSF_HIDEICONS, FALSE);
+	const BOOL was_hidden = state.fHideIcons;
+	state.fHideIcons = !was_hidden;
+	SHGetSetSettings(&state, SSF_HIDEICONS, TRUE);
+	state.fHideIcons = was_hidden;
+	SHGetSetSettings(&state, SSF_HIDEICONS, TRUE);
+}
+
+int64_t WindowsWindowEnumerator::desktop_explorer_process_id() const {
+	HWND list_view = desktop_list_view();
+	if (list_view == nullptr) {
+		return 0;
+	}
+	DWORD pid = 0;
+	GetWindowThreadProcessId(list_view, &pid);
+	return static_cast<int64_t>(pid);
 }
 
 void stop_window_event_hook_global() {
