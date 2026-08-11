@@ -12,6 +12,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <commctrl.h>
 #include <dwmapi.h>
 
 #include <atomic>
@@ -269,6 +270,113 @@ BOOL CALLBACK collect_window(HWND window, LPARAM user_data) {
 	return TRUE;
 }
 
+// --- Cursor capture (WH_MOUSE_LL) ------------------------------------------
+// Absolute mouse takeover for the cursor-confiscation behavior. The low-level
+// hook is only a conduit: it swallows every mouse event while the atomic
+// `active` flag is set and passes everything through otherwise. That flag is
+// the real gate, so even a forgotten UnhookWindowsHookEx can never lock the
+// user's mouse — the moment active clears, input flows again.
+struct CursorCaptureState {
+	std::atomic<bool> active{false};
+	std::atomic<bool> installed{false};
+	std::atomic<DWORD> worker_thread_id{0};
+	std::thread worker;
+	HHOOK hook = nullptr;
+};
+static CursorCaptureState g_cursor_capture;
+
+LRESULT CALLBACK mouse_hook_proc(int n_code, WPARAM w_param, LPARAM l_param) {
+	if (n_code >= 0 && g_cursor_capture.active.load()) {
+		// Swallow every mouse event during confiscation: moves, buttons, wheel.
+		return 1;
+	}
+	return CallNextHookEx(nullptr, n_code, w_param, l_param);
+}
+
+void cursor_capture_worker() {
+	g_cursor_capture.worker_thread_id = GetCurrentThreadId();
+	// lpfn lives in this DLL, which is loaded into the Godot process, so the
+	// hook can be installed with hMod = NULL (the documented in-process form).
+	g_cursor_capture.hook = SetWindowsHookExW(WH_MOUSE_LL, mouse_hook_proc, nullptr, 0);
+	if (g_cursor_capture.hook == nullptr) {
+		g_cursor_capture.installed = false;
+		g_cursor_capture.worker_thread_id = 0;
+		return;
+	}
+	g_cursor_capture.installed = true;
+	MSG message;
+	while (GetMessageW(&message, nullptr, 0, 0) > 0) {
+		if (message.message == WM_APP) {
+			break;
+		}
+		TranslateMessage(&message);
+		DispatchMessageW(&message);
+	}
+	UnhookWindowsHookEx(g_cursor_capture.hook);
+	g_cursor_capture.hook = nullptr;
+	g_cursor_capture.installed = false;
+}
+
+void shutdown_cursor_capture_worker() {
+	for (int attempt = 0; attempt < 200 && g_cursor_capture.worker_thread_id.load() == 0; ++attempt) {
+		Sleep(1);
+	}
+	const DWORD thread_id = g_cursor_capture.worker_thread_id.exchange(0);
+	if (thread_id != 0) {
+		PostThreadMessageW(thread_id, WM_APP, 0, 0);
+	}
+	if (g_cursor_capture.worker.joinable()) {
+		g_cursor_capture.worker.join();
+	}
+	g_cursor_capture.active = false;
+}
+
+// --- Desktop icons (Explorer SysListView32) --------------------------------
+// The desktop's icon list is the SysListView32 control under the shell's
+// DefView (Progman, or a WorkerW on Windows 11). Icons are moved with
+// LVM_SETITEMPOSITION only — never deleted, so the .lnk/files stay intact and
+// every move is reversible.
+
+HWND desktop_def_view() {
+	HWND def_view = FindWindowExW(FindWindowW(L"Progman", nullptr), nullptr, L"SHELLDLL_DefView", nullptr);
+	if (def_view != nullptr) {
+		return def_view;
+	}
+	struct WorkerSearch {
+		HWND found = nullptr;
+	};
+	WorkerSearch search;
+	EnumWindows([](HWND top, LPARAM user_data) -> BOOL {
+		auto *state = reinterpret_cast<WorkerSearch *>(user_data);
+		wchar_t class_name[64] = {};
+		if (GetClassNameW(top, class_name, 64) > 0 && _wcsicmp(class_name, L"WorkerW") == 0) {
+			HWND def = FindWindowExW(top, nullptr, L"SHELLDLL_DefView", nullptr);
+			if (def != nullptr) {
+				state->found = def;
+				return FALSE;
+			}
+		}
+		return TRUE;
+	}, reinterpret_cast<LPARAM>(&search));
+	return search.found;
+}
+
+HWND desktop_list_view() {
+	HWND def_view = desktop_def_view();
+	if (def_view == nullptr) {
+		return nullptr;
+	}
+	return FindWindowExW(def_view, nullptr, L"SysListView32", nullptr);
+}
+
+POINT desktop_listview_screen_origin(HWND list_view) {
+	POINT origin = {0, 0};
+	if (list_view != nullptr) {
+		ClientToScreen(list_view, &origin);
+	}
+	return origin;
+}
+
 } // namespace
 
 void WindowsWindowEnumerator::_bind_methods() {
@@ -285,6 +393,15 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("consume_dirty_flag"), &WindowsWindowEnumerator::consume_dirty_flag);
 	ClassDB::bind_method(D_METHOD("get_dirty_handle"), &WindowsWindowEnumerator::get_dirty_handle);
 	ClassDB::bind_method(D_METHOD("set_event_hook_tracked_handles", "handles"), &WindowsWindowEnumerator::set_event_hook_tracked_handles);
+	ClassDB::bind_method(D_METHOD("set_cursor_position", "x", "y"), &WindowsWindowEnumerator::set_cursor_position);
+	ClassDB::bind_method(D_METHOD("set_cursor_visible", "visible"), &WindowsWindowEnumerator::set_cursor_visible);
+	ClassDB::bind_method(D_METHOD("is_key_pressed", "vk"), &WindowsWindowEnumerator::is_key_pressed);
+	ClassDB::bind_method(D_METHOD("start_cursor_capture"), &WindowsWindowEnumerator::start_cursor_capture);
+	ClassDB::bind_method(D_METHOD("stop_cursor_capture"), &WindowsWindowEnumerator::stop_cursor_capture);
+	ClassDB::bind_method(D_METHOD("is_cursor_capture_active"), &WindowsWindowEnumerator::is_cursor_capture_active);
+	ClassDB::bind_method(D_METHOD("enumerate_desktop_icons"), &WindowsWindowEnumerator::enumerate_desktop_icons);
+	ClassDB::bind_method(D_METHOD("set_desktop_icon_position", "name", "screen_x", "screen_y"), &WindowsWindowEnumerator::set_desktop_icon_position);
+	ClassDB::bind_method(D_METHOD("desktop_listview_available"), &WindowsWindowEnumerator::desktop_listview_available);
 }
 
 Array WindowsWindowEnumerator::enumerate_windows(int32_t max_count, bool include_titles) const {
@@ -381,8 +498,126 @@ void WindowsWindowEnumerator::set_event_hook_tracked_handles(const Array &handle
 	}
 }
 
+void WindowsWindowEnumerator::set_cursor_position(int32_t x, int32_t y) const {
+	SetCursorPos(x, y);
+}
+
+void WindowsWindowEnumerator::set_cursor_visible(bool visible) const {
+	// Force the system cursor's display counter negative/positive. Re-asserting
+	// every frame is the caller's job (other apps may bump the counter back).
+	if (visible) {
+		while (ShowCursor(TRUE) < 0) {
+		}
+	} else {
+		while (ShowCursor(FALSE) >= 0) {
+		}
+	}
+}
+
+bool WindowsWindowEnumerator::is_key_pressed(int32_t vk) const {
+	return (GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
+}
+
+bool WindowsWindowEnumerator::start_cursor_capture() {
+	if (g_cursor_capture.active.load()) {
+		return true;
+	}
+	if (g_cursor_capture.worker.joinable()) {
+		g_cursor_capture.worker.join();
+	}
+	if (!g_cursor_capture.installed.load()) {
+		g_cursor_capture.worker_thread_id = 0;
+		g_cursor_capture.worker = std::thread(cursor_capture_worker);
+		for (int attempt = 0; attempt < 200 && !g_cursor_capture.installed.load(); ++attempt) {
+			Sleep(1);
+		}
+		if (!g_cursor_capture.installed.load()) {
+			return false;
+		}
+	}
+	g_cursor_capture.active = true;
+	return true;
+}
+
+void WindowsWindowEnumerator::stop_cursor_capture() {
+	g_cursor_capture.active = false;
+	shutdown_cursor_capture_worker();
+}
+
+bool WindowsWindowEnumerator::is_cursor_capture_active() const {
+	return g_cursor_capture.active.load();
+}
+
+Array WindowsWindowEnumerator::enumerate_desktop_icons() const {
+	Array result;
+	HWND list_view = desktop_list_view();
+	if (list_view == nullptr) {
+		return result;
+	}
+	const POINT origin = desktop_listview_screen_origin(list_view);
+	const int count = static_cast<int>(SendMessageW(list_view, LVM_GETITEMCOUNT, 0, 0));
+	for (int index = 0; index < count; ++index) {
+		wchar_t buffer[1024] = {};
+		LVITEMW item = {};
+		item.iSubItem = 0;
+		item.pszText = buffer;
+		item.cchTextMax = static_cast<int>(sizeof(buffer) / sizeof(wchar_t));
+		const LRESULT written = SendMessageW(list_view, LVM_GETITEMTEXTW, index, reinterpret_cast<LPARAM>(&item));
+		if (written <= 0) {
+			continue;
+		}
+		POINT position = {0, 0};
+		const LRESULT got = SendMessageW(list_view, LVM_GETITEMPOSITION, index, reinterpret_cast<LPARAM>(&position));
+		if (got == 0) {
+			continue;
+		}
+		Dictionary entry;
+		entry["name"] = from_wide(std::wstring(buffer, static_cast<size_t>(written)));
+		entry["x"] = static_cast<int64_t>(position.x) + origin.x;
+		entry["y"] = static_cast<int64_t>(position.y) + origin.y;
+		result.push_back(entry);
+	}
+	return result;
+}
+
+bool WindowsWindowEnumerator::set_desktop_icon_position(const String &name, int32_t screen_x, int32_t screen_y) const {
+	HWND list_view = desktop_list_view();
+	if (list_view == nullptr) {
+		return false;
+	}
+	const POINT origin = desktop_listview_screen_origin(list_view);
+	const int client_x = screen_x - origin.x;
+	const int client_y = screen_y - origin.y;
+	const std::wstring target = to_wide(name);
+	const int count = static_cast<int>(SendMessageW(list_view, LVM_GETITEMCOUNT, 0, 0));
+	for (int index = 0; index < count; ++index) {
+		wchar_t buffer[1024] = {};
+		LVITEMW item = {};
+		item.iSubItem = 0;
+		item.pszText = buffer;
+		item.cchTextMax = static_cast<int>(sizeof(buffer) / sizeof(wchar_t));
+		const LRESULT written = SendMessageW(list_view, LVM_GETITEMTEXTW, index, reinterpret_cast<LPARAM>(&item));
+		if (written <= 0) {
+			continue;
+		}
+		if (_wcsicmp(buffer, target.c_str()) == 0) {
+			return SendMessageW(list_view, LVM_SETITEMPOSITION, index, MAKELPARAM(client_x, client_y)) != FALSE;
+		}
+	}
+	return false;
+}
+
+bool WindowsWindowEnumerator::desktop_listview_available() const {
+	return desktop_list_view() != nullptr;
+}
+
 void stop_window_event_hook_global() {
 	shutdown_hook_worker();
+}
+
+void stop_cursor_capture_global() {
+	g_cursor_capture.active = false;
+	shutdown_cursor_capture_worker();
 }
 
 } // namespace godot

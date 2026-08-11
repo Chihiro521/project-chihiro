@@ -118,6 +118,30 @@
         "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
       },
       {
+        "id": "cursor_confiscate", "clip": "straighten_bag", "fallback_clip": "react", "state": "cursor_confiscate",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 120000,
+        "preconditions": {
+          "requires_all": ["cursor_mischief", "cursor_in_reach"],
+          "requires_any_clips": ["straighten_bag", "guard_bag_annoyed", "reason_pose", "react"],
+          "relationship": {"min": "familiar"},
+          "needs": {"energy": {"min": 25}}
+        },
+        "score_weights": {"base": 22, "needs": {"curiosity": 0.3, "boredom": 0.25}},
+        "effects": {"boredom": -8, "irritation": 3}, "session": {"type": "one_shot", "max_duration_ms": 60000}
+      },
+      {
+        "id": "icon_collect", "clip": "straighten_bag", "fallback_clip": "react", "state": "icon_collect",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 90000,
+        "preconditions": {
+          "requires_all": ["icon_collection", "desktop_listview_available", "has_desktop_icons", "bag_not_full"],
+          "requires_any_clips": ["straighten_bag", "tidy_clothes", "guard_bag_annoyed", "react"],
+          "relationship": {"min": "trusted"},
+          "needs": {"energy": {"min": 28}}
+        },
+        "score_weights": {"base": 24, "needs": {"boredom": 0.3, "curiosity": 0.2}},
+        "effects": {"boredom": -10, "curiosity": -4}, "session": {"type": "one_shot", "max_duration_ms": 16000}
+      },
+      {
         "id": "head_pat_accept", "clip": "head_pat_accept", "state": "direct_interaction",
         "priority": "direct_interaction", "interrupt_policy": "return_idle", "resume_policy": "never", "selectable": false,
         "preconditions": {}, "score_weights": {"base": 0}, "effects": {"affection": 0.15}, "session": {"type": "one_shot"}

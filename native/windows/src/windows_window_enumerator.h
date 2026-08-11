@@ -25,6 +25,22 @@ public:
 	bool set_window_rect(int64_t handle, int32_t x, int32_t y, int32_t width, int32_t height) const;
 	bool atomic_replace_file(const String &temporary_path, const String &target_path) const;
 
+	// Cursor confiscation ("绝对没收"). The WH_MOUSE_LL hook only swallows mouse
+	// events while capture is active; a forgotten stop_cursor_capture() degrades
+	// to pass-through, never a permanently trapped mouse.
+	void set_cursor_position(int32_t x, int32_t y) const;
+	void set_cursor_visible(bool visible) const;
+	bool is_key_pressed(int32_t vk) const;
+	bool start_cursor_capture();
+	void stop_cursor_capture();
+	bool is_cursor_capture_active() const;
+
+	// Desktop icons (Explorer's SysListView32). Positions are in screen pixels
+	// of the virtual desktop; underlying .lnk/files are never touched.
+	Array enumerate_desktop_icons() const;
+	bool set_desktop_icon_position(const String &name, int32_t screen_x, int32_t screen_y) const;
+	bool desktop_listview_available() const;
+
 	// SetWinEventHook machinery. The worker thread only flips atomics; the
 	// GDScript side polls consume_dirty_flag()/get_dirty_handle() each frame.
 	bool start_event_hook();
@@ -45,6 +61,7 @@ private:
 // Join-safe shutdown for module unload; joins the hook worker before its
 // std::thread state is destroyed.
 void stop_window_event_hook_global();
+void stop_cursor_capture_global();
 
 } // namespace godot
 

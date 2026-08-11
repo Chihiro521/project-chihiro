@@ -229,6 +229,76 @@
     {"id":"fling_slide_003","text":"要我滑到哪儿？说个坐标。","events":["fling_slide"]},
     {"id":"fling_throw_001","text":"飞……飞出去了！","events":["fling_throw"]},
     {"id":"fling_throw_002","text":"伞！快开伞！吓死我了。","events":["fling_throw"]},
-    {"id":"fling_throw_003","text":"有本事别撒手！","events":["fling_throw"]}
+    {"id":"fling_throw_003","text":"有本事别撒手！","events":["fling_throw"]},
+
+    {"id":"cursor_grab_001","text":"这个设备我先替你保管。","events":["cursor_grab"],"tags":["cursor","confiscate"]},
+    {"id":"cursor_grab_002","text":"你的鼠标精度太差，交给我校准。","events":["cursor_grab"],"tags":["cursor","confiscate","science"]},
+    {"id":"cursor_grab_003","text":"没收。理由你猜。","events":["cursor_grab"],"tags":["cursor","confiscate","tease"]},
+    {"id":"cursor_grab_004","text":"控制权转移，流程正规。","events":["cursor_grab"],"tags":["cursor","confiscate"]},
+    {"id":"cursor_grab_005","text":"别动，先让我看看你的轨迹数据。","events":["cursor_grab"],"tags":["cursor","confiscate","science"]},
+    {"id":"cursor_grab_006","text":"抢到的瞬间，它甚至没有反抗。","events":["cursor_grab"],"tags":["cursor","confiscate","tease"]},
+
+    {"id":"cursor_escape_001","text":"啧……被你按掉了。","events":["cursor_escape"],"tags":["cursor","escape"]},
+    {"id":"cursor_escape_002","text":"好吧，先还你。下次未必。","events":["cursor_escape"],"tags":["cursor","escape"]},
+    {"id":"cursor_escape_003","text":"Esc 是吧，记下了。","events":["cursor_escape"],"tags":["cursor","escape","tease"]},
+    {"id":"cursor_escape_004","text":"跑得倒挺快。","events":["cursor_escape"],"tags":["cursor","escape"]},
+    {"id":"cursor_escape_005","text":"归还原物。别以为每次都有按键。","events":["cursor_escape"],"tags":["cursor","escape","science"]},
+    {"id":"cursor_escape_006","text":"行，你赢了这一局。","events":["cursor_escape"],"relationship_tiers":["familiar","trust","close"],"tags":["cursor","escape"]},
+
+    {"id":"cursor_release_001","text":"考察完毕，归还原物。","events":["cursor_release"],"tags":["cursor","release","science"]},
+    {"id":"cursor_release_002","text":"嗯，数据够了。还你。","events":["cursor_release"],"tags":["cursor","release"]},
+    {"id":"cursor_release_003","text":"采样完成。表现普通。","events":["cursor_release"],"tags":["cursor","release","tease"]},
+    {"id":"cursor_release_004","text":"结论：你的操作精度有待提升。物归原主。","events":["cursor_release"],"tags":["cursor","release","science"]},
+    {"id":"cursor_release_005","text":"60 秒刚好够记录特征。","events":["cursor_release"],"tags":["cursor","release"]},
+    {"id":"cursor_release_006","text":"还你。我已经记住它的运动模式了。","events":["cursor_release"],"tags":["cursor","release","science"]},
+
+    {"id":"cursor_miss_001","text":"跑得还挺快。","events":["cursor_miss"],"tags":["cursor","miss","tease"]},
+    {"id":"cursor_miss_002","text":"光标超出采样范围，下次再抓。","events":["cursor_miss"],"tags":["cursor","miss","science"]},
+    {"id":"cursor_miss_003","text":"啧，被你躲开了。","events":["cursor_miss"],"tags":["cursor","miss"]},
+    {"id":"cursor_miss_004","text":"它动了。有点意思。","events":["cursor_miss"],"tags":["cursor","miss"]},
+    {"id":"cursor_miss_005","text":"速度比我预期快，记录在案。","events":["cursor_miss"],"tags":["cursor","miss","science"]},
+    {"id":"cursor_miss_006","text":"逃逸成功。这次不算。","events":["cursor_miss"],"tags":["cursor","miss"]},
+
+    {"id":"icon_collect_001","text":"桌面太乱了，我帮你归档。","events":["icon_collect"],"tags":["icon","collect"]},
+    {"id":"icon_collect_002","text":"这个快捷方式，先收进我的分类。","events":["icon_collect"],"tags":["icon","collect","science"]},
+    {"id":"icon_collect_003","text":"桌面熵值过高，需要干预。","events":["icon_collect"],"tags":["icon","collect","science"]},
+    {"id":"icon_collect_004","text":"图标摆放没有体系，我来修正。","events":["icon_collect"],"tags":["icon","collect","tease"]},
+    {"id":"icon_collect_005","text":"借走一下。用完还你。","events":["icon_collect"],"tags":["icon","collect"]},
+    {"id":"icon_collect_006","text":"乱放的代价，就是被收走。","events":["icon_collect"],"tags":["icon","collect","tease"]},
+
+    {"id":"icon_arrange_001","text":"就放这里，比你原来的位置合理。","events":["icon_arrange"],"tags":["icon","arrange","tease"]},
+    {"id":"icon_arrange_002","text":"摆好了，现在桌面像样了。","events":["icon_arrange"],"tags":["icon","arrange"]},
+    {"id":"icon_arrange_003","text":"重新分配坐标，秩序回归。","events":["icon_arrange"],"tags":["icon","arrange","science"]},
+    {"id":"icon_arrange_004","text":"这个位置经过计算，不是随手。","events":["icon_arrange"],"tags":["icon","arrange","science"]},
+    {"id":"icon_arrange_005","text":"放好了。你可以开始习惯它了。","events":["icon_arrange"],"tags":["icon","arrange","tease"]},
+    {"id":"icon_arrange_006","text":"归位完成。别再弄乱。","events":["icon_arrange"],"tags":["icon","arrange"]},
+
+    {"id":"icon_keepsake_001","text":"这个……我要了。","events":["icon_keepsake"],"tags":["icon","keepsake"]},
+    {"id":"icon_keepsake_002","text":"列入我的收藏，不许抢。","events":["icon_keepsake"],"tags":["icon","keepsake"]},
+    {"id":"icon_keepsake_003","text":"样本合格，纳入藏品。","events":["icon_keepsake"],"tags":["icon","keepsake","science"]},
+    {"id":"icon_keepsake_004","text":"它符合我的分类标准。","events":["icon_keepsake"],"tags":["icon","keepsake","science"]},
+    {"id":"icon_keepsake_005","text":"这件不错，归我。","events":["icon_keepsake"],"relationship_tiers":["familiar","trust","close"],"tags":["icon","keepsake"]},
+    {"id":"icon_keepsake_006","text":"别讨回去，我打算长期观察它。","events":["icon_keepsake"],"tags":["icon","keepsake"]},
+
+    {"id":"icon_give_001","text":"给我的？……那我收下了。","events":["icon_give"],"tags":["icon","give"]},
+    {"id":"icon_give_002","text":"算你有眼光。","events":["icon_give"],"tags":["icon","give","tease"]},
+    {"id":"icon_give_003","text":"主动送样本？罕见行为。","events":["icon_give"],"tags":["icon","give","science"]},
+    {"id":"icon_give_004","text":"收下。会好好归档的。","events":["icon_give"],"tags":["icon","give"]},
+    {"id":"icon_give_005","text":"不错，知道讨好我的收藏体系了。","events":["icon_give"],"tags":["icon","give","tease"]},
+    {"id":"icon_give_006","text":"谢谢。……这句不算数。","events":["icon_give"],"relationship_tiers":["trust","close"],"tags":["icon","give"]},
+
+    {"id":"icon_reclaim_001","text":"啧，还你还你。","events":["icon_reclaim"],"tags":["icon","reclaim"]},
+    {"id":"icon_reclaim_002","text":"拿稳，别再弄乱了。","events":["icon_reclaim"],"tags":["icon","reclaim","tease"]},
+    {"id":"icon_reclaim_003","text":"你的归档权交还。别乱摆。","events":["icon_reclaim"],"tags":["icon","reclaim","science"]},
+    {"id":"icon_reclaim_004","text":"行，还你。别后悔。","events":["icon_reclaim"],"tags":["icon","reclaim"]},
+    {"id":"icon_reclaim_005","text":"要回就快，别磨蹭。","events":["icon_reclaim"],"tags":["icon","reclaim","tease"]},
+    {"id":"icon_reclaim_006","text":"收回。希望你有自己的秩序。","events":["icon_reclaim"],"tags":["icon","reclaim"]},
+
+    {"id":"icon_restore_001","text":"啧，又要排回去。你们的秩序观我不评价。","events":["icon_restore"],"tags":["icon","restore","tease"]},
+    {"id":"icon_restore_002","text":"行，全部还原。累死我了。","events":["icon_restore"],"tags":["icon","restore"]},
+    {"id":"icon_restore_003","text":"还原完成。桌面重新混乱中。","events":["icon_restore"],"tags":["icon","restore","tease"]},
+    {"id":"icon_restore_004","text":"一把全还你。下次照旧。","events":["icon_restore"],"tags":["icon","restore"]},
+    {"id":"icon_restore_005","text":"好，我拆台我认。还原了。","events":["icon_restore"],"tags":["icon","restore"]},
+    {"id":"icon_restore_006","text":"归位。虽然我很满意原方案。","events":["icon_restore"],"tags":["icon","restore","science"]}
   ]
 }

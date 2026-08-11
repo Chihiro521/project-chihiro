@@ -15,8 +15,10 @@ void uninitialize_little_chihiro_windows_module(ModuleInitializationLevel level)
 	if (level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
-	// Join the WinEventHook worker before its std::thread state is destroyed.
+	// Join the WinEventHook and cursor-capture workers before their std::thread
+	// state is destroyed.
 	stop_window_event_hook_global();
+	stop_cursor_capture_global();
 }
 
 extern "C" {
