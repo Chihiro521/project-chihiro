@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS := {
 	"action_sounds": true,
 	"sfx_volume": 0.72,
 	"window_collision": true,
+	"cursor_mischief": true,
+	"icon_collection": true,
 }
 
 var _window: Window
@@ -51,6 +53,53 @@ func get_virtual_desktop_bounds() -> Rect2:
 
 func get_cursor_position() -> Vector2i:
 	return DisplayServer.mouse_get_position()
+
+## Cursor confiscation ("绝对没收"). Every call is a no-op when the native
+## bridge is missing, and the WH_MOUSE_LL hook only swallows events while
+## capture is active -- so a forgotten stop can never trap the mouse.
+func set_cursor_position(x: int, y: int) -> void:
+	if _native_bridge != null and _native_bridge.has_method("set_cursor_position"):
+		_native_bridge.call("set_cursor_position", x, y)
+
+func set_cursor_visible(visible: bool) -> void:
+	if _native_bridge != null and _native_bridge.has_method("set_cursor_visible"):
+		_native_bridge.call("set_cursor_visible", visible)
+
+func is_key_pressed(vk: int) -> bool:
+	if _native_bridge != null and _native_bridge.has_method("is_key_pressed"):
+		return bool(_native_bridge.call("is_key_pressed", vk))
+	return false
+
+func start_cursor_capture() -> bool:
+	if _native_bridge != null and _native_bridge.has_method("start_cursor_capture"):
+		return bool(_native_bridge.call("start_cursor_capture"))
+	return false
+
+func stop_cursor_capture() -> void:
+	if _native_bridge != null and _native_bridge.has_method("stop_cursor_capture"):
+		_native_bridge.call("stop_cursor_capture")
+
+func is_cursor_capture_active() -> bool:
+	if _native_bridge != null and _native_bridge.has_method("is_cursor_capture_active"):
+		return bool(_native_bridge.call("is_cursor_capture_active"))
+	return false
+
+## Desktop icons (Explorer's SysListView32). Positions are in screen pixels;
+## the underlying .lnk/files are never touched, only the ListView view slot.
+func enumerate_desktop_icons() -> Array:
+	if _native_bridge != null and _native_bridge.has_method("enumerate_desktop_icons"):
+		return _native_bridge.call("enumerate_desktop_icons")
+	return []
+
+func set_desktop_icon_position(name: String, screen_x: int, screen_y: int) -> bool:
+	if _native_bridge != null and _native_bridge.has_method("set_desktop_icon_position"):
+		return bool(_native_bridge.call("set_desktop_icon_position", name, screen_x, screen_y))
+	return false
+
+func desktop_listview_available() -> bool:
+	if _native_bridge != null and _native_bridge.has_method("desktop_listview_available"):
+		return bool(_native_bridge.call("desktop_listview_available"))
+	return false
 
 func set_position(value: Vector2) -> void:
 	_window.position = Vector2i(roundi(value.x), roundi(value.y))

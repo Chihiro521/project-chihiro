@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dkvp0hrsi3d6q"]
+[gd_scene load_steps=12 format=3 uid="uid://dkvp0hrsi3d6q"]
 
 [ext_resource type="Script" uid="uid://cbifga6bt5l7e" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" uid="uid://psics7fgg3p3" path="res://scripts/core/sprite_player.gd" id="2_player"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/ui/action_catalog_panel.gd" id="9_action_catalog"]
 [ext_resource type="Script" path="res://scripts/ui/mechanism_dashboard.gd" id="10_mechanism_dashboard"]
 [ext_resource type="Script" path="res://scripts/ui/offscreen_marker.gd" id="11_marker"]
+[ext_resource type="Script" path="res://scripts/ui/backpack_panel.gd" id="12_backpack_panel"]
 
 [node name="LittleChihiro" type="Node" unique_id=1273643401]
 script = ExtResource("1_main")
@@ -93,6 +94,17 @@ always_on_top = true
 transient = false
 force_native = true
 script = ExtResource("10_mechanism_dashboard")
+
+[node name="BackpackPanel" type="Window" parent="."]
+title = "千寻的背包"
+initial_position = 1
+size = Vector2i(480, 560)
+min_size = Vector2i(360, 420)
+visible = false
+always_on_top = true
+transient = false
+force_native = true
+script = ExtResource("12_backpack_panel")
 
 [node name="Menu" type="PopupMenu" parent="." unique_id=1568697174]
 prefer_native_menu = true

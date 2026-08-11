@@ -75,6 +75,24 @@ const WINDOW_HOP_REACH_PX := 120.0
 ## visible rendering.
 const WINDOW_STAND_MIN_AGE_MS := 2000.0
 
+# Cursor confiscation ("绝对没收"). VK_ESCAPE is reserved EXCLUSIVELY as this
+# behavior's escape valve — it does nothing outside the confiscation hold.
+const VK_ESCAPE := 0x1B
+const CURSOR_CONFISCATE_CHASE_MS := 2600.0
+const CURSOR_CONFISCATE_GRAB_RANGE_PX := 110.0
+const CURSOR_CONFISCATE_HOLD_MS := 60000.0
+const CURSOR_CONFISCATE_WALK_SPEED := 480.0
+
+# Icon collection ("归档桌面图标"). Real ListView slot moves only; .lnk/files
+# are never touched. The stash slot sits far off the virtual desktop.
+const ICON_STASH_POS := Vector2(-4000, -4000)
+const ICON_BAG_CAPACITY := 3
+const ICON_KEEPSAKE_PROBABILITY := 0.12
+const ICON_COLLECT_WALK_SPEED := 420.0
+const ICON_COLLECT_GRAB_MS := 800.0
+const ICON_COLLECT_PLACE_MS := 900.0
+const ICON_BAG_PATH := "user://icon_bag.json"
+
 const MENU_HEAD_PAT := 1
 const MENU_POKE := 2
 const MENU_CLOCK := 3
@@ -100,6 +118,10 @@ const MENU_COMPANION_60 := 22
 const MENU_FREE_ROAM := 23
 const MENU_MANUAL_CONTROL := 24
 const MENU_WINDOW_COLLISION := 25
+const MENU_BACKPACK := 26
+const MENU_RESTORE_ICONS := 27
+const MENU_CURSOR_MISCHIEF := 28
+const MENU_ICON_COLLECTION := 29
 const TRAY_SHOW := 101
 const TRAY_RECENTER := 104
 const TRAY_AUTO_WANDER := 106
@@ -112,6 +134,10 @@ const TRAY_ACTION_CATALOG := 112
 const TRAY_MECHANISM_DASHBOARD := 113
 const TRAY_MANUAL_CONTROL := 114
 const TRAY_WINDOW_COLLISION := 115
+const TRAY_BACKPACK := 116
+const TRAY_RESTORE_ICONS := 117
+const TRAY_CURSOR_MISCHIEF := 118
+const TRAY_ICON_COLLECTION := 119
 
 @onready var sprite_player: PetSpritePlayer = $SpritePlayer
 @onready var desktop: DesktopWindowBridge = $DesktopWindow
@@ -123,6 +149,7 @@ const TRAY_WINDOW_COLLISION := 115
 @onready var sfx_player: PetSfxPlayer = $SfxPlayer
 @onready var action_catalog: PetActionCatalogPanel = $ActionCatalog
 @onready var mechanism_dashboard: PetMechanismDashboard = $MechanismDashboard
+@onready var backpack_panel: PetBackpackPanel = $BackpackPanel
 
 var manifest: PetManifestData
 var machine := PetStateMachine.new()
@@ -219,6 +246,8 @@ var title_awareness := true
 var action_sounds := true
 var sfx_volume := 0.72
 var window_collision_enabled := true
+var cursor_mischief := true
+var icon_collection := true
 var gaze_engaged := false
 var smoothed_cursor: Variant = null
 var suspended := false
@@ -284,6 +313,30 @@ var _manual_feedback_handle := 0
 var _manual_feedback_prev_rect := Rect2i()
 var _manual_feedback_last_at := -INF
 
+# Cursor confiscation ("绝对没收") — a bespoke phase machine, not a clip session.
+# The WH_MOUSE_LL hook is only ever armed while cursor_capture_phase == "hold";
+# _release_cursor_capture() is idempotent and called on every exit path.
+var cursor_capture_phase := ""
+var cursor_capture_started_ms := -1.0
+var cursor_capture_end_reason := ""
+var cursor_capture_anchor := Vector2.ZERO
+var _cursor_capture_installed := false
+
+# Icon collection ("归档桌面图标") — approach → grab(stash) → carry → place.
+# icon_bag_entries is the persistent manifest (user://icon_bag.json); every
+# offscreen icon is listed there so a crash mid-carry still restores it.
+var icon_collect_phase := ""
+var icon_collect_phase_at := -1.0
+var icon_collect_icon: Dictionary = {}
+var icon_collect_target := Vector2.ZERO
+var icon_collect_placed := false
+var icon_collect_keepsaked := false
+var icon_bag_entries: Array = []
+
+# Lightweight lerp walk shared by the two special behaviors (mirrors the roam
+# system's walk_motion: from → to over a fixed duration, wall-blocked).
+var behavior_walk: Dictionary = {}
+
 func _ready() -> void:
 	desktop.configure()
 	var settings := desktop.load_settings()
@@ -296,7 +349,13 @@ func _ready() -> void:
 	sfx_volume = float(settings.get("sfx_volume", 0.72))
 	window_collision_enabled = bool(settings.get("window_collision", true))
 	window_platform_service.set_collision_enabled(window_collision_enabled)
+	cursor_mischief = bool(settings.get("cursor_mischief", true))
+	icon_collection = bool(settings.get("icon_collection", true))
 	sfx_player.configure(action_sounds, sfx_volume)
+	_reconcile_icon_bag()
+	backpack_panel.reclaim_requested.connect(_on_backpack_reclaim)
+	backpack_panel.give_requested.connect(_on_backpack_give)
+	backpack_panel.restore_all_requested.connect(_on_backpack_restore_all)
 	manifest = PetManifestData.load_from_file(SKIN_MANIFEST)
 	if not manifest.is_valid():
 		for error in manifest.errors:
@@ -360,6 +419,10 @@ func _process(delta: float) -> void:
 		_update_roam(now)
 	elif not ecology_walk_motion.is_empty():
 		_update_ecology_walk(now)
+	elif machine.state == "cursor_confiscate":
+		_update_cursor_confiscate(now)
+	elif machine.state == "icon_collect":
+		_update_icon_collect(now)
 	_update_edge_patrol(now)
 	_update_drag_idle(now)
 	if machine.state == "drag_slide":
@@ -466,6 +529,8 @@ func _notification(what: int) -> void:
 		_save_position()
 		_save_user_settings()
 		_save_life_state()
+		_release_cursor_capture()
+		_restore_ordinary_icons_on_exit()
 		window_event_debouncer.stop_event_hook()
 		get_tree().quit()
 
@@ -488,12 +553,17 @@ func _setup_menus() -> void:
 	menu.add_item("回到中央", MENU_RECENTER)
 	menu.add_item("暂时隐藏", MENU_HIDE)
 	menu.add_separator()
+	menu.add_item("查看背包", MENU_BACKPACK)
+	menu.add_item("还原全部图标", MENU_RESTORE_ICONS)
+	menu.add_separator()
 	menu.add_check_item("自主闲逛", MENU_AUTO_WANDER)
 	menu.add_check_item("光标跟随", MENU_CURSOR_TRACKING)
 	menu.add_check_item("气泡台词", MENU_SPEECH_BUBBLES)
 	menu.add_check_item("读取窗口标题", MENU_TITLE_AWARENESS)
 	menu.add_check_item("窗口碰撞", MENU_WINDOW_COLLISION)
 	menu.add_check_item("动作音效", MENU_ACTION_SOUNDS)
+	menu.add_check_item("没收光标", MENU_CURSOR_MISCHIEF)
+	menu.add_check_item("归档图标", MENU_ICON_COLLECTION)
 	menu.add_item("人格机制…（F8）", MENU_MECHANISM_DASHBOARD)
 	menu.add_item("动作总览…（F9）", MENU_ACTION_CATALOG)
 	menu.add_check_item("调试信息（F10）", MENU_DEBUG_OVERLAY)
@@ -510,6 +580,11 @@ func _setup_menus() -> void:
 	tray_menu.add_check_item("读取窗口标题", TRAY_TITLE_AWARENESS)
 	tray_menu.add_check_item("窗口碰撞", TRAY_WINDOW_COLLISION)
 	tray_menu.add_check_item("动作音效", TRAY_ACTION_SOUNDS)
+	tray_menu.add_check_item("没收光标", TRAY_CURSOR_MISCHIEF)
+	tray_menu.add_check_item("归档图标", TRAY_ICON_COLLECTION)
+	tray_menu.add_separator()
+	tray_menu.add_item("查看背包", TRAY_BACKPACK)
+	tray_menu.add_item("还原全部图标", TRAY_RESTORE_ICONS)
 	tray_menu.add_separator()
 	tray_menu.add_item("人格机制", TRAY_MECHANISM_DASHBOARD)
 	tray_menu.add_item("动作总览", TRAY_ACTION_CATALOG)
@@ -539,6 +614,12 @@ func _sync_menu_checks() -> void:
 		for id: int in [MENU_ACTION_SOUNDS, TRAY_ACTION_SOUNDS]:
 			var index: int = popup.get_item_index(id)
 			if index >= 0: popup.set_item_checked(index, action_sounds)
+		for id: int in [MENU_CURSOR_MISCHIEF, TRAY_CURSOR_MISCHIEF]:
+			var index: int = popup.get_item_index(id)
+			if index >= 0: popup.set_item_checked(index, cursor_mischief)
+		for id: int in [MENU_ICON_COLLECTION, TRAY_ICON_COLLECTION]:
+			var index: int = popup.get_item_index(id)
+			if index >= 0: popup.set_item_checked(index, icon_collection)
 	var debug_index := menu.get_item_index(MENU_DEBUG_OVERLAY)
 	if debug_index >= 0: menu.set_item_checked(debug_index, debug_overlay.visible)
 
@@ -635,6 +716,18 @@ func _on_menu_id_pressed(id: int) -> void:
 			window_platform_service.refresh_bodies()
 			_save_user_settings()
 			_sync_menu_checks()
+		MENU_CURSOR_MISCHIEF, TRAY_CURSOR_MISCHIEF:
+			cursor_mischief = not cursor_mischief
+			_save_user_settings()
+			_sync_menu_checks()
+		MENU_ICON_COLLECTION, TRAY_ICON_COLLECTION:
+			icon_collection = not icon_collection
+			_save_user_settings()
+			_sync_menu_checks()
+		MENU_BACKPACK, TRAY_BACKPACK:
+			_open_backpack_panel()
+		MENU_RESTORE_ICONS, TRAY_RESTORE_ICONS:
+			_restore_all_icons()
 		MENU_DEBUG_OVERLAY:
 			debug_overlay.toggle()
 			_sync_menu_checks()
@@ -647,6 +740,8 @@ func _on_menu_id_pressed(id: int) -> void:
 			_save_position()
 			_save_user_settings()
 			_save_life_state()
+			_release_cursor_capture()
+			_restore_ordinary_icons_on_exit()
 			get_tree().quit()
 		TRAY_SHOW:
 			hidden = false
@@ -695,6 +790,8 @@ func _save_user_settings() -> void:
 		"action_sounds": action_sounds,
 		"sfx_volume": sfx_volume,
 		"window_collision": window_collision_enabled,
+		"cursor_mischief": cursor_mischief,
+		"icon_collection": icon_collection,
 	})
 	if save_error != OK:
 		push_warning("无法保存桌宠设置：%s" % error_string(save_error))
@@ -878,6 +975,12 @@ func _behavior_context() -> Dictionary:
 		"dragging": machine.state == "dragged",
 		"menu_open": menu.visible,
 		"direct_interaction": machine.state in ["head_pat", "poke_cheek", "clock_scare"],
+		"cursor_mischief": cursor_mischief,
+		"icon_collection": icon_collection,
+		"cursor_in_reach": _cursor_in_confiscate_reach(),
+		"desktop_listview_available": desktop.desktop_listview_available(),
+		"has_desktop_icons": _desktop_has_collectable_icons(),
+		"bag_not_full": _bag_carry_count() < ICON_BAG_CAPACITY,
 	}
 
 func _ecology_context() -> Dictionary:
@@ -1300,6 +1403,13 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 func _start_autonomous_intent(intent: Dictionary) -> bool:
 	if intent.is_empty() or machine.state != "idle" or action_session.is_active() or not pending_front_intent.is_empty():
 		return false
+	# The two desktop-intervention behaviors are bespoke phase machines (they need
+	# real walk/grab clips and real-world effects, not a clip-session envelope).
+	var special_id := str(intent.get("id", ""))
+	if special_id == "cursor_confiscate":
+		return _begin_cursor_confiscation(intent)
+	if special_id == "icon_collect":
+		return _begin_icon_collection(intent)
 	if str(intent.get("id", "")) == "window_walk":
 		intent = _prepare_platform_walk(intent)
 		if intent.is_empty():
@@ -1356,7 +1466,7 @@ func _play_intent_sfx(intent_id: String) -> void:
 func _machine_state_for_intent(intent: Dictionary) -> String:
 	var intent_id := str(intent.get("id", ""))
 	var configured_state := str(intent.get("state", ""))
-	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
+	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_confiscate", "icon_collect"]:
 		return configured_state
 	match intent_id:
 		"nap": return "sleeping"
@@ -1413,7 +1523,513 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		"window_walk": return "window_walk"
 		"window_sit": return "window_sit"
 		"window_land_recover": return "window_land"
+		"cursor_confiscate":
+			return "cursor_miss" if cursor_capture_end_reason == "miss" else ("cursor_escape" if cursor_capture_end_reason == "escape" else "cursor_release")
+		"icon_collect":
+			return "icon_keepsake" if icon_collect_keepsaked else ("icon_arrange" if icon_collect_placed else "icon_collect")
 		_: return ""
+
+## ---- Cursor confiscation ("绝对没收") ----
+## Chase → grab → absolute confiscation hold (mouse pinned, hidden, swallowed)
+## → release. Esc is the sole escape valve; the 60s hold times out on its own.
+## Everything here is idempotent: _release_cursor_capture() is safe to call from
+## any exit path (Esc, timeout, interrupt, quit).
+
+func _cursor_in_confiscate_reach() -> bool:
+	var cursor := Vector2(desktop.get_cursor_position())
+	var foot := _pet_foot_global()
+	var dx := absf(cursor.x - foot.x)
+	var dy := cursor.y - foot.y
+	return dx <= 480.0 and dy >= -360.0 and dy <= 180.0
+
+func _can_snatch_cursor(cursor: Vector2) -> bool:
+	var foot := _pet_foot_global()
+	var dy := cursor.y - foot.y
+	return absf(cursor.x - foot.x) <= CURSOR_CONFISCATE_GRAB_RANGE_PX + 40.0 and dy >= -300.0 and dy <= 120.0
+
+func _begin_cursor_confiscation(intent: Dictionary) -> bool:
+	current_intent = intent.duplicate(true)
+	if machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) != "cursor_confiscate":
+		current_intent.clear()
+		return false
+	cursor_capture_phase = "chase"
+	cursor_capture_end_reason = ""
+	cursor_capture_started_ms = _now_ms()
+	var cursor := Vector2(desktop.get_cursor_position())
+	_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_CONFISCATE_WALK_SPEED)
+	if not behavior_walk.is_empty():
+		_play_confiscate_chase_clip()
+	return true
+
+func _update_cursor_confiscate(now: float) -> void:
+	match cursor_capture_phase:
+		"chase":
+			var cursor := Vector2(desktop.get_cursor_position())
+			if _can_snatch_cursor(cursor):
+				_begin_cursor_hold(now)
+				return
+			if now - cursor_capture_started_ms >= CURSOR_CONFISCATE_CHASE_MS:
+				cursor_capture_end_reason = "miss"
+				_finish_special_behavior("cursor_confiscate", "completed")
+				return
+			if behavior_walk.is_empty():
+				# The cursor sits on top of her x (or she already reached it). Stand
+				# still until it re-enters the grab band or the chase times out.
+				return
+			if _advance_behavior_walk(now):
+				# Reached the old target — re-aim at the live cursor. Re-issue the
+				# walk clip so a direction flip picks the correct baked-direction loop.
+				_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_CONFISCATE_WALK_SPEED)
+				if not behavior_walk.is_empty():
+					_play_confiscate_chase_clip()
+		"hold":
+			# Absolute: pin to her hand, hide it, swallow every mouse event. If the
+			# player was mid-drag when grabbed, wait for the button release before
+			# arming the hook so a swallowed button-up can never leave a sticky drag.
+			desktop.set_cursor_position(roundi(cursor_capture_anchor.x), roundi(cursor_capture_anchor.y))
+			desktop.set_cursor_visible(false)
+			if not _cursor_capture_installed:
+				if _mouse_button_held():
+					return
+				_install_cursor_capture()
+			if desktop.is_key_pressed(VK_ESCAPE):
+				_end_cursor_confiscation("escape")
+			elif now - cursor_capture_started_ms >= CURSOR_CONFISCATE_HOLD_MS:
+				_end_cursor_confiscation("timeout")
+
+func _begin_cursor_hold(now: float) -> void:
+	cursor_capture_phase = "hold"
+	cursor_capture_started_ms = now
+	_cursor_capture_installed = false
+	var cursor := Vector2(desktop.get_cursor_position())
+	# The cursor is stuffed into her bag, held at her side where the sprite keeps it.
+	cursor_capture_anchor = position + Vector2(facing * 26.0, 48.0)
+	desktop.set_cursor_position(roundi(cursor_capture_anchor.x), roundi(cursor_capture_anchor.y))
+	desktop.set_cursor_visible(false)
+	if not _mouse_button_held():
+		_install_cursor_capture()
+	sprite_player.play_clip("straighten_bag")
+	sfx_player.play("bag")
+	_emit_dialogue("cursor_grab")
+
+func _end_cursor_confiscation(reason: String) -> void:
+	cursor_capture_end_reason = reason
+	_release_cursor_capture()
+	if reason == "timeout":
+		# Release the hold, then play her "考察完毕" pose before returning.
+		cursor_capture_phase = "release"
+		sprite_player.play_clip("reason_pose")
+		return
+	_finish_special_behavior("cursor_confiscate", "completed")
+
+func _abort_cursor_confiscation() -> void:
+	_release_cursor_capture()
+	cursor_capture_phase = ""
+	cursor_capture_end_reason = ""
+	if str(current_intent.get("id", "")) == "cursor_confiscate":
+		current_intent.clear()
+
+func _release_cursor_capture() -> void:
+	_cursor_capture_installed = false
+	if desktop.is_cursor_capture_active():
+		desktop.stop_cursor_capture()
+	desktop.set_cursor_visible(true)
+
+func _install_cursor_capture() -> void:
+	if _cursor_capture_installed:
+		return
+	_cursor_capture_installed = true
+	if not desktop.start_cursor_capture():
+		# Keep the flag set for this hold so we degrade to pin+hide without
+		# re-warning every frame; _release_cursor_capture() clears it for the
+		# next hold, which gets a fresh attempt.
+		push_warning("小千寻：无法安装鼠标没收钩子，退化为仅锁定位置")
+
+func _mouse_button_held() -> bool:
+	return desktop.is_key_pressed(0x01) or desktop.is_key_pressed(0x02) or desktop.is_key_pressed(0x04)
+
+func _play_confiscate_chase_clip() -> void:
+	_set_direction(1)
+	sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
+
+func _handle_cursor_confiscate_clip(clip_name: String) -> void:
+	if cursor_capture_phase == "release":
+		if clip_name == "reason_pose":
+			_finish_special_behavior("cursor_confiscate", "completed")
+		return
+	if clip_name in ["patrol_floor_left", "patrol_floor_right"]:
+		if cursor_capture_phase == "chase":
+			_play_confiscate_chase_clip()
+		return
+	if clip_name == "straighten_bag":
+		# The grab gesture finished — the hold loop keeps guarding the bag.
+		sprite_player.play_clip("guard_bag_annoyed")
+		return
+	if clip_name == "guard_bag_annoyed" and cursor_capture_phase == "hold":
+		sprite_player.play_clip("guard_bag_annoyed")
+
+## ---- Icon collection ("归档桌面图标") ----
+## approach → grab(stash offscreen + bag entry) → carry → place at a random spot.
+## Ordinary icons return on app exit; keepsakes (random "看中" or player "给她")
+## persist until reclaimed. .lnk/files are never touched.
+
+func _desktop_has_collectable_icons() -> bool:
+	if not desktop.desktop_listview_available():
+		return false
+	var bag_names: Dictionary = {}
+	for entry in icon_bag_entries:
+		bag_names[str(entry.get("name", ""))] = true
+	for item in desktop.enumerate_desktop_icons():
+		if item is Dictionary and not str(item.get("name", "")).is_empty() and not bag_names.has(str(item.get("name", ""))):
+			return true
+	return false
+
+func _begin_icon_collection(intent: Dictionary) -> bool:
+	var target := _pick_collectable_icon()
+	if target.is_empty():
+		return false
+	current_intent = intent.duplicate(true)
+	icon_collect_icon = target
+	icon_collect_placed = false
+	icon_collect_keepsaked = false
+	if machine.dispatch({"type": "ACTION_START", "state": "icon_collect"}) != "icon_collect":
+		current_intent.clear()
+		icon_collect_icon = {}
+		return false
+	icon_collect_phase = "approach"
+	icon_collect_phase_at = _now_ms()
+	_start_behavior_walk(Vector2(float(target.get("x", 0.0)), float(target.get("y", 0.0))), ICON_COLLECT_WALK_SPEED)
+	_play_icon_collect_chase_clip()
+	return true
+
+func _update_icon_collect(now: float) -> void:
+	match icon_collect_phase:
+		"approach":
+			if _advance_behavior_walk(now):
+				icon_collect_phase = "grab"
+				icon_collect_phase_at = now
+				_grab_icon(now)
+		"grab":
+			if now - icon_collect_phase_at >= ICON_COLLECT_GRAB_MS:
+				if icon_collect_keepsaked:
+					# She took a liking to it — it stays in the bag for good.
+					_finish_icon_collection()
+				else:
+					icon_collect_target = _random_placement_target()
+					icon_collect_phase = "carry"
+					icon_collect_phase_at = now
+					_start_behavior_walk(icon_collect_target, ICON_COLLECT_WALK_SPEED)
+					_play_icon_collect_chase_clip()
+		"carry":
+			if _advance_behavior_walk(now):
+				icon_collect_phase = "place"
+				icon_collect_phase_at = now
+				_place_icon(now)
+		"place":
+			if now - icon_collect_phase_at >= ICON_COLLECT_PLACE_MS:
+				_finish_icon_collection()
+
+func _grab_icon(now: float) -> void:
+	var name := str(icon_collect_icon.get("name", ""))
+	if name.is_empty():
+		_finish_icon_collection()
+		return
+	if not desktop.set_desktop_icon_position(name, int(ICON_STASH_POS.x), int(ICON_STASH_POS.y)):
+		# The ListView refused (auto-arrange or a stale slot) — degrade gracefully.
+		_finish_icon_collection()
+		return
+	icon_collect_keepsaked = randf() < ICON_KEEPSAKE_PROBABILITY
+	icon_bag_entries.append({
+		"name": name,
+		"kind": "keepsake" if icon_collect_keepsaked else "ordinary",
+		"original_pos": icon_collect_icon.get("original", {"x": 0, "y": 0}),
+	})
+	_save_icon_bag()
+	sprite_player.play_clip("straighten_bag")
+	sfx_player.play("bag")
+	if icon_collect_keepsaked:
+		_emit_dialogue("icon_keepsake")
+
+func _place_icon(now: float) -> void:
+	var name := str(icon_collect_icon.get("name", ""))
+	if not name.is_empty() and not icon_collect_keepsaked:
+		var entry_index := _icon_bag_entry_index(name)
+		if entry_index >= 0:
+			if desktop.set_desktop_icon_position(name, roundi(icon_collect_target.x), roundi(icon_collect_target.y)):
+				icon_collect_placed = true
+				# Keep tracking the ordinary icon (with its original position) so it
+				# returns on app exit — "她摆放过的也算". Bag capacity only counts
+				# icons she is carrying, not ones already placed back on the desktop.
+				icon_bag_entries[entry_index]["placed"] = true
+			_save_icon_bag()
+	icon_collect_phase_at = now
+	sprite_player.play_clip("look_around")
+
+func _finish_icon_collection() -> void:
+	_finish_special_behavior("icon_collect", "completed")
+
+func _abort_icon_collection() -> void:
+	if str(current_intent.get("id", "")) == "icon_collect":
+		current_intent.clear()
+	icon_collect_phase = ""
+	_return_in_flight_icon()
+
+func _play_icon_collect_chase_clip() -> void:
+	_set_direction(1)
+	sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
+
+func _handle_icon_collect_clip(clip_name: String) -> void:
+	if icon_collect_phase in ["approach", "carry"] and clip_name in ["patrol_floor_left", "patrol_floor_right"]:
+		_play_icon_collect_chase_clip()
+		return
+	# grab/place hold their pose until the phase timer advances.
+
+func _finish_special_behavior(intent_id: String, outcome: String) -> void:
+	var finished := current_intent.duplicate(true)
+	current_intent.clear()
+	resumable_platform_intent.clear()
+	if outcome in ["completed", "timeout"] and needs_model != null:
+		needs_model.apply_event("behavior_completed", {"effects": finished.get("effects", {})})
+		var dialogue_event := _dialogue_event_for_intent(intent_id)
+		if not dialogue_event.is_empty():
+			_emit_dialogue(dialogue_event)
+	if machine.state in ["cursor_confiscate", "icon_collect"]:
+		machine.dispatch({"type": "ACTION_END"})
+	if routine_session.is_active() and ecology_step_mode == "intent" and not routine_session.is_paused():
+		_complete_ecology_step("completed")
+
+## ---- Movement helpers shared by the two special behaviors ----
+
+func _start_behavior_walk(target: Vector2, speed_px_per_second: float) -> void:
+	var from := position
+	var to := _clamp_position(target, false)
+	if from.distance_to(to) < 6.0:
+		behavior_walk = {}
+		return
+	facing = 1 if (to.x - from.x) > 0.0 else -1
+	behavior_walk = {
+		"from": from,
+		"to": to,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(160.0, from.distance_to(to) / maxf(1.0, speed_px_per_second) * 1000.0),
+	}
+
+func _advance_behavior_walk(now: float) -> bool:
+	if behavior_walk.is_empty():
+		return true
+	var duration := maxf(1.0, float(behavior_walk.get("duration_ms", 1.0)))
+	var progress := clampf((now - float(behavior_walk.get("started_at", now))) / duration, 0.0, 1.0)
+	var from := Vector2(behavior_walk.get("from", position))
+	var to := Vector2(behavior_walk.get("to", position))
+	var previous_position := position
+	position = _clamp_position(from.lerp(to, progress), false)
+	if not desktop_world.walls.is_empty() and progress < 1.0:
+		var wall := _blocked_walk_wall(previous_position, position)
+		if not wall.is_empty():
+			var side := int(wall.get("side", 0))
+			var wall_x := float(wall.get("x", 0.0))
+			var body_edge := wall_x - (WINDOW_FOOT_OFFSET_X + side * PetWallResolverScript.BODY_HALF_WIDTH)
+			position = _clamp_position(Vector2(body_edge, position.y), false)
+			behavior_walk = {}
+			_apply_position()
+			return true
+	if absf(to.x - from.x) > 1.0:
+		facing = 1 if (to.x - from.x) > 0.0 else -1
+	_apply_position()
+	if progress >= 1.0:
+		behavior_walk = {}
+		return true
+	return false
+
+## ---- Backpack manifest (user://icon_bag.json) ----
+
+func _load_icon_bag() -> void:
+	if not FileAccess.file_exists(ICON_BAG_PATH):
+		return
+	var file := FileAccess.open(ICON_BAG_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed = JSON.parse_string(file.get_as_text())
+	if parsed is Array:
+		icon_bag_entries.clear()
+		for value in parsed:
+			if value is Dictionary and not str(value.get("name", "")).is_empty():
+				icon_bag_entries.append(value)
+
+func _save_icon_bag() -> void:
+	var file := FileAccess.open(ICON_BAG_PATH, FileAccess.WRITE)
+	if file == null:
+		push_warning("无法写入背包清单：%s" % ICON_BAG_PATH)
+		return
+	file.store_string(JSON.stringify(icon_bag_entries, "  "))
+
+func _icon_bag_entry_index(name: String) -> int:
+	for index in range(icon_bag_entries.size()):
+		if str(icon_bag_entries[index].get("name", "")) == name:
+			return index
+	return -1
+
+func _remove_icon_bag_entry(name: String) -> void:
+	var index := _icon_bag_entry_index(name)
+	if index >= 0:
+		icon_bag_entries.remove_at(index)
+
+## Icons she is currently carrying (stashed, not placed back on the desktop).
+## Placed ordinary icons stay in the manifest for exit-restore but no longer
+## count against the 3-slot bag capacity.
+func _bag_carry_count() -> int:
+	var count := 0
+	for entry in icon_bag_entries:
+		if not bool(entry.get("placed", false)):
+			count += 1
+	return count
+
+## Boot: restore any ordinary icon left stashed by a crash, keep keepsakes, drop
+## entries whose icon is gone from the desktop.
+func _reconcile_icon_bag() -> void:
+	_load_icon_bag()
+	if icon_bag_entries.is_empty():
+		return
+	var names: Dictionary = {}
+	for item in desktop.enumerate_desktop_icons():
+		if item is Dictionary:
+			names[str(item.get("name", ""))] = true
+	var kept: Array = []
+	for entry in icon_bag_entries:
+		var name := str(entry.get("name", ""))
+		if not names.has(name):
+			continue
+		if str(entry.get("kind", "ordinary")) == "ordinary":
+			var original: Dictionary = entry.get("original_pos", {})
+			if not original.is_empty():
+				desktop.set_desktop_icon_position(name, int(original.get("x", 0)), int(original.get("y", 0)))
+		else:
+			kept.append(entry)
+	icon_bag_entries = kept
+	_save_icon_bag()
+
+## Restore every ordinary icon on app exit; keepsakes persist in the manifest.
+func _restore_ordinary_icons_on_exit() -> void:
+	for entry in icon_bag_entries:
+		if str(entry.get("kind", "ordinary")) == "ordinary":
+			var original: Dictionary = entry.get("original_pos", {})
+			if not original.is_empty():
+				desktop.set_desktop_icon_position(str(entry.get("name", "")), int(original.get("x", 0)), int(original.get("y", 0)))
+	var kept: Array = []
+	for entry in icon_bag_entries:
+		if str(entry.get("kind", "ordinary")) != "ordinary":
+			kept.append(entry)
+	icon_bag_entries = kept
+	_save_icon_bag()
+
+func _restore_all_icons() -> void:
+	for entry in icon_bag_entries:
+		var original: Dictionary = entry.get("original_pos", {})
+		if not original.is_empty():
+			desktop.set_desktop_icon_position(str(entry.get("name", "")), int(original.get("x", 0)), int(original.get("y", 0)))
+	icon_bag_entries.clear()
+	_save_icon_bag()
+	_refresh_backpack_panel()
+	_emit_dialogue("icon_restore")
+
+## An ordinary icon grabbed but never placed/keepsaked must go home (covers both
+## an interrupt mid-carry and the keepsake-keeps-everything rule above).
+func _return_in_flight_icon() -> void:
+	var name := str(icon_collect_icon.get("name", ""))
+	var original: Variant = icon_collect_icon.get("original", {})
+	icon_collect_icon = {}
+	if name.is_empty() or not original is Dictionary or original.is_empty():
+		return
+	var entry_index := _icon_bag_entry_index(name)
+	if entry_index >= 0 and str(icon_bag_entries[entry_index].get("kind", "ordinary")) == "ordinary":
+		desktop.set_desktop_icon_position(name, int(original.get("x", 0)), int(original.get("y", 0)))
+		icon_bag_entries.remove_at(entry_index)
+		_save_icon_bag()
+
+func _desktop_icon_position(icon_name: String) -> Dictionary:
+	for item in desktop.enumerate_desktop_icons():
+		if item is Dictionary and str(item.get("name", "")) == icon_name:
+			return {"x": int(item.get("x", 0)), "y": int(item.get("y", 0))}
+	return {}
+
+func _pick_collectable_icon() -> Dictionary:
+	if not desktop.desktop_listview_available():
+		return {}
+	var bag_names: Dictionary = {}
+	for entry in icon_bag_entries:
+		bag_names[str(entry.get("name", ""))] = true
+	var candidates: Array = []
+	for item in desktop.enumerate_desktop_icons():
+		if not item is Dictionary:
+			continue
+		var name := str(item.get("name", ""))
+		if name.is_empty() or bag_names.has(name):
+			continue
+		candidates.append(item)
+	if candidates.is_empty():
+		return {}
+	var best_distance := INF
+	for item in candidates:
+		var item_position := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+		best_distance = minf(best_distance, position.distance_to(item_position))
+	var near: Array = []
+	for item in candidates:
+		var item_position := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+		if position.distance_to(item_position) <= best_distance * 1.8 + 120.0:
+			near.append(item)
+	var pool: Array = near if not near.is_empty() else candidates
+	var chosen: Dictionary = pool[randi() % pool.size()]
+	var result := chosen.duplicate(true)
+	result["original"] = {"x": int(chosen.get("x", 0)), "y": int(chosen.get("y", 0))}
+	return result
+
+func _random_placement_target() -> Vector2:
+	var bounds := desktop.get_virtual_desktop_bounds()
+	var margin := 90.0
+	return Vector2(
+		bounds.position.x + margin + randf() * maxf(1.0, bounds.size.x - margin * 2.0),
+		bounds.position.y + margin + randf() * maxf(1.0, bounds.size.y - margin * 2.0),
+	)
+
+## ---- Backpack panel plumbing ----
+
+func _open_backpack_panel() -> void:
+	_refresh_backpack_panel()
+	backpack_panel.popup_centered()
+
+func _refresh_backpack_panel() -> void:
+	var desktop_icons: Array = desktop.enumerate_desktop_icons() if desktop.desktop_listview_available() else []
+	backpack_panel.update_view(icon_bag_entries, desktop_icons, ICON_BAG_CAPACITY)
+
+func _on_backpack_reclaim(icon_name: String) -> void:
+	var index := _icon_bag_entry_index(icon_name)
+	if index < 0:
+		return
+	var entry: Dictionary = icon_bag_entries[index]
+	var original: Dictionary = entry.get("original_pos", {})
+	if not original.is_empty():
+		desktop.set_desktop_icon_position(icon_name, int(original.get("x", 0)), int(original.get("y", 0)))
+	icon_bag_entries.remove_at(index)
+	_save_icon_bag()
+	_refresh_backpack_panel()
+	_emit_dialogue("icon_reclaim")
+
+func _on_backpack_give(icon_name: String) -> void:
+	if _bag_carry_count() >= ICON_BAG_CAPACITY:
+		return
+	var original := _desktop_icon_position(icon_name)
+	if original.is_empty():
+		return
+	if not desktop.set_desktop_icon_position(icon_name, int(ICON_STASH_POS.x), int(ICON_STASH_POS.y)):
+		return
+	icon_bag_entries.append({"name": icon_name, "kind": "keepsake", "original_pos": original})
+	_save_icon_bag()
+	_refresh_backpack_panel()
+	_emit_dialogue("icon_give")
+
+func _on_backpack_restore_all() -> void:
+	_restore_all_icons()
+	_refresh_backpack_panel()
 
 func _interrupt_action(kind: String, context: Dictionary = {}) -> void:
 	_stop_roam()
@@ -1996,6 +2612,10 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	blink_deadline = -1.0
 	idle_side_pose_deadline = -1.0
 	side_pose_reverting = false
+	if from == "cursor_confiscate" and to != "cursor_confiscate":
+		_abort_cursor_confiscation()
+	if from == "icon_collect" and to != "icon_collect":
+		_abort_icon_collection()
 	if to != "idle" and not pending_front_intent.is_empty():
 		pending_front_intent.clear()
 		pending_front_handoff_clip = ""
@@ -2093,6 +2713,12 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	if to == "idle": _advance_or_schedule_wander()
 
 func _on_clip_completed(clip_name: String, _segment: String) -> void:
+	if machine.state == "cursor_confiscate":
+		_handle_cursor_confiscate_clip(clip_name)
+		return
+	if machine.state == "icon_collect":
+		_handle_icon_collect_clip(clip_name)
+		return
 	if machine.state == "idle" and not pending_front_intent.is_empty() and clip_name == pending_front_handoff_clip:
 		var intent := pending_front_intent.duplicate(true)
 		pending_front_intent.clear()

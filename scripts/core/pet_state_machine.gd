@@ -13,6 +13,7 @@ const ACTIVE_STATES := {
 	"platform_walk": true, "platform_sit": true,
 	"manual_control": true, "roam_walk": true,
 	"drag_slide": true, "drag_throw": true, "wall_climb": true,
+	"cursor_confiscate": true, "icon_collect": true,
 }
 const DIRECT_INTERACTION_STATES := {
 	"idle": true, "notice": true, "cursor_track": true, "cursor_startle": true,
@@ -27,6 +28,7 @@ const PASSIVE_CURSOR_STATES := {"idle": true, "notice": true, "cursor_track": tr
 const AUTONOMOUS_ACTION_STATES := {
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
 	"platform_walk": true, "platform_sit": true, "roam_walk": true, "wall_climb": true,
+	"cursor_confiscate": true, "icon_collect": true,
 }
 
 var state := "boot"
