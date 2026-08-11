@@ -552,6 +552,7 @@ void WindowsWindowEnumerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("enumerate_desktop_icons"), &WindowsWindowEnumerator::enumerate_desktop_icons);
 	ClassDB::bind_method(D_METHOD("set_desktop_icon_position", "name", "screen_x", "screen_y"), &WindowsWindowEnumerator::set_desktop_icon_position);
 	ClassDB::bind_method(D_METHOD("desktop_listview_available"), &WindowsWindowEnumerator::desktop_listview_available);
+	ClassDB::bind_method(D_METHOD("desktop_icon_spacing"), &WindowsWindowEnumerator::desktop_icon_spacing);
 	ClassDB::bind_method(D_METHOD("hide_desktop_icon", "name"), &WindowsWindowEnumerator::hide_desktop_icon);
 	ClassDB::bind_method(D_METHOD("desktop_icon_present", "name"), &WindowsWindowEnumerator::desktop_icon_present);
 	ClassDB::bind_method(D_METHOD("refresh_desktop_icons"), &WindowsWindowEnumerator::refresh_desktop_icons);
@@ -751,6 +752,15 @@ bool WindowsWindowEnumerator::set_desktop_icon_position(const String &name, int3
 
 bool WindowsWindowEnumerator::desktop_listview_available() const {
 	return desktop_list_view() != nullptr;
+}
+
+Vector2i WindowsWindowEnumerator::desktop_icon_spacing() const {
+	HWND list_view = desktop_list_view();
+	if (list_view == nullptr) {
+		return Vector2i(0, 0);
+	}
+	const LRESULT packed = SendMessageW(list_view, LVM_GETITEMSPACING, 0, 0);
+	return Vector2i(static_cast<int32_t>(LOWORD(packed)), static_cast<int32_t>(HIWORD(packed)));
 }
 
 bool WindowsWindowEnumerator::hide_desktop_icon(const String &name) const {

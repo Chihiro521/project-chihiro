@@ -101,6 +101,13 @@ func desktop_listview_available() -> bool:
 		return bool(_native_bridge.call("desktop_listview_available"))
 	return false
 
+## Actual Explorer icon-grid spacing in screen pixels. This is a scalar native
+## query and is used to choose empty cells without hardcoding a Windows scale.
+func desktop_icon_spacing() -> Vector2i:
+	if _native_bridge != null and _native_bridge.has_method("desktop_icon_spacing"):
+		return Vector2i(_native_bridge.call("desktop_icon_spacing"))
+	return Vector2i.ZERO
+
 ## Hiding a desktop icon removes its ListView slot (the .lnk and its saved
 ## position stay intact); a later refresh re-adds it at its original spot.
 func hide_desktop_icon(name: String) -> bool:

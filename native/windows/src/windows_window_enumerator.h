@@ -40,6 +40,9 @@ public:
 	Array enumerate_desktop_icons() const;
 	bool set_desktop_icon_position(const String &name, int32_t screen_x, int32_t screen_y) const;
 	bool desktop_listview_available() const;
+	// LVM_GETITEMSPACING is a scalar message: it does not pass a pointer into
+	// Explorer, so it is safe across the desktop ListView process boundary.
+	Vector2i desktop_icon_spacing() const;
 
 	// Hiding a desktop icon broadcasts SHCNE_DELETE for its desktop-namespace
 	// pidl: the same notification explorer sends when a file is really deleted,
