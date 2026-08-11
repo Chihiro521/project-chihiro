@@ -331,6 +331,14 @@ func _test_state_machine() -> void:
 	_expect(machine.dispatch({"type": "FULLSCREEN_EXIT"}) == "idle", "fullscreen exit resumes idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "ambient_action"}) == "ambient_action", "autonomous action enters generic execution state")
 	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "autonomous action returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) == "cursor_confiscate", "cursor confiscate enters its bespoke state")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "cursor confiscate returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) == "cursor_confiscate", "cursor confiscate re-enters")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "cursor confiscate clip end returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "icon_collect"}) == "icon_collect", "icon collect enters its bespoke state")
+	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "icon collect clip end returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "icon_collect"}) == "icon_collect", "icon collect re-enters")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "icon collect returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "platform_sit"}) == "platform_sit", "platform action enters platform state")
 	_expect(machine.dispatch({"type": "PLATFORM_LOST"}) == "drag_fall", "platform loss preempts into fall")
 	_expect(machine.dispatch({"type": "ARRIVE"}) == "land", "platform fall can land")
@@ -528,7 +536,7 @@ func _test_behavior_director() -> void:
 		"returned_after_seconds": 3600.0,
 	}
 	var diagnostics := director.diagnostic_candidates(needs, context, 89000)
-	_expect(diagnostics.size() == 16, "behavior diagnostics expose all sixteen configured intents")
+	_expect(diagnostics.size() == 18, "behavior diagnostics expose all eighteen configured intents")
 	var eligible_diagnostic := false
 	var event_diagnostic := false
 	for diagnostic in diagnostics:
@@ -671,7 +679,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 205, "dialogue catalog contains 205 lines")
+	_expect(dialogue.line_count() == 265, "dialogue catalog contains 265 lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
