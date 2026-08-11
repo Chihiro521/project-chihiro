@@ -101,6 +101,31 @@ func desktop_listview_available() -> bool:
 		return bool(_native_bridge.call("desktop_listview_available"))
 	return false
 
+## Hiding a desktop icon removes its ListView slot (the .lnk and its saved
+## position stay intact); a later refresh re-adds it at its original spot.
+func hide_desktop_icon(name: String) -> bool:
+	if _native_bridge != null and _native_bridge.has_method("hide_desktop_icon"):
+		return bool(_native_bridge.call("hide_desktop_icon", name))
+	return false
+
+func desktop_icon_present(name: String) -> bool:
+	if _native_bridge != null and _native_bridge.has_method("desktop_icon_present"):
+		return bool(_native_bridge.call("desktop_icon_present", name))
+	return false
+
+func refresh_desktop_icons() -> void:
+	if _native_bridge != null and _native_bridge.has_method("refresh_desktop_icons"):
+		_native_bridge.call("refresh_desktop_icons")
+
+func force_desktop_icon_refresh() -> void:
+	if _native_bridge != null and _native_bridge.has_method("force_desktop_icon_refresh"):
+		_native_bridge.call("force_desktop_icon_refresh")
+
+func desktop_explorer_process_id() -> int:
+	if _native_bridge != null and _native_bridge.has_method("desktop_explorer_process_id"):
+		return int(_native_bridge.call("desktop_explorer_process_id"))
+	return 0
+
 func set_position(value: Vector2) -> void:
 	_window.position = Vector2i(roundi(value.x), roundi(value.y))
 

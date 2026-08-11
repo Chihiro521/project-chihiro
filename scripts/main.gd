@@ -83,9 +83,9 @@ const CURSOR_CONFISCATE_GRAB_RANGE_PX := 110.0
 const CURSOR_CONFISCATE_HOLD_MS := 60000.0
 const CURSOR_CONFISCATE_WALK_SPEED := 480.0
 
-# Icon collection ("归档桌面图标"). Real ListView slot moves only; .lnk/files
-# are never touched. The stash slot sits far off the virtual desktop.
-const ICON_STASH_POS := Vector2(-4000, -4000)
+# Icon collection ("归档桌面图标"). Only the rendered desktop presentation is
+# changed; .lnk/files are never touched. Ordinary icons move through the ListView,
+# while keepsakes use a shell delete notification and return on refresh.
 const ICON_BAG_CAPACITY := 3
 const ICON_KEEPSAKE_PROBABILITY := 0.12
 const ICON_COLLECT_WALK_SPEED := 420.0
@@ -101,6 +101,14 @@ const ICON_PLACEMENT_VISIBLE_TRIES := 8
 const ICON_NAV_ARC_HEIGHT_PX := 84.0
 const ICON_COLLECT_FLY_SPEED := 300.0
 const ICON_COLLECT_LANDING_MS := 520.0
+const ICON_TRANSFER_TIMEOUT_MS := 5000.0
+# The desktop ListView position is the icon-cell origin. Dropping relative to the
+# pet's standing foot makes a reclaimed icon visibly land at her current location.
+const ICON_DROP_FROM_FOOT := Vector2(-48.0, -72.0)
+# Windows desktop icon cells are larger than the glyph itself. This hitbox is only
+# used while the left button is held, so a normal click cannot become a gift.
+const ICON_GIFT_HITBOX := Rect2(-18.0, -18.0, 96.0, 96.0)
+const ICON_GIFT_DRAG_THRESHOLD_PX := 12.0
 # Hand anchor is ~48px below the window top (the cursor-hold anchor), while her
 # feet sit WINDOW_FOOT_OFFSET_Y below it. Horizontal slack absorbs the body's
 # offset inside the window so the grab test does not depend on her facing.
@@ -337,9 +345,12 @@ var cursor_capture_end_reason := ""
 var cursor_capture_anchor := Vector2.ZERO
 var _cursor_capture_installed := false
 
-# Icon collection ("归档桌面图标") — approach → grab(stash) → carry → place.
+# Icon collection ("归档桌面图标") — approach → grab → carry → place. A
+# keepsaked icon is hidden from the rendered desktop through a shell delete
+# notification; restoring it (reclaim or restore-all) asks the shell to
+# re-enumerate the desktop, then re-positions it.
 # icon_bag_entries is the persistent manifest (user://icon_bag.json); every
-# offscreen icon is listed there so a crash mid-carry still restores it.
+# hidden icon is listed there so a crash mid-carry still restores it.
 var icon_collect_phase := ""
 var icon_collect_phase_at := -1.0
 var icon_collect_started_at := -1.0
@@ -348,6 +359,26 @@ var icon_collect_target := Vector2.ZERO
 var icon_collect_placed := false
 var icon_collect_keepsaked := false
 var icon_bag_entries: Array = []
+# FIFO of deferred desktop-icon restore tasks. A task:
+#   "refresh": bool        # issue refresh_desktop_icons() before waiting
+#   "refresh_issued": bool # internal
+#   "wait_names": Array    # every name must reappear before positioning
+#   "position_map": Dictionary  # name -> Vector2 (final desktop position)
+#   "positioned": Dictionary    # internal progress
+#   "rehide_names": Array  # names to hide again after positioning (remaining keepsakes)
+#   "escalated": bool      # internal: force_desktop_icon_refresh already tried
+#   "started_ms"/"timeout_ms": float
+#   "done_kind"/"done_name": String
+var icon_restore_queue: Array = []
+var next_icon_restore_check_ms := -1.0
+# A real desktop-icon drag is observed globally because the pet window is
+# mouse-passthrough. Once the icon enters her rendered hit area and the button is
+# released, it becomes the same recorded keepsake transfer as the backpack button.
+var icon_gift_drag: Dictionary = {}
+# Transaction for a visible give / reclaim animation. The manifest is written
+# before the give animation starts; a close or interruption therefore cannot lose
+# the hidden icon even if the clip is cut short.
+var icon_transfer: Dictionary = {}
 # Multi-modal navigation for one collection run: {mode, platform, at}. Hop/fly
 # drives a manual parabola (icon_collect_arc); walk reuses behavior_walk.
 var icon_collect_nav: Dictionary = {}
@@ -444,6 +475,9 @@ func _process(delta: float) -> void:
 		_update_cursor_confiscate(now)
 	elif machine.state == "icon_collect":
 		_update_icon_collect(now)
+	_update_icon_gift_drag(now)
+	_update_icon_transfer(now)
+	_update_icon_restore(now)
 	_update_edge_patrol(now)
 	_update_drag_idle(now)
 	if machine.state == "drag_slide":
@@ -1488,7 +1522,7 @@ func _play_intent_sfx(intent_id: String) -> void:
 func _machine_state_for_intent(intent: Dictionary) -> String:
 	var intent_id := str(intent.get("id", ""))
 	var configured_state := str(intent.get("state", ""))
-	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_confiscate", "icon_collect"]:
+	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_confiscate", "icon_collect", "icon_transfer"]:
 		return configured_state
 	match intent_id:
 		"nap": return "sleeping"
@@ -1550,6 +1584,206 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		"icon_collect":
 			return "icon_keepsake" if icon_collect_keepsaked else ("icon_arrange" if icon_collect_placed else "icon_collect")
 		_: return ""
+
+## ---- User-gifted icon transfer --------------------------------------------
+##
+## There are two entry points into the same transaction:
+##   1. click "给她" in the backpack;
+##   2. drag a rendered desktop icon onto her and release the mouse.
+## Both paths record the original desktop position, hide only the rendered shell
+## item, play the same bag animation, and persist the keepsake before the clip
+## starts. Reclaim uses the reverse playback of the same bag clip, then asks the
+## shell to restore the icon at the pet's current feet.
+
+func _update_icon_gift_drag(now: float) -> void:
+	var mouse_down := desktop != null and desktop.is_key_pressed(0x01)
+	if not mouse_down:
+		if not icon_gift_drag.is_empty():
+			var dropped := icon_gift_drag.duplicate(true)
+			icon_gift_drag.clear()
+			if bool(dropped.get("entered_pet", false)) and bool(dropped.get("moved", false)):
+				_begin_icon_transfer(
+					"give",
+					str(dropped.get("name", "")),
+					dropped.get("original", {}),
+					false,
+					"mouse_drag",
+				)
+		return
+	if not icon_collection or machine.state != "idle" or not press.is_empty() or menu.visible:
+		icon_gift_drag.clear()
+		return
+	var cursor := Vector2(desktop.get_cursor_position())
+	if icon_gift_drag.is_empty():
+		var target := _desktop_icon_at_screen_point(cursor)
+		if target.is_empty():
+			return
+		icon_gift_drag = {
+			"name": str(target.get("name", "")),
+			"original": {"x": int(target.get("x", 0)), "y": int(target.get("y", 0))},
+			"start_cursor": cursor,
+			"started_at": now,
+			"moved": false,
+			"entered_pet": false,
+		}
+		return
+	var start_cursor := Vector2(icon_gift_drag.get("start_cursor", cursor))
+	if cursor.distance_to(start_cursor) >= ICON_GIFT_DRAG_THRESHOLD_PX:
+		icon_gift_drag["moved"] = true
+	if _screen_point_hits_pet(cursor):
+		icon_gift_drag["entered_pet"] = true
+	if now - float(icon_gift_drag.get("started_at", now)) > ICON_TRANSFER_TIMEOUT_MS:
+		icon_gift_drag.clear()
+
+func _update_icon_transfer(now: float) -> void:
+	if icon_transfer.is_empty():
+		return
+	# The bag clip is finite, but keep the transaction self-closing if a clip is
+	# interrupted or an animation asset fails to report completion. Give has
+	# already been persisted before this point; reclaim/restore-all still retain
+	# their manifest rollback until the shell restore task finishes.
+	if now - float(icon_transfer.get("started_at", now)) >= ICON_TRANSFER_TIMEOUT_MS:
+		_complete_icon_transfer()
+
+func _desktop_icon_at_screen_point(screen_point: Vector2) -> Dictionary:
+	if desktop == null or not desktop.desktop_listview_available():
+		return {}
+	var bag_names: Dictionary = {}
+	for entry in icon_bag_entries:
+		bag_names[str(entry.get("name", ""))] = true
+	var result: Dictionary = {}
+	var best_distance := INF
+	for item in desktop.enumerate_desktop_icons():
+		if not item is Dictionary:
+			continue
+		var name := str(item.get("name", ""))
+		if name.is_empty() or bag_names.has(name):
+			continue
+		var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+		if not _is_icon_visible(icon_pos):
+			continue
+		if not ICON_GIFT_HITBOX.has_point(screen_point - icon_pos):
+			continue
+		var distance := screen_point.distance_squared_to(icon_pos)
+		if distance < best_distance:
+			best_distance = distance
+			result = item.duplicate(true)
+	return result
+
+func _screen_point_hits_pet(screen_point: Vector2) -> bool:
+	if hidden or suspended or not desktop.is_visible():
+		return false
+	var local := screen_point - position
+	return local.x >= 0.0 and local.y >= 0.0 and local.x < float(pet_window_size.x) and local.y < float(pet_window_size.y) and not sprite_player.hit_test(local).is_empty()
+
+func _begin_icon_transfer(kind: String, icon_name: String, original: Dictionary, panel_was_visible: bool, source := "backpack") -> bool:
+	if icon_transfer.size() > 0 or not icon_collection:
+		return false
+	if machine.state == "menu_wait":
+		machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	if machine.state != "idle" or action_session.is_active() or (icon_name.is_empty() and kind != "restore_all"):
+		return false
+	if kind == "give":
+		if _bag_carry_count() >= ICON_BAG_CAPACITY or _icon_bag_entry_index(icon_name) >= 0:
+			return false
+		if original.is_empty():
+			original = _desktop_icon_position(icon_name)
+		if original.is_empty() or not desktop.hide_desktop_icon(icon_name):
+			return false
+		icon_bag_entries.append({
+			"name": icon_name,
+			"kind": "keepsake",
+			"original_pos": original.duplicate(true),
+			"gift_source": source,
+		})
+		_save_icon_bag()
+	icon_transfer = {
+		"kind": kind,
+		"name": icon_name,
+		"original": original.duplicate(true),
+		"panel_was_visible": panel_was_visible,
+		"source": source,
+		"started_at": _now_ms(),
+	}
+	if panel_was_visible:
+		backpack_panel.hide()
+	if machine.dispatch({"type": "ACTION_START", "state": "icon_transfer"}) != "icon_transfer":
+		# The transfer is already durably recorded (or still present in the bag for
+		# reclaim). Complete its data path even if a transient state transition rejects
+		# the animation state, rather than leaving a hidden icon with no UI feedback.
+		_complete_icon_transfer()
+		return true
+	sfx_player.play("bag")
+	return true
+
+func _handle_icon_transfer_clip(clip_name: String) -> void:
+	if icon_transfer.is_empty():
+		machine.dispatch({"type": "CLIP_END"})
+		return
+	if clip_name == "straighten_bag":
+		_complete_icon_transfer()
+
+func _complete_icon_transfer() -> void:
+	var transfer := icon_transfer.duplicate(true)
+	icon_transfer.clear()
+	var kind := str(transfer.get("kind", ""))
+	var name := str(transfer.get("name", ""))
+	var reopen_panel := bool(transfer.get("panel_was_visible", false))
+	if kind == "give":
+		if needs_model != null:
+			needs_model.apply_event("friendly_interaction")
+		_bump_interaction("positive", true)
+		if machine.state == "icon_transfer":
+			machine.dispatch({"type": "ACTION_END"})
+		_refresh_backpack_panel()
+		_emit_dialogue("icon_give")
+		if reopen_panel:
+			backpack_panel.popup_centered()
+		return
+	if kind == "reclaim":
+		var index := _icon_bag_entry_index(name)
+		if index < 0:
+			if machine.state == "icon_transfer":
+				machine.dispatch({"type": "ACTION_END"})
+			return
+		var entry: Dictionary = icon_bag_entries[index]
+		var drop_position := _icon_drop_position_at_pet()
+		icon_bag_entries.remove_at(index)
+		_save_icon_bag()
+		if str(entry.get("kind", "ordinary")) == "keepsake":
+			_queue_icon_restore({
+				"refresh": true,
+				"wait_names": [name],
+				"position_map": {name: drop_position},
+				"rehide_names": _keepsake_names(),
+				"rollback_entries": [entry],
+				"done_kind": "reclaim",
+				"done_name": name,
+				"reopen_panel": reopen_panel,
+			})
+		else:
+			if desktop.set_desktop_icon_position(name, roundi(drop_position.x), roundi(drop_position.y)):
+				_finish_icon_restore({"done_kind": "reclaim", "reopen_panel": reopen_panel})
+			else:
+				icon_bag_entries.append(entry)
+				_save_icon_bag()
+		if machine.state == "icon_transfer":
+			machine.dispatch({"type": "ACTION_END"})
+		return
+	if kind == "restore_all":
+		_queue_restore_all_icons(reopen_panel)
+		if machine.state == "icon_transfer":
+			machine.dispatch({"type": "ACTION_END"})
+
+func _abort_icon_transfer() -> void:
+	var reopen := bool(icon_transfer.get("panel_was_visible", false))
+	icon_transfer.clear()
+	if reopen:
+		call_deferred("_open_backpack_panel")
+
+func _icon_drop_position_at_pet() -> Vector2:
+	var foot := position + Vector2(WINDOW_FOOT_OFFSET_X, WINDOW_FOOT_OFFSET_Y)
+	return Vector2(roundf(foot.x + ICON_DROP_FROM_FOOT.x), roundf(foot.y + ICON_DROP_FROM_FOOT.y))
 
 ## ---- Cursor confiscation ("绝对没收") ----
 ## Chase → grab → absolute confiscation hold (mouse pinned, hidden, swallowed)
@@ -1925,11 +2159,13 @@ func _grab_icon(now: float) -> void:
 	if not _icon_reachable_from_position(position, icon_pos):
 		_lose_icon_target("out_of_reach")
 		return
-	if not desktop.set_desktop_icon_position(name, int(ICON_STASH_POS.x), int(ICON_STASH_POS.y)):
-		# The ListView refused (auto-arrange or a stale slot) — degrade gracefully.
+	icon_collect_keepsaked = randf() < ICON_KEEPSAKE_PROBABILITY
+	if icon_collect_keepsaked and not desktop.hide_desktop_icon(name):
+		# A keepsake is hidden by removing its ListView slot; if the ListView
+		# refused (view gone or a stale slot), degrade to not collecting. Ordinary
+		# icons never leave the ListView — she carries them visibly and places them.
 		_finish_icon_collection()
 		return
-	icon_collect_keepsaked = randf() < ICON_KEEPSAKE_PROBABILITY
 	icon_bag_entries.append({
 		"name": name,
 		"kind": "keepsake" if icon_collect_keepsaked else "ordinary",
@@ -2160,13 +2396,29 @@ func _bag_carry_count() -> int:
 	return count
 
 ## Boot: restore any ordinary icon left stashed by a crash, keep keepsakes, drop
-## entries whose icon is gone from the desktop.
+## entries whose icon is gone from the desktop. A reboot rebuilds the ListView
+## from the namespace, so a hidden keepsake reappears and must be hidden again.
 func _reconcile_icon_bag() -> void:
 	_load_icon_bag()
 	if icon_bag_entries.is_empty():
 		return
+	var items := desktop.enumerate_desktop_icons()
+	if items.is_empty():
+		# ListView not populated yet (shell not ready at boot): do NOT drop every
+		# entry on an empty enumeration, or the bag would be wiped. Defer re-hiding
+		# the keepsakes; the restore poller waits until the ListView is live.
+		var keepsakes := _keepsake_names()
+		if not keepsakes.is_empty():
+			_queue_icon_restore({
+				"refresh": false,
+				"wait_names": [],
+				"position_map": {},
+				"rehide_names": keepsakes,
+				"timeout_ms": 60000.0,
+			})
+		return
 	var names: Dictionary = {}
-	for item in desktop.enumerate_desktop_icons():
+	for item in items:
 		if item is Dictionary:
 			names[str(item.get("name", ""))] = true
 	var kept: Array = []
@@ -2179,6 +2431,8 @@ func _reconcile_icon_bag() -> void:
 			if not original.is_empty():
 				desktop.set_desktop_icon_position(name, int(original.get("x", 0)), int(original.get("y", 0)))
 		else:
+			# The shell re-added the keepsake's slot from the namespace; hide it again.
+			desktop.hide_desktop_icon(name)
 			kept.append(entry)
 	icon_bag_entries = kept
 	_save_icon_bag()
@@ -2198,14 +2452,44 @@ func _restore_ordinary_icons_on_exit() -> void:
 	_save_icon_bag()
 
 func _restore_all_icons() -> void:
+	if icon_bag_entries.is_empty():
+		_refresh_backpack_panel()
+		return
+	if _begin_icon_transfer("restore_all", "", {}, backpack_panel.visible, "restore_all"):
+		return
+	_queue_restore_all_icons(false)
+
+func _queue_restore_all_icons(reopen_panel: bool) -> void:
+	if icon_bag_entries.is_empty():
+		_refresh_backpack_panel()
+		return
+	var position_map: Dictionary = {}
+	var wait_names: Array = []
+	var had_keepsake := false
+	var rollback_entries := icon_bag_entries.duplicate(true)
 	for entry in icon_bag_entries:
+		var name := str(entry.get("name", ""))
+		if name.is_empty():
+			continue
+		wait_names.append(name)
+		if str(entry.get("kind", "ordinary")) == "keepsake":
+			had_keepsake = true
 		var original: Dictionary = entry.get("original_pos", {})
 		if not original.is_empty():
-			desktop.set_desktop_icon_position(str(entry.get("name", "")), int(original.get("x", 0)), int(original.get("y", 0)))
+			position_map[name] = Vector2(int(original.get("x", 0)), int(original.get("y", 0)))
 	icon_bag_entries.clear()
 	_save_icon_bag()
-	_refresh_backpack_panel()
-	_emit_dialogue("icon_restore")
+	# A refresh is only needed when keepsakes were hidden (deleted slots to
+	# re-add); ordinary icons never left the ListView and position directly.
+	_queue_icon_restore({
+		"refresh": had_keepsake,
+		"wait_names": wait_names,
+		"position_map": position_map,
+		"rehide_names": [],
+		"rollback_entries": rollback_entries,
+		"done_kind": "restore_all",
+		"reopen_panel": reopen_panel,
+	})
 
 ## An ordinary icon grabbed but never placed/keepsaked must go home (covers both
 ## an interrupt mid-carry and the keepsake-keeps-everything rule above).
@@ -2228,6 +2512,114 @@ func _desktop_icon_position(icon_name: String) -> Dictionary:
 		if item is Dictionary and str(item.get("name", "")) == icon_name:
 			return {"x": int(item.get("x", 0)), "y": int(item.get("y", 0))}
 	return {}
+
+## ---- Deferred desktop-icon restore (reclaim / restore-all) ----
+
+## Names currently hidden in the bag (keepsakes that are not placed back).
+func _keepsake_names() -> Array:
+	var result: Array = []
+	for entry in icon_bag_entries:
+		if str(entry.get("kind", "ordinary")) == "keepsake" and not bool(entry.get("placed", false)):
+			result.append(str(entry.get("name", "")))
+	return result
+
+func _queue_icon_restore(spec: Dictionary) -> void:
+	spec["refresh_issued"] = false
+	spec["positioned"] = {}
+	spec["escalated"] = false
+	spec["started_ms"] = _now_ms()
+	spec["timeout_ms"] = float(spec.get("timeout_ms", 10000.0))
+	spec["done_kind"] = str(spec.get("done_kind", ""))
+	spec["done_name"] = str(spec.get("done_name", ""))
+	icon_restore_queue.append(spec)
+
+## Drives the front-most restore task to completion, throttled to ~150ms. After a
+## refresh the deleted slots reappear asynchronously, so we poll for them, then
+## position each, then re-hide the keepsakes that must stay hidden (reclaiming
+## one icon makes every other hidden keepsake flash back briefly — inherent to a
+## shell-wide refresh, and they are re-hidden right after).
+func _update_icon_restore(now: float) -> void:
+	if icon_restore_queue.is_empty():
+		return
+	if now < next_icon_restore_check_ms:
+		return
+	next_icon_restore_check_ms = now + 150.0
+	if desktop == null or not desktop.desktop_listview_available():
+		return
+	var task: Dictionary = icon_restore_queue[0]
+	if bool(task.get("refresh", false)) and not bool(task.get("refresh_issued", false)):
+		desktop.refresh_desktop_icons()
+		task["refresh_issued"] = true
+	# 1) Wait for every target name to reappear.
+	var missing: Array = []
+	for name in task.get("wait_names", []):
+		if not desktop.desktop_icon_present(str(name)):
+			missing.append(str(name))
+	if not missing.is_empty():
+		if now - float(task.get("started_ms", now)) >= float(task.get("timeout_ms", 10000.0)):
+			if not bool(task.get("escalated", false)):
+				# The light refresh did not re-add — force a full desktop rebuild.
+				task["escalated"] = true
+				task["started_ms"] = now
+				desktop.force_desktop_icon_refresh()
+			else:
+				_abandon_icon_restore(task)
+		return
+	# 2) Position each present name once.
+	var positioned: Dictionary = task.get("positioned", {})
+	for name in task.get("wait_names", []):
+		var key := str(name)
+		if positioned.has(key):
+			continue
+		var target: Variant = task.get("position_map", {}).get(key, null)
+		if target == null:
+			positioned[key] = true
+			continue
+		if desktop.set_desktop_icon_position(key, int(target.x), int(target.y)):
+			positioned[key] = true
+	task["positioned"] = positioned
+	if positioned.size() < (task.get("wait_names", []) as Array).size():
+		if now - float(task.get("started_ms", now)) >= float(task.get("timeout_ms", 10000.0)):
+			_abandon_icon_restore(task)
+		return
+	# 3) Re-hide the remaining keepsakes.
+	var retry: Array = []
+	for name in task.get("rehide_names", []):
+		var key := str(name)
+		if desktop.desktop_icon_present(key) and not desktop.hide_desktop_icon(key):
+			retry.append(key)
+	if retry.is_empty():
+		icon_restore_queue.pop_front()
+		_finish_icon_restore(task)
+	elif now - float(task.get("started_ms", now)) >= float(task.get("timeout_ms", 10000.0)):
+		# Give up re-hiding; keepsakes stay in the manifest, so the next boot
+		# reconcile (or a manual restore) hides them again. Nothing is lost.
+		icon_restore_queue.pop_front()
+		_finish_icon_restore(task)
+
+func _finish_icon_restore(task: Dictionary) -> void:
+	match str(task.get("done_kind", "")):
+		"reclaim":
+			_refresh_backpack_panel()
+			_emit_dialogue("icon_reclaim")
+		"restore_all":
+			_refresh_backpack_panel()
+			_emit_dialogue("icon_restore")
+	if bool(task.get("reopen_panel", false)):
+		backpack_panel.popup_centered()
+
+func _abandon_icon_restore(task: Dictionary) -> void:
+	icon_restore_queue.pop_front()
+	var rollback: Array = task.get("rollback_entries", [])
+	if not rollback.is_empty():
+		for entry in rollback:
+			if entry is Dictionary and _icon_bag_entry_index(str(entry.get("name", ""))) < 0:
+				icon_bag_entries.append(entry)
+		_save_icon_bag()
+	push_warning("图标恢复超时，未能完成: %s" % str(task.get("done_name", "")))
+	_refresh_backpack_panel()
+	if bool(task.get("reopen_panel", false)):
+		backpack_panel.popup_centered()
 
 ## Candidate filter: un-collected, visible, and reachable. Among those, pick by
 ## distance-weighted random (nearer icons are likelier, but never deterministic).
@@ -2301,29 +2693,16 @@ func _on_backpack_reclaim(icon_name: String) -> void:
 		return
 	var entry: Dictionary = icon_bag_entries[index]
 	var original: Dictionary = entry.get("original_pos", {})
-	if not original.is_empty():
-		desktop.set_desktop_icon_position(icon_name, int(original.get("x", 0)), int(original.get("y", 0)))
-	icon_bag_entries.remove_at(index)
-	_save_icon_bag()
-	_refresh_backpack_panel()
-	_emit_dialogue("icon_reclaim")
+	_begin_icon_transfer("reclaim", icon_name, original, backpack_panel.visible, "backpack")
 
 func _on_backpack_give(icon_name: String) -> void:
-	if _bag_carry_count() >= ICON_BAG_CAPACITY:
-		return
 	var original := _desktop_icon_position(icon_name)
 	if original.is_empty():
 		return
-	if not desktop.set_desktop_icon_position(icon_name, int(ICON_STASH_POS.x), int(ICON_STASH_POS.y)):
-		return
-	icon_bag_entries.append({"name": icon_name, "kind": "keepsake", "original_pos": original})
-	_save_icon_bag()
-	_refresh_backpack_panel()
-	_emit_dialogue("icon_give")
+	_begin_icon_transfer("give", icon_name, original, backpack_panel.visible, "backpack")
 
 func _on_backpack_restore_all() -> void:
 	_restore_all_icons()
-	_refresh_backpack_panel()
 
 func _interrupt_action(kind: String, context: Dictionary = {}) -> void:
 	_stop_roam()
@@ -2910,6 +3289,8 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		_abort_cursor_confiscation()
 	if from == "icon_collect" and to != "icon_collect":
 		_abort_icon_collection()
+	if from == "icon_transfer" and to != "icon_transfer":
+		_abort_icon_transfer()
 	if to != "idle" and not pending_front_intent.is_empty():
 		pending_front_intent.clear()
 		pending_front_handoff_clip = ""
@@ -3000,6 +3381,9 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	elif to == "roam_walk":
 		_set_direction(1)
 		sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
+	elif to == "icon_transfer":
+		var transfer_kind := str(icon_transfer.get("kind", ""))
+		sprite_player.play_clip("straighten_bag", true, "", transfer_kind in ["reclaim", "restore_all"])
 	else:
 		sprite_player.play_clip(to)
 	if to != "float": airborne_phase = ""
@@ -3012,6 +3396,9 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		return
 	if machine.state == "icon_collect":
 		_handle_icon_collect_clip(clip_name)
+		return
+	if machine.state == "icon_transfer":
+		_handle_icon_transfer_clip(clip_name)
 		return
 	if machine.state == "idle" and not pending_front_intent.is_empty() and clip_name == pending_front_handoff_clip:
 		var intent := pending_front_intent.duplicate(true)

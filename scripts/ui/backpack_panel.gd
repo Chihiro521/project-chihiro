@@ -66,14 +66,14 @@ func _build_ui() -> void:
 	var middle_divider := HSeparator.new()
 	column.add_child(middle_divider)
 
-	column.add_child(_section_label("桌面上的", "送给她做藏品，会跨会话留在包里。"))
+	column.add_child(_section_label("桌面上的", "点击“给她”，或直接把桌面图标拖到她身上；送给她后会播放收纳动画，并跨会话留在包里。"))
 	_desktop_rows_box = _scroll_list(column, -1.0)
 
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 10)
 	column.add_child(footer)
 	var hint := Label.new()
-	hint.text = "要回：放回原位  ·  给她：变成藏品"
+	hint.text = "要回：从包里取出并放在她脚边  ·  给她：收进包里"
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
