@@ -79,6 +79,17 @@ func self_z_order() -> int:
 	return _self_z_order
 
 
+## Last window snapshots (rect/z_order/visible/minimized/maximized/cloaked, refreshed
+## every ~500ms). Read-only: consumers use them to decide what is on screen.
+func last_snapshots() -> Array:
+	return _last_snapshots.duplicate()
+
+
+## This process's pid, used to exclude the pet's own windows from occlusion tests.
+func self_process_id() -> int:
+	return _self_process_id
+
+
 func enumerate_snapshots(max_count := 0) -> Array:
 	if _native_bridge == null or not _native_bridge.has_method("enumerate_windows"):
 		return []

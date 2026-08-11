@@ -91,6 +91,21 @@ const ICON_KEEPSAKE_PROBABILITY := 0.12
 const ICON_COLLECT_WALK_SPEED := 420.0
 const ICON_COLLECT_GRAB_MS := 800.0
 const ICON_COLLECT_PLACE_MS := 900.0
+# Reachability band for grabbing an icon. Mirrors the cursor-confiscation grab range:
+# she can only collect icons her hands can actually reach from her current spot.
+const ICON_COLLECT_GRAB_RANGE_PX := 130.0
+const ICON_REACH_UP_PX := 90.0
+const ICON_REACH_DOWN_PX := 40.0
+const ICON_MAX_WALK_HORIZONTAL_PX := 1800.0
+const ICON_PLACEMENT_VISIBLE_TRIES := 8
+const ICON_NAV_ARC_HEIGHT_PX := 84.0
+const ICON_COLLECT_FLY_SPEED := 300.0
+const ICON_COLLECT_LANDING_MS := 520.0
+# Hand anchor is ~48px below the window top (the cursor-hold anchor), while her
+# feet sit WINDOW_FOOT_OFFSET_Y below it. Horizontal slack absorbs the body's
+# offset inside the window so the grab test does not depend on her facing.
+const ICON_HAND_OFFSET_Y_PX := 48.0
+const ICON_HORIZONTAL_SLACK_PX := WINDOW_FOOT_OFFSET_X
 const ICON_BAG_PATH := "user://icon_bag.json"
 
 const MENU_HEAD_PAT := 1
@@ -327,11 +342,17 @@ var _cursor_capture_installed := false
 # offscreen icon is listed there so a crash mid-carry still restores it.
 var icon_collect_phase := ""
 var icon_collect_phase_at := -1.0
+var icon_collect_started_at := -1.0
 var icon_collect_icon: Dictionary = {}
 var icon_collect_target := Vector2.ZERO
 var icon_collect_placed := false
 var icon_collect_keepsaked := false
 var icon_bag_entries: Array = []
+# Multi-modal navigation for one collection run: {mode, platform, at}. Hop/fly
+# drives a manual parabola (icon_collect_arc); walk reuses behavior_walk.
+var icon_collect_nav: Dictionary = {}
+var icon_collect_arc: Dictionary = {}
+var icon_collect_nav_clip := ""
 
 # Lightweight lerp walk shared by the two special behaviors (mirrors the roam
 # system's walk_motion: from → to over a fixed duration, wall-blocked).
@@ -980,6 +1001,7 @@ func _behavior_context() -> Dictionary:
 		"cursor_in_reach": _cursor_in_confiscate_reach(),
 		"desktop_listview_available": desktop.desktop_listview_available(),
 		"has_desktop_icons": _desktop_has_collectable_icons(),
+		"has_reachable_icons": _has_reachable_collectable_icon(),
 		"bag_not_full": _bag_carry_count() < ICON_BAG_CAPACITY,
 	}
 
@@ -1673,6 +1695,98 @@ func _handle_cursor_confiscate_clip(clip_name: String) -> void:
 ## Ordinary icons return on app exit; keepsakes (random "看中" or player "给她")
 ## persist until reclaimed. .lnk/files are never touched.
 
+## ---- Visibility and reachability (the collection trigger/selection chain) ----
+
+## Windows currently occluding screen content behind them: every foreground-valid
+## window whose z-order sits behind the pet (or is maximized), mirroring the
+## pet-occlusion rule in window_platform_service.gd. The pet's own always-on-top
+## window is excluded by the self-pid filter, so she never occludes her targets.
+func _occluding_rects() -> Array[Rect2i]:
+	var rects: Array[Rect2i] = []
+	var self_z := window_platform_service.self_z_order()
+	var self_pid := window_platform_service.self_process_id()
+	for snap in window_platform_service.last_snapshots():
+		if not snap is Dictionary:
+			continue
+		if not WindowPlatformService.is_foreground_snapshot_valid(snap, self_pid):
+			continue
+		var z := int(snap.get("z_order", 0))
+		if self_z > 0 and z >= self_z and not bool(snap.get("maximized", false)):
+			continue
+		var rect := WindowPlatform.rect_from_value(snap.get("rect", Rect2i()))
+		if rect.size.x > 0 and rect.size.y > 0:
+			rects.append(rect)
+	return rects
+
+func _is_point_obscured(screen_pos: Vector2) -> bool:
+	for rect in _occluding_rects():
+		if rect.has_point(Vector2i(roundi(screen_pos.x), roundi(screen_pos.y))):
+			return true
+	return false
+
+## An icon she cannot see (covered by a foreground window — e.g. a maximized
+## window) is not collectable. "如果桌面图标并没有被绘制出来…不会触发搜集".
+func _is_icon_visible(icon_pos: Vector2) -> bool:
+	return not _is_point_obscured(icon_pos)
+
+## Grab reach from the window origin she would occupy: the horizontal band adds
+## slack for her body's offset inside the window (so the test is facing-agnostic),
+## the vertical band is the hand anchor (~48px below the box top) plus her reach.
+## Wall-blocked or clamped short → the live grab check fails and she loses the
+## target, which is the intended "隔墙/过高够不到" outcome.
+func _icon_reachable_from_position(at_position: Vector2, icon_pos: Vector2) -> bool:
+	var hand_y := at_position.y + ICON_HAND_OFFSET_Y_PX
+	return absf(icon_pos.x - at_position.x) <= ICON_COLLECT_GRAB_RANGE_PX + ICON_HORIZONTAL_SLACK_PX \
+		and icon_pos.y >= hand_y - ICON_REACH_UP_PX \
+		and icon_pos.y <= hand_y + ICON_REACH_DOWN_PX
+
+## Enumerate every approach mode that could put an icon within grab reach:
+## walk (same-level only — flat walking never climbs), hop (borrow a window
+## ledge), fly (always viable, bounded by the whole behavior's timeout). Each
+## entry carries the window origin she would occupy in that mode.
+func _icon_reach_analysis(icon_pos: Vector2) -> Dictionary:
+	var modes: Array = []
+	var walk_stand := _clamp_position(Vector2(icon_pos.x, position.y), false)
+	if absf(icon_pos.x - position.x) <= ICON_MAX_WALK_HORIZONTAL_PX and _icon_reachable_from_position(walk_stand, icon_pos):
+		modes.append({"mode": "walk", "platform": null, "at": walk_stand})
+	var best_hop: Dictionary = {}
+	var best_hop_distance := INF
+	for platform in platforms:
+		if not platform.contains_x(icon_pos.x) and absf(platform.center().x - icon_pos.x) > ICON_COLLECT_GRAB_RANGE_PX * 2.0:
+			continue
+		var stand_x := clampf(icon_pos.x, float(platform.segment_left()) + 24.0, float(platform.segment_right()) - 24.0)
+		var stand := _position_for_platform(platform, stand_x)
+		if not _icon_reachable_from_position(stand, icon_pos):
+			continue
+		var distance := stand.distance_to(icon_pos)
+		if distance < best_hop_distance:
+			best_hop_distance = distance
+			best_hop = {"mode": "hop", "platform": platform, "at": stand}
+	if not best_hop.is_empty():
+		modes.append(best_hop)
+	modes.append({"mode": "fly", "platform": null, "at": _clamp_position(Vector2(icon_pos.x, icon_pos.y), false)})
+	return {"reachable": not modes.is_empty(), "modes": modes}
+
+## Weighted random among viable modes (walk > hop > fly). A single viable mode
+## is used outright; only genuinely open choices roll — "随机选中之后跳上附近的
+## 小窗口,或者直接选择飞行".
+func _pick_approach_mode(modes: Array) -> Dictionary:
+	if modes.is_empty():
+		return {}
+	var weights := {"walk": 50.0, "hop": 30.0, "fly": 20.0}
+	var total := 0.0
+	for m in modes:
+		total += weights.get(str(m.get("mode", "fly")), 20.0)
+	var roll := randf() * total
+	for m in modes:
+		roll -= weights.get(str(m.get("mode", "fly")), 20.0)
+		if roll <= 0.0:
+			return m
+	return modes[0]
+
+## The visibility gate: at least one un-collected desktop icon is actually drawn
+## on screen. A maximized window covering every icon → false → the behavior never
+## triggers while the player cannot see the icons being taken.
 func _desktop_has_collectable_icons() -> bool:
 	if not desktop.desktop_listview_available():
 		return false
@@ -1681,7 +1795,27 @@ func _desktop_has_collectable_icons() -> bool:
 		bag_names[str(entry.get("name", ""))] = true
 	for item in desktop.enumerate_desktop_icons():
 		if item is Dictionary and not str(item.get("name", "")).is_empty() and not bag_names.has(str(item.get("name", ""))):
-			return true
+			var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+			if _is_icon_visible(icon_pos):
+				return true
+	return false
+
+## The reachability gate: at least one visible, un-collected icon has a viable
+## approach mode. "触发前先确认真的够得着" — advertised to the director as
+## has_reachable_icons so it is an explicit trigger condition.
+func _has_reachable_collectable_icon() -> bool:
+	if not desktop.desktop_listview_available():
+		return false
+	var bag_names: Dictionary = {}
+	for entry in icon_bag_entries:
+		bag_names[str(entry.get("name", ""))] = true
+	for item in desktop.enumerate_desktop_icons():
+		if item is Dictionary and not str(item.get("name", "")).is_empty() and not bag_names.has(str(item.get("name", ""))):
+			var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+			if not _is_icon_visible(icon_pos):
+				continue
+			if bool(_icon_reach_analysis(icon_pos).get("reachable", false)):
+				return true
 	return false
 
 func _begin_icon_collection(intent: Dictionary) -> bool:
@@ -1698,14 +1832,37 @@ func _begin_icon_collection(intent: Dictionary) -> bool:
 		return false
 	icon_collect_phase = "approach"
 	icon_collect_phase_at = _now_ms()
-	_start_behavior_walk(Vector2(float(target.get("x", 0.0)), float(target.get("y", 0.0))), ICON_COLLECT_WALK_SPEED)
-	_play_icon_collect_chase_clip()
+	icon_collect_started_at = icon_collect_phase_at
+	var icon_pos := Vector2(float(target.get("x", 0.0)), float(target.get("y", 0.0)))
+	var analysis := _icon_reach_analysis(icon_pos)
+	var mode := _pick_approach_mode(analysis.get("modes", []))
+	if mode.is_empty():
+		# Should not happen (target was reachable), but degrade rather than stall.
+		_abort_icon_collection()
+		return false
+	_begin_icon_navigation(str(mode.get("mode", "fly")), mode.get("platform", null), Vector2(mode.get("at", icon_pos)))
 	return true
 
 func _update_icon_collect(now: float) -> void:
+	if _icon_collect_timeout_check(now):
+		return
+	# She only keeps chasing a target she can still see. The moment a window
+	# slides over it she drops the plan — "被遮挡失去目标".
+	if icon_collect_phase == "approach" and not _is_icon_visible(_icon_collect_target_pos()):
+		_lose_icon_target("obscured")
+		return
 	match icon_collect_phase:
 		"approach":
-			if _advance_behavior_walk(now):
+			if _advance_icon_navigation(now):
+				if str(icon_collect_nav.get("mode", "walk")) == "walk":
+					icon_collect_phase = "grab"
+					icon_collect_phase_at = now
+					_grab_icon(now)
+				else:
+					icon_collect_phase = "landing"
+					icon_collect_phase_at = now
+		"landing":
+			if now - icon_collect_phase_at >= ICON_COLLECT_LANDING_MS:
 				icon_collect_phase = "grab"
 				icon_collect_phase_at = now
 				_grab_icon(now)
@@ -1715,13 +1872,25 @@ func _update_icon_collect(now: float) -> void:
 					# She took a liking to it — it stays in the bag for good.
 					_finish_icon_collection()
 				else:
-					icon_collect_target = _random_placement_target()
+					icon_collect_target = _visible_placement_target()
 					icon_collect_phase = "carry"
 					icon_collect_phase_at = now
-					_start_behavior_walk(icon_collect_target, ICON_COLLECT_WALK_SPEED)
-					_play_icon_collect_chase_clip()
+					_begin_icon_navigation(
+						"walk" if absf(icon_collect_target.y - position.y) <= ICON_REACH_UP_PX + ICON_REACH_DOWN_PX else "fly",
+						null,
+						icon_collect_target,
+					)
 		"carry":
-			if _advance_behavior_walk(now):
+			if _advance_icon_navigation(now):
+				if str(icon_collect_nav.get("mode", "walk")) == "walk":
+					icon_collect_phase = "place"
+					icon_collect_phase_at = now
+					_place_icon(now)
+				else:
+					icon_collect_phase = "place_land"
+					icon_collect_phase_at = now
+		"place_land":
+			if now - icon_collect_phase_at >= ICON_COLLECT_LANDING_MS:
 				icon_collect_phase = "place"
 				icon_collect_phase_at = now
 				_place_icon(now)
@@ -1729,10 +1898,32 @@ func _update_icon_collect(now: float) -> void:
 			if now - icon_collect_phase_at >= ICON_COLLECT_PLACE_MS:
 				_finish_icon_collection()
 
+func _icon_collect_target_pos() -> Vector2:
+	return Vector2(float(icon_collect_icon.get("x", 0.0)), float(icon_collect_icon.get("y", 0.0)))
+
+## Total-run budget. Special behaviors bypass action_session's max_duration_ms,
+## so icon_collect enforces its own internal timeout (profile default 16000).
+func _icon_collect_timeout_check(now: float) -> bool:
+	var max_ms := int(current_intent.get("session", {}).get("max_duration_ms", 16000))
+	if max_ms > 0 and _now_ms() - icon_collect_started_at >= max_ms:
+		_lose_icon_target("timeout")
+		return true
+	return false
+
 func _grab_icon(now: float) -> void:
 	var name := str(icon_collect_icon.get("name", ""))
 	if name.is_empty():
 		_finish_icon_collection()
+		return
+	# No teleport grabbing: she must be within reach *and* still able to see the
+	# icon. A wall-blocked approach, a clamped-short hop, or a window sliding over
+	# the icon all end as "失去目标" rather than an impossible grab.
+	var icon_pos := _icon_collect_target_pos()
+	if not _is_icon_visible(icon_pos):
+		_lose_icon_target("obscured")
+		return
+	if not _icon_reachable_from_position(position, icon_pos):
+		_lose_icon_target("out_of_reach")
 		return
 	if not desktop.set_desktop_icon_position(name, int(ICON_STASH_POS.x), int(ICON_STASH_POS.y)):
 		# The ListView refused (auto-arrange or a stale slot) — degrade gracefully.
@@ -1772,7 +1963,91 @@ func _abort_icon_collection() -> void:
 	if str(current_intent.get("id", "")) == "icon_collect":
 		current_intent.clear()
 	icon_collect_phase = ""
+	icon_collect_nav = {}
+	icon_collect_arc = {}
+	behavior_walk = {}
 	_return_in_flight_icon()
+
+## The in-behavior "失去目标" ending (occluded, out of reach, or timed out): the
+## ordinary icon goes home, the run ends, and she complains. Called at most once
+## per run (the phase machine leaves the state afterwards).
+func _lose_icon_target(_reason: String) -> void:
+	icon_collect_phase = ""
+	icon_collect_nav = {}
+	icon_collect_arc = {}
+	behavior_walk = {}
+	_return_in_flight_icon()
+	_emit_dialogue("icon_miss")
+	_finish_special_behavior("icon_collect", "aborted")
+
+## ---- Multi-modal navigation for icon collection (approach + carry) ----
+
+func _begin_icon_navigation(mode_name: String, platform: Variant, at: Vector2) -> void:
+	icon_collect_nav = {"mode": mode_name, "platform": platform}
+	icon_collect_nav_clip = ""
+	var to := _clamp_position(at, false)
+	if position.distance_to(to) < 6.0:
+		icon_collect_arc = {}
+		behavior_walk = {}
+		return
+	if mode_name == "walk":
+		_start_behavior_walk(to, ICON_COLLECT_WALK_SPEED)
+		_play_icon_collect_chase_clip()
+	else:
+		_start_icon_arc(to, mode_name)
+
+func _start_icon_arc(to: Vector2, mode_name: String) -> void:
+	icon_collect_arc = {
+		"from": position,
+		"to": to,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(600.0, position.distance_to(to) / maxf(1.0, ICON_COLLECT_FLY_SPEED) * 1000.0),
+		"arc_height": ICON_NAV_ARC_HEIGHT_PX,
+		"mode": mode_name,
+	}
+	_set_icon_nav_clip("takeoff")
+
+func _advance_icon_navigation(now: float) -> bool:
+	if behavior_walk.is_empty() and icon_collect_arc.is_empty():
+		return true
+	if not icon_collect_arc.is_empty():
+		return _advance_icon_arc(now)
+	if _advance_behavior_walk(now):
+		behavior_walk = {}
+		return true
+	return false
+
+## Manual parabola: y -= 4*arc_height*t*(1-t), the same math as _update_motion
+## but self-contained so it never touches the roam state machine (special
+## behaviors own the icon_collect state). Real clips takeoff → float → land /
+## window_land_recover carry her through the arc.
+func _advance_icon_arc(now: float) -> bool:
+	if icon_collect_arc.is_empty():
+		return true
+	var duration := maxf(1.0, float(icon_collect_arc.get("duration_ms", 1.0)))
+	var t := clampf((now - float(icon_collect_arc.get("started_at", now))) / duration, 0.0, 1.0)
+	var from := Vector2(icon_collect_arc.get("from", position))
+	var to := Vector2(icon_collect_arc.get("to", position))
+	var arc := float(icon_collect_arc.get("arc_height", 0.0))
+	var base := from.lerp(to, t)
+	position = _clamp_position(Vector2(base.x, base.y - 4.0 * arc * t * (1.0 - t)), false)
+	_apply_position()
+	if t < 0.12:
+		_set_icon_nav_clip("takeoff")
+	elif t < 0.82:
+		_set_icon_nav_clip("float")
+	else:
+		_set_icon_nav_clip("window_land_recover" if str(icon_collect_arc.get("mode", "")) == "hop" else "land")
+	if t >= 1.0:
+		icon_collect_arc = {}
+		return true
+	return false
+
+func _set_icon_nav_clip(clip_name: String) -> void:
+	if icon_collect_nav_clip == clip_name:
+		return
+	icon_collect_nav_clip = clip_name
+	sprite_player.play_clip(clip_name)
 
 func _play_icon_collect_chase_clip() -> void:
 	_set_direction(1)
@@ -1941,7 +2216,9 @@ func _return_in_flight_icon() -> void:
 	if name.is_empty() or not original is Dictionary or original.is_empty():
 		return
 	var entry_index := _icon_bag_entry_index(name)
-	if entry_index >= 0 and str(icon_bag_entries[entry_index].get("kind", "ordinary")) == "ordinary":
+	# A placed ordinary icon is legitimately sitting on the desktop (still tracked
+	# for exit-restore) — only a still-carried one goes home.
+	if entry_index >= 0 and str(icon_bag_entries[entry_index].get("kind", "ordinary")) == "ordinary" and not bool(icon_bag_entries[entry_index].get("placed", false)):
 		desktop.set_desktop_icon_position(name, int(original.get("x", 0)), int(original.get("y", 0)))
 		icon_bag_entries.remove_at(entry_index)
 		_save_icon_bag()
@@ -1952,6 +2229,8 @@ func _desktop_icon_position(icon_name: String) -> Dictionary:
 			return {"x": int(item.get("x", 0)), "y": int(item.get("y", 0))}
 	return {}
 
+## Candidate filter: un-collected, visible, and reachable. Among those, pick by
+## distance-weighted random (nearer icons are likelier, but never deterministic).
 func _pick_collectable_icon() -> Dictionary:
 	if not desktop.desktop_listview_available():
 		return {}
@@ -1965,20 +2244,26 @@ func _pick_collectable_icon() -> Dictionary:
 		var name := str(item.get("name", ""))
 		if name.is_empty() or bag_names.has(name):
 			continue
-		candidates.append(item)
+		var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+		if not _is_icon_visible(icon_pos):
+			continue
+		if not bool(_icon_reach_analysis(icon_pos).get("reachable", false)):
+			continue
+		candidates.append({"item": item, "distance": position.distance_to(icon_pos)})
 	if candidates.is_empty():
 		return {}
-	var best_distance := INF
-	for item in candidates:
-		var item_position := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
-		best_distance = minf(best_distance, position.distance_to(item_position))
-	var near: Array = []
-	for item in candidates:
-		var item_position := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
-		if position.distance_to(item_position) <= best_distance * 1.8 + 120.0:
-			near.append(item)
-	var pool: Array = near if not near.is_empty() else candidates
-	var chosen: Dictionary = pool[randi() % pool.size()]
+	var total := 0.0
+	for entry in candidates:
+		total += 1.0 / (1.0 + float(entry["distance"]))
+	var roll := randf() * total
+	var chosen: Dictionary = {}
+	for entry in candidates:
+		roll -= 1.0 / (1.0 + float(entry["distance"]))
+		if roll <= 0.0:
+			chosen = entry["item"]
+			break
+	if chosen.is_empty():
+		chosen = (candidates.back()["item"] as Dictionary)
 	var result := chosen.duplicate(true)
 	result["original"] = {"x": int(chosen.get("x", 0)), "y": int(chosen.get("y", 0))}
 	return result
@@ -1990,6 +2275,15 @@ func _random_placement_target() -> Vector2:
 		bounds.position.x + margin + randf() * maxf(1.0, bounds.size.x - margin * 2.0),
 		bounds.position.y + margin + randf() * maxf(1.0, bounds.size.y - margin * 2.0),
 	)
+
+## Placement prefers a spot the player can see her set the icon down on; a few
+## blind retries, then fall back to any spot (icons are always reclaimable).
+func _visible_placement_target() -> Vector2:
+	for _attempt in range(ICON_PLACEMENT_VISIBLE_TRIES):
+		var candidate := _random_placement_target()
+		if not _is_point_obscured(candidate):
+			return candidate
+	return _random_placement_target()
 
 ## ---- Backpack panel plumbing ----
 
