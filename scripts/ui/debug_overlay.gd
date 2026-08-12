@@ -39,12 +39,12 @@ func set_snapshot(snapshot: Dictionary) -> void:
 		])
 	var needs: Dictionary = snapshot.get("needs", {})
 	if not needs.is_empty():
-		lines.append("E %.1f  B %.1f  C %.1f  I %.1f  A %.1f" % [
+		lines.append("E %.1f  B %.1f  C %.1f  I %.1f  R %s" % [
 			float(needs.get("energy", 0.0)),
 			float(needs.get("boredom", 0.0)),
 			float(needs.get("curiosity", 0.0)),
 			float(needs.get("irritation", 0.0)),
-			float(needs.get("affection", 0.0)),
+			_relationship_label(str(snapshot.get("relationship_tier", "guarded"))),
 		])
 	var scores: Array = snapshot.get("scores", [])
 	for score in scores.slice(0, mini(3, scores.size())):
@@ -64,3 +64,12 @@ func set_snapshot(snapshot: Dictionary) -> void:
 
 func toggle() -> void:
 	visible = not visible
+
+static func _relationship_label(tier: String) -> String:
+	match tier:
+		"distant": return "疏远"
+		"guarded", "wary": return "戒备"
+		"familiar": return "熟悉"
+		"trusted", "trust": return "信任"
+		"close": return "亲近"
+		_: return "未判定"

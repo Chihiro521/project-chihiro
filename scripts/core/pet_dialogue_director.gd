@@ -9,7 +9,7 @@ const AMBIENT_MIN_COOLDOWN_MS := 90000.0
 const AMBIENT_MAX_COOLDOWN_MS := 240000.0
 const TITLE_STABILITY_MS := 2000.0
 const TITLE_MAX_LENGTH := 24
-const RELATIONSHIP_TIERS := ["distant", "wary", "familiar", "trust", "close"]
+const RELATIONSHIP_TIERS := ["distant", "guarded", "familiar", "trusted", "close"]
 const TIME_PERIODS := ["morning", "noon", "afternoon", "evening", "late_night"]
 const APP_CATEGORIES := ["browser", "code", "terminal", "game", "media", "chat", "office", "art", "files", "other"]
 const SENSITIVE_TITLE_MARKERS := [
@@ -80,6 +80,7 @@ func load_data(path: String = DEFAULT_DATA_PATH) -> bool:
 			continue
 		known_ids[dialogue_id] = true
 		entries.append(normalized)
+	_expand_relationship_interactions(root.get("relationship_interactions", {}), known_ids)
 	return errors.is_empty()
 
 func is_valid() -> bool:
@@ -110,7 +111,7 @@ func set_recent_dialogue_ids(ids: Array) -> void:
 func recent_dialogue_ids() -> Array[String]:
 	return _recent_ids.duplicate()
 
-func select_line(context: Dictionary, now_ms: float = -1.0) -> Dictionary:
+func select_line(context: Dictionary, now_ms: float = -1.0, bypass_event_cooldown := false) -> Dictionary:
 	if not is_valid():
 		return {}
 	var now := float(Time.get_ticks_msec()) if now_ms < 0.0 else now_ms
@@ -119,12 +120,31 @@ func select_line(context: Dictionary, now_ms: float = -1.0) -> Dictionary:
 	if event_name == "ambient":
 		if now < next_ambient_at_ms:
 			return {}
-	elif now < next_event_at_ms:
+	elif not bypass_event_cooldown and now < next_event_at_ms:
 		return {}
+	var dedicated_pool: Array[Dictionary] = []
+	var tier_pool: Array[Dictionary] = []
+	var generic_pool: Array[Dictionary] = []
+	for entry in entries:
+		if not _matches(entry, normalized):
+			continue
+		if bool(entry.get("relationship_dedicated", false)):
+			dedicated_pool.append(entry)
+		elif (entry.relationship_tiers as Array).is_empty():
+			generic_pool.append(entry)
+		else:
+			tier_pool.append(entry)
+	# A relationship-specific pool is authoritative. Generic lines only fill a
+	# genuine data gap; they never dilute a complete five-tier interaction pool.
+	var source_pool: Array[Dictionary] = (
+		dedicated_pool
+		if not dedicated_pool.is_empty()
+		else (tier_pool if not tier_pool.is_empty() else generic_pool)
+	)
 	var candidates: Array[Dictionary] = []
 	var total_weight := 0.0
-	for entry in entries:
-		if str(entry.id) in _recent_ids or not _matches(entry, normalized):
+	for entry in source_pool:
+		if str(entry.id) in _recent_ids:
 			continue
 		var weighted := entry.duplicate(true)
 		weighted["_selection_weight"] = _score(entry, normalized)
@@ -132,6 +152,18 @@ func select_line(context: Dictionary, now_ms: float = -1.0) -> Dictionary:
 			continue
 		total_weight += float(weighted._selection_weight)
 		candidates.append(weighted)
+	# Interaction milestones must always produce feedback. Prefer a line that has
+	# not been used recently, but allow the two-line event pool to wrap when the
+	# same action happens several times in quick succession.
+	if candidates.is_empty() and (bypass_event_cooldown or not dedicated_pool.is_empty() or not tier_pool.is_empty()):
+		total_weight = 0.0
+		for entry in source_pool:
+			var weighted := entry.duplicate(true)
+			weighted["_selection_weight"] = _score(entry, normalized)
+			if float(weighted._selection_weight) <= 0.0:
+				continue
+			total_weight += float(weighted._selection_weight)
+			candidates.append(weighted)
 	if candidates.is_empty() or total_weight <= 0.0:
 		return {}
 	var cursor := _rng.randf_range(0.0, total_weight)
@@ -235,9 +267,9 @@ func classify_application(app_name: String, safe_title: String = "") -> String:
 func normalize_relationship_tier(value: String) -> String:
 	match value.strip_edges().to_lower():
 		"distant", "estranged", "疏远": return "distant"
-		"wary", "guarded", "戒备": return "wary"
+		"wary", "guarded", "戒备": return "guarded"
 		"familiar", "熟悉": return "familiar"
-		"trust", "trusted", "信任": return "trust"
+		"trust", "trusted", "信任": return "trusted"
 		"close", "intimate", "亲近": return "close"
 		_: return "familiar"
 
@@ -258,20 +290,68 @@ func _normalize_context(context: Dictionary, now_ms: float) -> Dictionary:
 	}
 
 func _normalize_entry(value: Dictionary) -> Dictionary:
+	var relationship_tiers: Array[String] = []
+	for tier_value in _string_array(value.get("relationship_tiers", [])):
+		var tier := normalize_relationship_tier(tier_value)
+		if tier not in relationship_tiers:
+			relationship_tiers.append(tier)
 	return {
 		"id": str(value.get("id", "")).strip_edges(),
 		"text": str(value.get("text", "")).strip_edges(),
 		"tags": _string_array(value.get("tags", [])),
 		"events": _string_array(value.get("events", value.get("event", []))),
 		"moods": _string_array(value.get("moods", [])),
-		"relationship_tiers": _string_array(value.get("relationship_tiers", [])),
+		"relationship_tiers": relationship_tiers,
 		"time_periods": _string_array(value.get("time_periods", [])),
 		"app_names": _string_array(value.get("app_names", [])),
 		"min_irritation": clampf(float(value.get("min_irritation", 0.0)), 0.0, 100.0),
 		"max_irritation": clampf(float(value.get("max_irritation", 100.0)), 0.0, 100.0),
 		"requires_window_title": bool(value.get("requires_window_title", false)),
+		"relationship_dedicated": bool(value.get("relationship_dedicated", false)),
 		"weight": maxf(0.01, float(value.get("weight", 1.0))),
 	}
+
+func _expand_relationship_interactions(value: Variant, known_ids: Dictionary) -> void:
+	if not value is Dictionary:
+		if value != null:
+			errors.append("relationship_interactions 必须是对象")
+		return
+	var root: Dictionary = value
+	if root.is_empty():
+		return
+	var openers_value: Variant = root.get("tier_openers", {})
+	var events_value: Variant = root.get("events", {})
+	if not openers_value is Dictionary or not events_value is Dictionary:
+		errors.append("relationship_interactions 缺少 tier_openers 或 events")
+		return
+	var openers: Dictionary = openers_value
+	var event_map: Dictionary = events_value
+	for event_value in event_map.keys():
+		var event_name := str(event_value).strip_edges().to_lower()
+		var cores: Array[String] = _string_array(event_map[event_value])
+		if event_name.is_empty() or cores.size() != 2:
+			errors.append("关系互动事件 %s 必须恰好提供两句核心台词" % event_name)
+			continue
+		for tier in RELATIONSHIP_TIERS:
+			var tier_openers: Array[String] = _string_array(openers.get(tier, []))
+			if tier_openers.size() != 2:
+				errors.append("关系阶段 %s 必须恰好提供两个语气开头" % tier)
+				continue
+			for line_index in range(2):
+				var dialogue_id := "relationship_%s_%s_%d" % [event_name, tier, line_index + 1]
+				if known_ids.has(dialogue_id):
+					errors.append("对话 id 重复：%s" % dialogue_id)
+					continue
+				var normalized := _normalize_entry({
+					"id": dialogue_id,
+					"text": "%s%s" % [tier_openers[line_index], cores[line_index]],
+					"events": [event_name],
+					"relationship_tiers": [tier],
+					"relationship_dedicated": true,
+					"tags": ["relationship", "player_interaction"],
+				})
+				known_ids[dialogue_id] = true
+				entries.append(normalized)
 
 func _matches(entry: Dictionary, context: Dictionary) -> bool:
 	if not _allows(entry.events, str(context.event)):

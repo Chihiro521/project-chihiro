@@ -2,6 +2,7 @@ class_name PetGoalDirector
 extends RefCounted
 
 const RECENT_LIMIT := 3
+const RelationshipRules := preload("res://scripts/core/pet_relationship_rules.gd")
 
 var errors: Array[String] = []
 var last_candidates: Array[Dictionary] = []
@@ -55,27 +56,7 @@ func create_goal(goal_id: String, context: Dictionary = {}, now_ms := -1) -> Dic
 
 func select_goal(needs: PetNeedsModel, context: Dictionary, now_ms := -1, commit := true) -> Dictionary:
 	var now := _resolve_now(now_ms)
-	var candidates: Array[Dictionary] = []
-	last_candidates.clear()
-	for definition in _goals:
-		var eligible := _eligible(definition, context, now)
-		var score := _score(definition, needs, context) if eligible else 0.0
-		var goal_id := str(definition.get("id", ""))
-		var recent_penalty := 0.0
-		if goal_id in _recent:
-			recent_penalty = float(definition.get("recent_penalty", 1000.0))
-			score -= recent_penalty
-		var diagnostic := {
-			"id": goal_id,
-			"name": str(definition.get("name", goal_id)),
-			"eligible": eligible,
-			"score": score,
-			"cooldown_ms": cooldown_remaining_ms(goal_id, now),
-			"recent_penalty": recent_penalty,
-		}
-		last_candidates.append(diagnostic)
-		if eligible:
-			candidates.append(_make_goal(definition, score, context, now))
+	var candidates := candidate_scores(needs, context, now)
 	if candidates.is_empty():
 		return {}
 	var non_recent: Array[Dictionary] = []
@@ -85,8 +66,39 @@ func select_goal(needs: PetNeedsModel, context: Dictionary, now_ms := -1, commit
 	var pool := non_recent if not non_recent.is_empty() else candidates
 	var selected := _weighted_choice(pool)
 	if commit:
-		_commit(selected, now)
+		commit_goal(selected, now)
 	return selected
+
+
+## Side-effect-free candidate enumeration for the shared autonomy scheduler.
+## Diagnostics still contain all configured goals, while the returned array only
+## contains candidates whose cooldown and environment gates currently pass.
+func candidate_scores(needs: PetNeedsModel, context: Dictionary, now_ms := -1) -> Array[Dictionary]:
+	var now := _resolve_now(now_ms)
+	var candidates: Array[Dictionary] = []
+	last_candidates.clear()
+	for definition in _goals:
+		var eligible := _eligible(definition, context, now)
+		var score := _score(definition, needs, context) if eligible else 0.0
+		var goal_id := str(definition.get("id", ""))
+		var diagnostic := {
+			"id": goal_id,
+			"name": str(definition.get("name", goal_id)),
+			"eligible": eligible,
+			"score": score,
+			"cooldown_ms": cooldown_remaining_ms(goal_id, now),
+			"recent": goal_id in _recent,
+		}
+		last_candidates.append(diagnostic)
+		if eligible:
+			candidates.append(_make_goal(definition, score, context, now))
+	return candidates
+
+
+func commit_goal(goal: Dictionary, now_ms := -1) -> void:
+	if goal.is_empty() or str(goal.get("id", "")).is_empty():
+		return
+	_commit(goal, _resolve_now(now_ms))
 
 
 func cooldown_remaining_ms(goal_id: String, now_ms: int) -> int:
@@ -102,6 +114,12 @@ func _eligible(definition: Dictionary, context: Dictionary, now_ms: int) -> bool
 	if cooldown_remaining_ms(goal_id, now_ms) > 0:
 		return false
 	if float(context.get("familiarity", 0.0)) < float(definition.get("min_familiarity", 0.0)):
+		return false
+	var minimum_relationship := str(definition.get("min_relationship", ""))
+	if not bool(context.get("player_requested", false)) and not minimum_relationship.is_empty() and not RelationshipRules.relationship_minimum_met(
+		str(context.get("relationship_tier", "familiar")),
+		minimum_relationship,
+	):
 		return false
 	var requires: Variant = definition.get("requires", [])
 	if requires is Array:
@@ -134,6 +152,10 @@ func _score(definition: Dictionary, needs: PetNeedsModel, context: Dictionary) -
 	if habit_stages is Dictionary:
 		for habit_id in definition.get("habit_ids", []):
 			score += float(habit_stages.get(str(habit_id), 0)) * float(definition.get("habit_stage_bonus", 2.0))
+	var relationship_weights: Variant = definition.get("relationship_weights", {})
+	if relationship_weights is Dictionary:
+		var tier := RelationshipRules.normalize_tier(str(context.get("relationship_tier", "familiar")))
+		score += float(relationship_weights.get(tier, 0.0))
 	return maxf(0.01, score)
 
 

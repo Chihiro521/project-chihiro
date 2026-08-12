@@ -25,9 +25,10 @@ public:
 	bool set_window_rect(int64_t handle, int32_t x, int32_t y, int32_t width, int32_t height) const;
 	bool atomic_replace_file(const String &temporary_path, const String &target_path) const;
 
-	// Cursor confiscation ("绝对没收"). The WH_MOUSE_LL hook only swallows mouse
-	// events while capture is active; a forgotten stop_cursor_capture() degrades
-	// to pass-through, never a permanently trapped mouse.
+	// Cursor confiscation ("绝对没收"). WH_MOUSE_LL swallows input while a tiny
+	// transparent topmost native window owns WM_SETCURSOR and supplies a null
+	// cursor. A forgotten stop_cursor_capture() still degrades to pass-through as
+	// soon as the atomic active gate clears.
 	void set_cursor_position(int32_t x, int32_t y) const;
 	void set_cursor_visible(bool visible) const;
 	bool is_key_pressed(int32_t vk) const;

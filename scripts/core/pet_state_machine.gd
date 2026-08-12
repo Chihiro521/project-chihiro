@@ -5,7 +5,7 @@ signal transitioned(from: String, to: String, event: Dictionary)
 
 const ACTIVE_STATES := {
 	"boot": true, "idle": true, "notice": true, "cursor_track": true,
-	"cursor_startle": true, "cursor_annoyed": true, "cursor_dizzy": true,
+	"cursor_startle": true, "cursor_annoyed": true, "cursor_dizzy": true, "cursor_warning": true,
 	"head_pat": true, "poke_cheek": true, "menu_wait": true, "clock_scare": true,
 	"react": true, "turn": true, "takeoff": true, "float": true,
 	"edge_patrol": true, "drag_fall": true, "land": true, "dragged": true,
@@ -13,7 +13,7 @@ const ACTIVE_STATES := {
 	"platform_walk": true, "platform_sit": true,
 	"manual_control": true, "roam_walk": true,
 	"drag_slide": true, "drag_throw": true, "wall_climb": true,
-	"cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
+	"cursor_play_chase": true, "cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
 }
 const DIRECT_INTERACTION_STATES := {
 	"idle": true, "notice": true, "cursor_track": true, "cursor_startle": true,
@@ -28,7 +28,7 @@ const PASSIVE_CURSOR_STATES := {"idle": true, "notice": true, "cursor_track": tr
 const AUTONOMOUS_ACTION_STATES := {
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
 	"platform_walk": true, "platform_sit": true, "roam_walk": true, "wall_climb": true,
-	"cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
+	"cursor_play_chase": true, "cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
 }
 
 var state := "boot"
@@ -53,6 +53,11 @@ func _reduce(current: String, event: Dictionary) -> String:
 		return "suspended"
 	if current == "suspended":
 		return "idle" if event_type == "FULLSCREEN_EXIT" else current
+	# Cursor custody runs independently after the bagging clip. Its timed reverse
+	# animation is a safety transition and may pre-empt whichever ordinary action
+	# is active when the custody period expires.
+	if event_type == "CURSOR_RELEASE_START" and ACTIVE_STATES.has(current) and current != "boot":
+		return "cursor_confiscate"
 	if event_type == "DRAG_START":
 		return "dragged"
 	if current == "dragged":
@@ -74,6 +79,8 @@ func _reduce(current: String, event: Dictionary) -> String:
 	if PASSIVE_CURSOR_STATES.has(current):
 		if event_type == "CURSOR_STARTLE":
 			return "cursor_startle"
+		if event_type == "CURSOR_WARNING":
+			return "cursor_warning"
 		if event_type == "CURSOR_SWEEP":
 			return "cursor_annoyed"
 		if event_type == "CURSOR_CIRCLE":
@@ -83,9 +90,13 @@ func _reduce(current: String, event: Dictionary) -> String:
 			return "head_pat"
 		if event_type == "POKE":
 			return "poke_cheek"
+	if current in ["notice", "cursor_track"] and event_type == "ACTION_START":
+		var cursor_action := str(event.get("state", ""))
+		if cursor_action in ["cursor_play_chase", "cursor_confiscate"]:
+			return cursor_action
 	if event_type == "INTERACTION_END" and current in [
 		"head_pat", "poke_cheek", "clock_scare", "cursor_startle",
-		"cursor_annoyed", "cursor_dizzy", "manual_control",
+		"cursor_annoyed", "cursor_dizzy", "cursor_warning", "manual_control",
 	]:
 		return str(event.get("resume", "idle"))
 	if AUTONOMOUS_ACTION_STATES.has(current):

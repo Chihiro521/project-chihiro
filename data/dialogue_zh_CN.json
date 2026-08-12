@@ -30,7 +30,7 @@
     {"id":"greeting_005","text":"晚上好。今天的误差准备收敛了吗？","events":["greeting"],"time_periods":["evening"],"tags":["greeting","science"]},
     {"id":"greeting_006","text":"还没睡？看来我得监控你的自毁倾向。","events":["greeting"],"time_periods":["late_night"],"tags":["greeting","care"]},
     {"id":"greeting_007","text":"你来了。不要一副我很期待的样子。","events":["greeting"],"relationship_tiers":["familiar","trust","close"],"tags":["greeting","relationship"]},
-    {"id":"greeting_008","text":"已检测到用户。暂不评价，观察期继续。","events":["greeting"],"relationship_tiers":["distant","wary"],"tags":["greeting","relationship"]},
+    {"id":"greeting_008","text":"检测到你了。暂不评价，观察期继续。","events":["greeting"],"relationship_tiers":["distant","wary"],"tags":["greeting","relationship"]},
 
     {"id":"return_001","text":"终于回来。你的时间管理实验显然失败了。","events":["return"],"tags":["return","tease"]},
     {"id":"return_002","text":"离开这么久，我差点把你归类为失联样本。","events":["return"],"tags":["return","science"]},
@@ -135,7 +135,7 @@
     {"id":"stretch_004","text":"运动范围正常，继续运行。","events":["stretch"],"tags":["action","stretch","science"]},
     {"id":"stretch_005","text":"呼……这声不计入实验记录。","events":["stretch"],"tags":["action","stretch"]},
 
-    {"id":"inspect_rabbit_001","text":"兔子状态正常，比某位用户可靠。","events":["inspect_rabbit"],"tags":["action","rabbit","tease"]},
+    {"id":"inspect_rabbit_001","text":"兔子状态正常，比你可靠。","events":["inspect_rabbit"],"tags":["action","rabbit","tease"]},
     {"id":"inspect_rabbit_002","text":"检查缝线、耳朵和抱持稳定性。通过。","events":["inspect_rabbit"],"tags":["action","rabbit","science"]},
     {"id":"inspect_rabbit_003","text":"别盯着看，这是设备维护。","events":["inspect_rabbit"],"tags":["action","rabbit"]},
     {"id":"inspect_rabbit_004","text":"它没有意见，所以很适合当研究助手。","events":["inspect_rabbit"],"tags":["action","rabbit"]},
@@ -259,6 +259,23 @@
     {"id":"cursor_miss_005","text":"速度比我预期快，记录在案。","events":["cursor_miss"],"tags":["cursor","miss","science"]},
     {"id":"cursor_miss_006","text":"逃逸成功。这次不算。","events":["cursor_miss"],"tags":["cursor","miss"]},
 
+    {"id":"cursor_play_chase_001","text":"别跑，我只是想确认你的移动轨迹……回来。","events":["cursor_play_chase"],"tags":["cursor","play","curious"]},
+    {"id":"cursor_play_chase_002","text":"这个速度很适合做追踪实验，暂时借我观察一下。","events":["cursor_play_chase"],"tags":["cursor","play","science"]},
+    {"id":"cursor_play_end_001","text":"实验结束。别得意，我只是暂时放过你。","events":["cursor_play_end"],"tags":["cursor","play","tease"]},
+    {"id":"cursor_play_end_002","text":"记录完毕。你还算勉强值得继续观察。","events":["cursor_play_end"],"tags":["cursor","play","science"]},
+    {"id":"cursor_warning_001","text":"绕圈和横扫都记录下来了，别逼我采取措施。","events":["cursor_warning"],"min_irritation":55,"tags":["cursor","warning","irritated"]},
+    {"id":"cursor_warning_002","text":"第一次警告。再来一次，我就把你的控制权收走。","events":["cursor_warning"],"min_irritation":55,"tags":["cursor","warning","tease"]},
+    {"id":"cursor_warning_second_001","text":"第二次警告。再继续，我就直接把光标收进包里。","events":["cursor_warning_second"],"min_irritation":55,"tags":["cursor","warning","irritated"]},
+    {"id":"cursor_warning_second_002","text":"最后一次提醒。第三次刺激会立即触发没收。","events":["cursor_warning_second"],"min_irritation":55,"tags":["cursor","warning","science"]},
+    {"id":"cursor_stage3_remote_001","text":"第三次。距离已经不重要了，我直接收走。","events":["cursor_stage3_remote"],"min_irritation":55,"tags":["cursor","punishment","irritated"]},
+    {"id":"cursor_stage3_remote_002","text":"远程没收启动。你的反抗样本，到此为止。","events":["cursor_stage3_remote"],"min_irritation":55,"tags":["cursor","punishment","science"]},
+    {"id":"cursor_capture_success_001","text":"捕获成功。光标暂时归我保管。","events":["cursor_capture_success"],"tags":["cursor","confiscate"]},
+    {"id":"cursor_capture_success_002","text":"收纳完成。放心，我会在合适的时候还给你。","events":["cursor_capture_success"],"tags":["cursor","confiscate","bag"]},
+    {"id":"cursor_capture_miss_001","text":"追捕失败……记住这次，下一次我不会再追了。","events":["cursor_capture_miss"],"tags":["cursor","miss","tease"]},
+    {"id":"cursor_capture_miss_002","text":"让你跑掉了。记录保留，别以为事情结束。","events":["cursor_capture_miss"],"tags":["cursor","miss","science"]},
+    {"id":"cursor_bag_release_001","text":"实验结束，光标就在我的包边。自己拿回去。","events":["cursor_bag_release"],"tags":["cursor","release","bag"]},
+    {"id":"cursor_bag_release_002","text":"还给你。下次别再逼我重复这个实验。","events":["cursor_bag_release"],"tags":["cursor","release","tease"]},
+
     {"id":"icon_collect_001","text":"桌面太乱了，我帮你归档。","events":["icon_collect"],"tags":["icon","collect"]},
     {"id":"icon_collect_002","text":"这个快捷方式，先收进我的分类。","events":["icon_collect"],"tags":["icon","collect","science"]},
     {"id":"icon_collect_003","text":"桌面熵值过高，需要干预。","events":["icon_collect"],"tags":["icon","collect","science"]},
@@ -294,6 +311,9 @@
     {"id":"icon_give_005","text":"不错，知道讨好我的收藏体系了。","events":["icon_give"],"tags":["icon","give","tease"]},
     {"id":"icon_give_006","text":"谢谢。……这句不算数。","events":["icon_give"],"relationship_tiers":["trust","close"],"tags":["icon","give"]},
 
+    {"id":"icon_bag_full_001","text":"包里已经满了。拿回去，别硬塞。","events":["icon_bag_full"],"tags":["icon","give","full"]},
+    {"id":"icon_bag_full_002","text":"容量上限是三个。这个样本暂不接收。","events":["icon_bag_full"],"tags":["icon","give","full","science"]},
+
     {"id":"icon_reclaim_001","text":"啧，还你还你。","events":["icon_reclaim"],"tags":["icon","reclaim"]},
     {"id":"icon_reclaim_002","text":"拿稳，别再弄乱了。","events":["icon_reclaim"],"tags":["icon","reclaim","tease"]},
     {"id":"icon_reclaim_003","text":"你的归档权交还。别乱摆。","events":["icon_reclaim"],"tags":["icon","reclaim","science"]},
@@ -307,5 +327,53 @@
     {"id":"icon_restore_004","text":"一把全还你。下次照旧。","events":["icon_restore"],"tags":["icon","restore"]},
     {"id":"icon_restore_005","text":"好，我拆台我认。还原了。","events":["icon_restore"],"tags":["icon","restore"]},
     {"id":"icon_restore_006","text":"归位。虽然我很满意原方案。","events":["icon_restore"],"tags":["icon","restore","science"]}
-  ]
+  ],
+  "relationship_interactions": {
+    "tier_openers": {
+      "distant": ["你，", "样本，"],
+      "guarded": ["先说好，", "我还在观察期，"],
+      "familiar": ["又是你。", "看在熟人的份上，"],
+      "trusted": ["交给我吧。", "我会配合，"],
+      "close": ["你呀……", "我当然会管你，"]
+    },
+    "events": {
+      "greeting": ["今天的观察现在开始。", "记录已启用，按正常方式行动。"],
+      "return": ["检测到你回来了，观察继续。", "离席结束，状态重新接入。"],
+      "head_pat_accept": ["这次触摸许可通过。", "可以摸，但别擅自扩大实验范围。"],
+      "head_pat_refuse": ["本次触摸不予许可，把手收回去。", "拒绝就是拒绝，别试探边界。"],
+      "poke": ["这一下已经记入干扰记录。", "单次戳刺已采样，下不为例。"],
+      "rapid_poke": ["连续干扰超出容忍阈值，立刻停手。", "你的连戳数据够了，再碰就升级处理。"],
+      "bag_touch": ["提包属于受保护区域，不准乱碰。", "把手从我的归档设备上移开。"],
+      "rough_drag": ["这种拖拽方式过于粗暴。", "放稳一点，我不是可以随便甩动的窗口。"],
+      "fling": ["抛掷轨迹已经记录，体验很差。", "惯性测试结束，下次先征求许可。"],
+      "fling_slide": ["滑行摩擦数据够了，别再推。", "地面位移已记录，现在让我停下。"],
+      "fling_throw": ["这次抛投的加速度明显超标。", "高空投掷不在友好互动范围内。"],
+      "control_enter": ["手动控制已接入，别乱下指令。", "控制权暂时开放，动作由你负责。"],
+      "control_exit": ["手动控制结束，我接回行动权。", "接管解除，后续行动恢复自主。"],
+      "control_long": ["持续协作达到三十秒，记录有效。", "长时控制样本完成，你的操作还算稳定。"],
+      "control_jump": ["跳跃指令收到，注意落点。", "起跳参数已执行，别让我撞上窗口。"],
+      "control_climb": ["攀爬路线确认，继续保持方向。", "墙面附着稳定，别突然松手。"],
+      "control_detach": ["脱离墙面，重心正在回正。", "解除攀附完成，下一步想清楚再按。"],
+      "control_fly": ["飞行控制开启，保持轨迹平滑。", "升空参数成立，别把我带进死角。"],
+      "control_fly_cancel": ["飞行取消，正在恢复落地姿态。", "中止升空已执行，准备接地。"],
+      "control_combo": ["组合动作成立，这次衔接不错。", "连续指令已完成，操作勉强合格。"],
+      "control_step_off": ["离开平台边缘，开始空中修正。", "踏空指令确认，落点由你负责。"],
+      "control_umbrella": ["缓降装置展开，下降率稳定。", "伞面已打开，别再追加奇怪输入。"],
+      "control_land": ["落地完成，关节状态正常。", "接地稳定，这次没有造成额外损耗。"],
+      "icon_give": ["赠予样本已接收，我会暂时保管。", "图标归档完成，之后由我决定放置时机。"],
+      "icon_bag_full": ["提包容量已满，这个图标不接收。", "三个位置都被占用，把目标放回原处。"],
+      "icon_reclaim": ["取出流程完成，图标放在我脚边。", "要回请求已执行，别再把它弄丢。"],
+      "icon_restore": ["批量还原完成，背包记录已清空。", "所有暂存图标已回到原始位置。"],
+      "cursor_play_chase": ["光标轨迹有观察价值，我追一小段。", "移动样本不错，暂时进入追踪实验。"],
+      "cursor_play_end": ["追踪实验结束，数据已经足够。", "轨迹记录完成，这次不继续追了。"],
+      "cursor_warning": ["第一次警告，停止绕圈和横扫。", "刺激记录已越线，再来一次就升级处理。"],
+      "cursor_warning_second": ["第二次警告，再继续就直接没收。", "最后提醒，下一次刺激会触发收包。"],
+      "cursor_stage3_remote": ["第三阶段启动，距离已经没有意义。", "远程没收开始，你的控制权到此为止。"],
+      "cursor_capture_success": ["光标捕获成功，暂时由我保管。", "绝对没收已经生效，等待归还。"],
+      "cursor_capture_miss": ["追捕失败，但惩罚记录不会清除。", "这次让它跑掉了，下次直接升级。"],
+      "cursor_bag_release": ["没收结束，光标已经放回包边。", "控制权归还，别再重复刚才的刺激。"],
+      "relationship_up": ["关系评估上调，我会开放更多自主互动。", "长期观察结果不错，对你的信任增加了。"],
+      "relationship_down": ["关系评估下调，边界重新收紧。", "近期样本表现不佳，我会提高戒备。"]
+    }
+  }
 }

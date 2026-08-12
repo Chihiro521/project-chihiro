@@ -11,6 +11,8 @@ const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progre
 const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
 const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
 const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
+const AutonomySchedulerScript := preload("res://scripts/core/pet_autonomy_scheduler.gd")
+const RelationshipRulesScript := preload("res://scripts/core/pet_relationship_rules.gd")
 const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
 const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
 const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd")
@@ -26,6 +28,7 @@ const TRAVEL_FACING_DEAD_ZONE := 18.0
 const MIN_EDGE_TRAVERSE_DISTANCE := 12.0
 const LIFE_SAVE_INTERVAL_MS := 30000.0
 const MECHANISM_DASHBOARD_REFRESH_MS := 200.0
+const AUTONOMY_OBSERVE_INTERVAL_MS := 1000.0
 const SPEECH_FOLLOW_INTERVAL_MS := 33.0
 ## How often the ridden window's rect is re-sampled while standing on it. The
 ## per-tick cost is one native single-window query plus a cached-snapshot
@@ -75,13 +78,24 @@ const WINDOW_HOP_REACH_PX := 120.0
 ## visible rendering.
 const WINDOW_STAND_MIN_AGE_MS := 2000.0
 
-# Cursor confiscation ("绝对没收"). VK_ESCAPE is reserved EXCLUSIVELY as this
-# behavior's escape valve — it does nothing outside the confiscation hold.
+# Cursor confiscation ("绝对没收"). During confiscation VK_ESCAPE is the global
+# safety valve; outside confiscation, focused manual control also uses Esc as its
+# original quick-exit shortcut. The capture branch always has priority.
 const VK_ESCAPE := 0x1B
-const CURSOR_CONFISCATE_CHASE_MS := 2600.0
-const CURSOR_CONFISCATE_GRAB_RANGE_PX := 110.0
 const CURSOR_CONFISCATE_HOLD_MS := 60000.0
-const CURSOR_CONFISCATE_WALK_SPEED := 480.0
+const CURSOR_PLAY_CHASE_MIN_MS := 3000.0
+const CURSOR_PLAY_CHASE_MAX_MS := 5000.0
+const CURSOR_PLAY_OBSERVE_MS := 650.0
+const CURSOR_PLAY_END_FALLBACK_MS := 3000.0
+const CURSOR_PLAY_CHASE_SPEED := 380.0
+const CURSOR_PLAY_CHASE_RANGE_PX := 155.0
+const CURSOR_PLAY_CHASE_COOLDOWN_MS := 60000.0
+const CURSOR_PUNISHMENT_THRESHOLD := 55.0
+const CURSOR_PROVOCATION_DECAY_MS := 40000.0
+const CURSOR_ARMING_MAX_MS := 5000.0
+const CURSOR_RELEASE_FALLBACK_MS := 3000.0
+const CURSOR_REMOTE_HOLD_MIN_MS := 30000.0
+const CURSOR_REMOTE_HOLD_MAX_MS := 60000.0
 
 # Icon collection ("归档桌面图标"). Only the rendered desktop presentation is
 # changed; .lnk/files are never touched. Ordinary icons move through the ListView,
@@ -117,8 +131,9 @@ const ICON_DEFAULT_GRID_SPACING := Vector2(96.0, 96.0)
 const ICON_DROP_FROM_FOOT := Vector2(-48.0, -72.0)
 # Windows desktop icon cells are larger than the glyph itself. This hitbox is only
 # used while the left button is held, so a normal click cannot become a gift.
-const ICON_GIFT_HITBOX := Rect2(-18.0, -18.0, 96.0, 96.0)
+const ICON_GIFT_HITBOX := Rect2(-24.0, -24.0, 112.0, 132.0)
 const ICON_GIFT_DRAG_THRESHOLD_PX := 12.0
+const ICON_GIFT_DRAG_TIMEOUT_MS := 15000.0
 # Hand anchor is ~48px below the window top (the cursor-hold anchor), while her
 # feet sit WINDOW_FOOT_OFFSET_Y below it. Horizontal slack absorbs the body's
 # offset inside the window so the grab test does not depend on her facing.
@@ -205,6 +220,7 @@ var ecology_progression
 var ecology_request_controller
 var goal_director
 var routine_session := RoutineSessionScript.new()
+var autonomy_scheduler := AutonomySchedulerScript.new(23013)
 
 var work_area := Rect2(0, 0, 1280, 720)
 var position := Vector2.ZERO
@@ -304,6 +320,7 @@ var _rider_occlusion_ms := 0.0
 var _window_first_seen_ms: Dictionary = {}
 var next_platform_swap := 0.0
 var next_mechanism_dashboard_update := 0.0
+var next_autonomy_observe := 0.0
 var next_speech_follow := 0.0
 var life_session_started_at_ms := 0.0
 var last_click_at := -INF
@@ -313,6 +330,7 @@ var manual_last_down_tap := -INF
 var manual_last_flight_enter_ms := -INF
 var _control_started_at := -1.0
 var _control_long_emitted := false
+var relationship_dialogue_queue: Array[String] = []
 var _last_control_clip := ""
 var _last_control_segment := ""
 var _last_control_reverse := false
@@ -347,13 +365,24 @@ var _manual_feedback_prev_rect := Rect2i()
 var _manual_feedback_last_at := -INF
 
 # Cursor confiscation ("绝对没收") — a bespoke phase machine, not a clip session.
-# The WH_MOUSE_LL hook is only ever armed while cursor_capture_phase == "hold";
+# The WH_MOUSE_LL hook is only ever armed while cursor_capture_phase is
+# bagging/hold/release;
 # _release_cursor_capture() is idempotent and called on every exit path.
 var cursor_capture_phase := ""
 var cursor_capture_started_ms := -1.0
 var cursor_capture_end_reason := ""
 var cursor_capture_anchor := Vector2.ZERO
 var _cursor_capture_installed := false
+var cursor_capture_source := "autonomous"
+var cursor_capture_hold_ms := CURSOR_CONFISCATE_HOLD_MS
+var cursor_capture_direct := false
+var cursor_capture_success := false
+var cursor_play_phase := ""
+var cursor_play_started_at := -1.0
+var cursor_play_duration_ms := -1.0
+var cursor_play_target := Vector2.ZERO
+var cursor_provocation_stage := 0
+var cursor_provocation_last_at := -1.0
 
 # Icon collection ("归档桌面图标") — approach → grab → timed storage. Every
 # icon that actually enters the bag is removed from the rendered desktop through
@@ -379,6 +408,10 @@ var icon_bag_entries: Array = []
 #   "done_kind"/"done_name": String
 var icon_restore_queue: Array = []
 var next_icon_restore_check_ms := -1.0
+# Explorer may finish its own desktop drop one frame after the global mouse-up.
+# Rejected gifts are therefore returned repeatedly for one second so the saved
+# pre-drag position reliably wins that race.
+var icon_gift_return_queue: Array = []
 # A real desktop-icon drag is observed globally because the pet window is
 # mouse-passthrough. Once the icon enters her rendered hit area and the button is
 # released, it becomes the same recorded keepsake transfer as the backpack button.
@@ -419,6 +452,7 @@ func _ready() -> void:
 	backpack_panel.reclaim_requested.connect(_on_backpack_reclaim)
 	backpack_panel.give_requested.connect(_on_backpack_give)
 	backpack_panel.restore_all_requested.connect(_on_backpack_restore_all)
+	backpack_panel.visibility_changed.connect(_on_backpack_visibility_changed)
 	manifest = PetManifestData.load_from_file(SKIN_MANIFEST)
 	if not manifest.is_valid():
 		for error in manifest.errors:
@@ -426,6 +460,7 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 	_initialize_life_systems()
+	speech_bubble.message_finished.connect(_on_speech_message_finished)
 	action_catalog.configure(manifest)
 	mechanism_dashboard.simulation_rate_requested.connect(_on_ecology_rate_requested)
 	machine.transitioned.connect(_on_transition)
@@ -464,6 +499,17 @@ func _process(delta: float) -> void:
 		next_window_refresh = minf(next_window_refresh, event_deadline)
 	_update_window_platforms(now)
 	_update_life_systems(delta, now)
+	var autonomy_active := _autonomy_clock_active()
+	autonomy_scheduler.advance_clock(delta * 1000.0, autonomy_active)
+	if autonomy_active and now >= next_autonomy_observe:
+		next_autonomy_observe = now + AUTONOMY_OBSERVE_INTERVAL_MS
+		autonomy_scheduler.observe(_collect_autonomy_channels(true))
+	_update_cursor_provocation_decay(now)
+	# Cursor custody is an overlay, not an exclusive character state. Once the
+	# bagging one-shot finishes the pet returns to idle and may run any ordinary
+	# autonomous action while this safety loop keeps the cursor hidden/captured.
+	if not cursor_capture_phase.is_empty():
+		_update_cursor_confiscate(now)
 	_update_dialogue_system(now)
 	if not hidden and not suspended and desktop.is_visible() and not desktop.is_minimized():
 		if offscreen_marker != null:
@@ -482,11 +528,12 @@ func _process(delta: float) -> void:
 		_update_roam(now)
 	elif not ecology_walk_motion.is_empty():
 		_update_ecology_walk(now)
-	elif machine.state == "cursor_confiscate":
-		_update_cursor_confiscate(now)
+	elif machine.state == "cursor_play_chase":
+		_update_cursor_play_chase(now)
 	elif machine.state == "icon_collect":
 		_update_icon_collect(now)
 	_update_icon_gift_drag(now)
+	_update_icon_gift_returns(now)
 	_update_icon_transfer(now)
 	_update_icon_release_scheduler(now)
 	_update_icon_restore(now)
@@ -522,6 +569,7 @@ func _process(delta: float) -> void:
 			"intent": str(current_intent.get("id", "")),
 			"clip": sprite_player.current_clip,
 			"needs": needs_model.snapshot() if needs_model != null else {},
+			"relationship_tier": needs_model.relationship_tier() if needs_model != null else "guarded",
 			"scores": behavior_director.last_candidates if behavior_director != null else [],
 			"platform": active_platform.stable_id() if active_platform != null else "",
 			"world": {
@@ -560,12 +608,18 @@ func _input(event: InputEvent) -> void:
 			_sync_menu_checks()
 			get_viewport().set_input_as_handled()
 			return
-		if machine.state == "manual_control" and key.pressed and not key.echo:
-			match key.keycode:
-				KEY_ESCAPE:
+		if key.pressed and not key.echo and key.keycode == KEY_ESCAPE:
+			match _escape_shortcut_target():
+				"cursor_capture":
+					_cancel_cursor_confiscation_immediately(true)
+					get_viewport().set_input_as_handled()
+					return
+				"manual_control":
 					_exit_manual_control()
 					get_viewport().set_input_as_handled()
 					return
+		if machine.state == "manual_control" and key.pressed and not key.echo:
+			match key.keycode:
 				KEY_W, KEY_UP:
 					_handle_manual_up_tap()
 					get_viewport().set_input_as_handled()
@@ -590,6 +644,17 @@ func _input(event: InputEvent) -> void:
 			_finish_press(false)
 	elif event is InputEventMouseMotion and not press.is_empty():
 		_update_press_drag()
+
+
+func _escape_shortcut_target() -> String:
+	# Absolute confiscation owns Esc even if another focused mode happens to be
+	# active underneath the custody overlay. With no custody, manual control gets
+	# its original quick-exit shortcut. The two actions are therefore exclusive.
+	if not cursor_capture_phase.is_empty():
+		return "cursor_capture"
+	if machine.state == "manual_control":
+		return "manual_control"
+	return ""
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -706,7 +771,7 @@ func _open_context_menu(local_position: Vector2) -> void:
 
 func _on_context_menu_hidden() -> void:
 	desktop.set_unfocusable(true)
-	if machine.state == "menu_wait":
+	if machine.state == "menu_wait" and not backpack_panel.visible:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
 
 func _on_menu_id_pressed(id: int) -> void:
@@ -785,6 +850,13 @@ func _on_menu_id_pressed(id: int) -> void:
 			_sync_menu_checks()
 		MENU_CURSOR_MISCHIEF, TRAY_CURSOR_MISCHIEF:
 			cursor_mischief = not cursor_mischief
+			if not cursor_mischief:
+				_reset_cursor_provocation()
+				if machine.state == "cursor_play_chase":
+					_abort_cursor_play_chase()
+					machine.dispatch({"type": "ACTION_END"})
+				if not cursor_capture_phase.is_empty():
+					_cancel_cursor_confiscation_immediately(true)
 			_save_user_settings()
 			_sync_menu_checks()
 		MENU_ICON_COLLECTION, TRAY_ICON_COLLECTION:
@@ -813,7 +885,7 @@ func _on_menu_id_pressed(id: int) -> void:
 		TRAY_SHOW:
 			hidden = false
 			desktop.set_visible(true)
-	if machine.state == "menu_wait" and id not in [MENU_CLOCK]:
+	if machine.state == "menu_wait" and id not in [MENU_CLOCK] and not backpack_panel.visible:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
 
 func _submit_ecology_request(request_id: String, payload: Dictionary = {}) -> void:
@@ -870,6 +942,7 @@ func _initialize_life_systems() -> void:
 	needs_model = PetNeedsModel.new(profile)
 	persistent_state = state_store.load_state()
 	needs_model.restore_persistent(persistent_state)
+	needs_model.relationship_tier_changed.connect(_on_relationship_tier_changed)
 	ecology_progression = EcologyProgressionScript.new(ecology_profile)
 	ecology_progression.restore_persistent(persistent_state)
 	ecology_request_controller = EcologyRequestScript.new(ecology_profile)
@@ -929,6 +1002,9 @@ func _update_life_systems(delta: float, now: float) -> void:
 		_save_life_state()
 
 func _update_dialogue_system(now: float) -> void:
+	if not relationship_dialogue_queue.is_empty() and not speech_bubble.is_showing():
+		if _flush_relationship_dialogue():
+			return
 	if not dialogue_scheduler.should_attempt(now, {
 		"enabled": speech_bubbles_enabled,
 		"surface_visible": not suspended and desktop.is_visible() and not desktop.is_minimized(),
@@ -938,12 +1014,35 @@ func _update_dialogue_system(now: float) -> void:
 	var emitted := _emit_dialogue("ambient")
 	dialogue_scheduler.commit_attempt(now, dialogue_director.next_ambient_at_ms if emitted else -INF)
 
+func _on_relationship_tier_changed(previous: String, current: String, _affection: float) -> void:
+	var event_name := (
+		"relationship_up"
+		if RelationshipRulesScript.relationship_rank(current) > RelationshipRulesScript.relationship_rank(previous)
+		else "relationship_down"
+	)
+	relationship_dialogue_queue.append(event_name)
+	while relationship_dialogue_queue.size() > 4:
+		relationship_dialogue_queue.pop_front()
+	call_deferred("_flush_relationship_dialogue")
+
+func _on_speech_message_finished(_dialogue_id: String) -> void:
+	call_deferred("_flush_relationship_dialogue")
+
+func _flush_relationship_dialogue() -> bool:
+	if relationship_dialogue_queue.is_empty() or speech_bubble.is_showing():
+		return false
+	var event_name: String = str(relationship_dialogue_queue.front())
+	if not _emit_dialogue(event_name):
+		return false
+	relationship_dialogue_queue.pop_front()
+	return true
+
 func _save_life_state() -> void:
 	if persistent_state.is_empty() or needs_model == null:
 		return
 	var target_store: PetStateStore = developer_state_store if using_developer_state else state_store
 	var candidate := persistent_state.duplicate(true)
-	candidate["affection"] = needs_model.get_need("affection")
+	candidate.merge(needs_model.relationship_persistent_snapshot(), true)
 	candidate["recent_dialogue_ids"] = dialogue_director.recent_dialogue_ids()
 	if ecology_progression != null:
 		candidate.merge(ecology_progression.persistent_snapshot(), true)
@@ -972,7 +1071,7 @@ func _on_ecology_rate_requested(rate: float) -> void:
 	using_developer_state = should_use_developer_state
 	var source_store: PetStateStore = developer_state_store if using_developer_state else state_store
 	persistent_state = source_store.load_state()
-	needs_model.reset_session(float(persistent_state.get("affection", 40.0)))
+	needs_model.reset_session(float(persistent_state.get("affection", 25.0)), persistent_state)
 	ecology_progression.restore_persistent(persistent_state)
 	home_anchor = persistent_state.get("home_anchor", {}).duplicate(true) if persistent_state.get("home_anchor", {}) is Dictionary else {}
 	session_unrecorded_seconds = 0.0
@@ -1000,6 +1099,16 @@ func _current_mood() -> String:
 		return "bored"
 	return "neutral"
 
+func _cursor_playful_mood() -> bool:
+	if needs_model == null:
+		return false
+	return needs_model.get_need("curiosity") >= 60.0 or needs_model.get_need("boredom") >= 65.0
+
+func _cursor_punishment_ready() -> bool:
+	if needs_model == null or not cursor_mischief:
+		return false
+	return needs_model.get_need("irritation") >= CURSOR_PUNISHMENT_THRESHOLD and needs_model.get_need("energy") >= 25.0
+
 func _dialogue_context(event_name: String, tags: Array = []) -> Dictionary:
 	var foreground := window_platform_service.foreground_snapshot()
 	return {
@@ -1016,18 +1125,41 @@ func _dialogue_context(event_name: String, tags: Array = []) -> Dictionary:
 func _emit_dialogue(event_name: String, tags: Array = []) -> bool:
 	if not speech_bubbles_enabled or suspended or not desktop.is_visible() or dialogue_director == null:
 		return false
-	var line := dialogue_director.select_line(_dialogue_context(event_name, tags), _now_ms())
+	var priority_events := {
+		"cursor_play_chase": true, "cursor_play_end": true, "cursor_warning": true,
+		"cursor_warning_second": true, "cursor_stage3_remote": true,
+		"cursor_capture_success": true, "cursor_capture_miss": true, "cursor_bag_release": true,
+		"icon_collect": true, "icon_miss": true, "icon_keepsake": true, "icon_give": true,
+		"icon_bag_full": true, "icon_reclaim": true, "icon_arrange": true, "icon_restore": true,
+		"relationship_up": true, "relationship_down": true,
+		"greeting": true, "return": true,
+		"head_pat_accept": true, "head_pat_refuse": true, "poke": true,
+		"rapid_poke": true, "bag_touch": true, "rough_drag": true,
+		"fling": true, "fling_slide": true, "fling_throw": true,
+		"control_enter": true, "control_exit": true, "control_long": true,
+		"control_jump": true, "control_climb": true, "control_detach": true,
+		"control_fly": true, "control_fly_cancel": true, "control_combo": true,
+		"control_step_off": true, "control_umbrella": true, "control_land": true,
+	}
+	var line := dialogue_director.select_line(
+		_dialogue_context(event_name, tags),
+		_now_ms(),
+		priority_events.has(event_name),
+	)
 	if not line.is_empty():
 		_show_speech(str(line.get("id", event_name)), str(line.get("text", "")))
 		return true
 	return false
 
 func _emit_control_quip(event_name: String) -> void:
-	if randf() >= CONTROL_QUIP_PROBABILITY:
+	var probability := RelationshipRulesScript.control_quip_probability(
+		needs_model.relationship_tier() if needs_model != null else "familiar"
+	)
+	if randf() >= probability:
 		return
 	_emit_dialogue(event_name)
 
-func _behavior_context() -> Dictionary:
+func _behavior_context(ignore_runtime_busy := false) -> Dictionary:
 	return {
 		"now_ms": int(_now_ms()),
 		"hour": int(Time.get_datetime_dict_from_system().get("hour", 0)),
@@ -1037,12 +1169,14 @@ func _behavior_context() -> Dictionary:
 		"on_platform": active_platform != null,
 		"relationship_tier": needs_model.relationship_tier(),
 		"returned_after_seconds": returned_after_seconds,
-		"autonomy_allowed": auto_wander and machine.state == "idle",
+		"autonomy_allowed": auto_wander and (ignore_runtime_busy or machine.state == "idle"),
 		"fullscreen": suspended,
 		"dragging": machine.state == "dragged",
-		"menu_open": menu.visible,
+		"menu_open": menu.visible or backpack_panel.visible,
 		"direct_interaction": machine.state in ["head_pat", "poke_cheek", "clock_scare"],
 		"cursor_mischief": cursor_mischief,
+		"cursor_playful_mood": _cursor_playful_mood(),
+		"cursor_punishment_ready": _cursor_punishment_ready(),
 		"icon_collection": icon_collection,
 		"cursor_in_reach": _cursor_in_confiscate_reach(),
 		"desktop_listview_available": desktop.desktop_listview_available(),
@@ -1137,16 +1271,19 @@ func _run_current_routine_step() -> void:
 	ecology_step_context = step.duplicate(true)
 	match step_type:
 		"intent":
-			var intent_id := _choose_ecology_intent(step)
-			if intent_id.is_empty() or not _start_direct_behavior(intent_id):
+			var intent := _choose_ecology_intent(step)
+			if intent.is_empty() or not _start_autonomous_intent(intent):
 				_finish_or_skip_ecology_step(step, "unavailable")
+			else:
+				var intent_id := str(intent.get("id", ""))
+				behavior_director.commit_intent(intent, int(_now_ms()))
+				autonomy_scheduler.mark_executed("behavior", intent_id)
 		"travel":
 			if not _run_ecology_travel(step):
 				_finish_or_skip_ecology_step(step, "unavailable")
 		"special":
 			if str(step.get("special", "")) == "edge_patrol":
-				_trigger_edge_patrol()
-				if machine.state != "edge_patrol":
+				if not _trigger_edge_patrol():
 					_finish_or_skip_ecology_step(step, "unavailable")
 			else:
 				_finish_or_skip_ecology_step(step, "unavailable")
@@ -1155,24 +1292,32 @@ func _run_current_routine_step() -> void:
 		_:
 			_finish_or_skip_ecology_step(step, "invalid")
 
-func _choose_ecology_intent(step: Dictionary) -> String:
+func _choose_ecology_intent(step: Dictionary) -> Dictionary:
 	var candidates: Array[String] = []
 	for value in step.get("intent_ids", []):
 		candidates.append(str(value))
 	if candidates.is_empty():
-		return ""
+		return {}
+	var eligible: Array[Dictionary] = []
+	for intent in behavior_director.candidate_scores(needs_model, _behavior_context(), int(_now_ms())):
+		if str(intent.get("id", "")) in candidates:
+			eligible.append(intent)
+	if eligible.is_empty():
+		return {}
 	if str(step.get("select_by_need", "")) == "energy":
-		if needs_model.get_need("energy") <= 25.0 and "nap" in candidates:
-			return "nap"
-		if "sit_rest" in candidates:
-			return "sit_rest"
-	var start := ecology_clock.elapsed_ms() % candidates.size()
-	for offset in range(candidates.size()):
-		var candidate := candidates[(start + offset) % candidates.size()]
-		if behavior_director.create_intent(candidate, needs_model, _behavior_context(), int(_now_ms())).is_empty():
-			continue
-		return candidate
-	return ""
+		var preferred_id := "nap" if needs_model.get_need("energy") <= 25.0 else "sit_rest"
+		for intent in eligible:
+			if str(intent.get("id", "")) == preferred_id:
+				return intent
+	var total := 0.0
+	for intent in eligible:
+		total += maxf(float(intent.get("score", 0.0)), 0.01)
+	var roll := randf() * total
+	for intent in eligible:
+		roll -= maxf(float(intent.get("score", 0.0)), 0.01)
+		if roll <= 0.0:
+			return intent
+	return eligible.back()
 
 func _run_ecology_travel(step: Dictionary) -> bool:
 	var target_kind := str(step.get("target", ""))
@@ -1323,8 +1468,10 @@ func _on_routine_completed(goal_id: String, outcome: String) -> void:
 		_observe_goal_discovery(goal_id, context)
 		if not request.is_empty():
 			ecology_progression.record_request(str(request.get("request_id", "")), "completed", int(Time.get_unix_time_from_system()))
-			var relationship_gain := 0.40 if str(request.get("request_id", "")) == "companion" else 0.25
-			needs_model.apply_event("friendly_interaction", {"effects": {"affection": relationship_gain, "boredom": -4.0}})
+			if str(request.get("request_id", "")) == "companion":
+				needs_model.apply_event("companion_completed")
+			else:
+				needs_model.apply_event("friendly_interaction", {"effects": {"affection": 0.25, "boredom": -4.0}})
 	if machine.state == "idle":
 		_schedule_wander()
 
@@ -1369,7 +1516,9 @@ func _handle_request_result(result: Dictionary) -> void:
 					ecology_progression.record_request(request_id, "refused", int(Time.get_unix_time_from_system()))
 				_show_speech("request_unavailable", "现在没法满足这个请求，稍后再试试。", 4.0)
 				return
-			var goal: Dictionary = goal_director.create_goal(goal_id, _ecology_context(), ecology_clock.elapsed_ms())
+			var request_context := _ecology_context()
+			request_context["player_requested"] = true
+			var goal: Dictionary = goal_director.create_goal(goal_id, request_context, ecology_clock.elapsed_ms())
 			if request_id == "stay_here" and not goal.is_empty():
 				goal["steps"] = [{"type": "intent", "intent_ids": ["sit_rest", "breathe_shift"], "max_duration_ms": 24000}]
 			if request_id == "companion":
@@ -1406,6 +1555,21 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 	var relationship_tier := needs_model.relationship_tier() if needs_model != null else "familiar"
 	var context := _behavior_context() if needs_model != null and manifest != null else {}
 	var candidates := behavior_director.diagnostic_candidates(needs_model, context, int(now)) if behavior_director != null else []
+	var scheduler_snapshot := autonomy_scheduler.snapshot()
+	var scheduler_candidates: Dictionary = {}
+	for value in scheduler_snapshot.get("candidates", []):
+		if value is Dictionary and str(value.get("channel", "")) == "behavior":
+			scheduler_candidates[str(value.get("id", ""))] = value
+	for index in range(candidates.size()):
+		if not candidates[index] is Dictionary:
+			continue
+		var diagnostic: Dictionary = candidates[index]
+		var scheduler_value: Variant = scheduler_candidates.get(str(diagnostic.get("id", "")), {})
+		if scheduler_value is Dictionary and not scheduler_value.is_empty():
+			diagnostic["scheduler_wait_ms"] = float(scheduler_value.get("wait_ms", 0.0))
+			diagnostic["scheduler_missed_rounds"] = int(scheduler_value.get("missed_channel_rounds", 0))
+			diagnostic["scheduler_effective_score"] = float(scheduler_value.get("effective_score", diagnostic.get("score", 0.0)))
+		candidates[index] = diagnostic
 	var state_stats_value: Variant = persistent_state.get("interaction_stats", {})
 	var state_stats: Dictionary = state_stats_value if state_stats_value is Dictionary else {}
 	var merged_stats := PetMechanismDashboard.merge_interaction_stats(state_stats, interaction_delta)
@@ -1423,8 +1587,10 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 		"ecology": ecology_progression.snapshot() if ecology_progression != null else {},
 		"ecology_clock": ecology_clock.snapshot(),
 		"goal_candidates": goal_director.last_candidates if goal_director != null else [],
+		"autonomy_scheduler": scheduler_snapshot,
 		"needs": needs_snapshot,
 		"relationship_tier": relationship_tier,
+		"relationship_daily": needs_model.relationship_daily_snapshot() if needs_model != null else {},
 		"mood": _current_mood(),
 		"candidates": candidates,
 		"recent_intents": behavior_director.recent_intents() if behavior_director != null else [],
@@ -1474,6 +1640,8 @@ func _start_autonomous_intent(intent: Dictionary) -> bool:
 	# The two desktop-intervention behaviors are bespoke phase machines (they need
 	# real walk/grab clips and real-world effects, not a clip-session envelope).
 	var special_id := str(intent.get("id", ""))
+	if special_id == "cursor_play_chase":
+		return _begin_cursor_play_chase(intent)
 	if special_id == "cursor_confiscate":
 		return _begin_cursor_confiscation(intent)
 	if special_id == "icon_collect":
@@ -1534,7 +1702,7 @@ func _play_intent_sfx(intent_id: String) -> void:
 func _machine_state_for_intent(intent: Dictionary) -> String:
 	var intent_id := str(intent.get("id", ""))
 	var configured_state := str(intent.get("state", ""))
-	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_confiscate", "icon_collect", "icon_transfer"]:
+	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_play_chase", "cursor_confiscate", "icon_collect", "icon_transfer"]:
 		return configured_state
 	match intent_id:
 		"nap": return "sleeping"
@@ -1591,10 +1759,14 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		"window_walk": return "window_walk"
 		"window_sit": return "window_sit"
 		"window_land_recover": return "window_land"
-		"cursor_confiscate":
-			return "cursor_miss" if cursor_capture_end_reason == "miss" else ("cursor_escape" if cursor_capture_end_reason == "escape" else "cursor_release")
+		"cursor_play_chase", "cursor_confiscate":
+			# These states emit dialogue at their phase boundaries so a looped chase,
+			# bag guard, or release cannot emit a second generic line on completion.
+			return ""
 		"icon_collect":
-			return "icon_keepsake" if icon_collect_keepsaked else "icon_collect"
+			# Keepsakes announce themselves at the actual grab. Do not request the
+			# same line again a fraction of a second later when the behavior closes.
+			return "" if icon_collect_keepsaked else "icon_collect"
 		_: return ""
 
 ## ---- User-gifted icon transfer --------------------------------------------
@@ -1609,43 +1781,136 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 
 func _update_icon_gift_drag(now: float) -> void:
 	var mouse_down := desktop != null and desktop.is_key_pressed(0x01)
-	if not mouse_down:
-		if not icon_gift_drag.is_empty():
-			var dropped := icon_gift_drag.duplicate(true)
-			icon_gift_drag.clear()
-			if bool(dropped.get("entered_pet", false)) and bool(dropped.get("moved", false)):
-				_begin_icon_transfer(
-					"give",
-					str(dropped.get("name", "")),
-					dropped.get("original", {}),
-					false,
-					"mouse_drag",
-				)
-		return
-	if not icon_collection or machine.state != "idle" or not press.is_empty() or menu.visible:
-		icon_gift_drag.clear()
-		return
 	var cursor := Vector2(desktop.get_cursor_position())
 	if icon_gift_drag.is_empty():
+		if not mouse_down or not _icon_gift_drag_state_allowed():
+			return
 		var target := _desktop_icon_at_screen_point(cursor)
 		if target.is_empty():
 			return
+		_end_passive_cursor_tracking_for_icon_gift()
 		icon_gift_drag = {
 			"name": str(target.get("name", "")),
 			"original": {"x": int(target.get("x", 0)), "y": int(target.get("y", 0))},
 			"start_cursor": cursor,
 			"started_at": now,
 			"moved": false,
-			"entered_pet": false,
+			"over_pet": false,
 		}
+		wander_deadline = -1.0
+		return
+	if not icon_collection or not _icon_gift_drag_state_allowed():
+		icon_gift_drag.clear()
+		if machine.state == "idle":
+			_schedule_wander()
+		return
+	if now - float(icon_gift_drag.get("started_at", now)) > ICON_GIFT_DRAG_TIMEOUT_MS:
+		icon_gift_drag.clear()
+		if machine.state == "idle":
+			_schedule_wander()
+		return
+	if not mouse_down:
+		var dropped := icon_gift_drag.duplicate(true)
+		var over_pet := _screen_point_hits_pet(cursor)
+		icon_gift_drag.clear()
+		if not _icon_gift_drop_is_valid(dropped, over_pet):
+			if machine.state == "idle":
+				_schedule_wander()
+			return
+		var icon_name := str(dropped.get("name", ""))
+		# Explorer remains authoritative. The original position is intentionally the
+		# pre-drag position, while this lookup only proves the rendered item still
+		# exists and has not already entered the bag.
+		if _bag_carry_count() >= ICON_BAG_CAPACITY:
+			_reject_icon_gift_bag_full(dropped)
+			if machine.state == "idle":
+				_schedule_wander()
+			return
+		if _icon_bag_entry_index(icon_name) >= 0:
+			_queue_icon_gift_return(icon_name, dropped.get("original", {}))
+			if machine.state == "idle":
+				_schedule_wander()
+			return
+		if _desktop_icon_position(icon_name).is_empty():
+			if machine.state == "idle":
+				_schedule_wander()
+			return
+		_end_passive_cursor_tracking_for_icon_gift()
+		_begin_icon_transfer(
+			"give",
+			icon_name,
+			dropped.get("original", {}),
+			false,
+			"mouse_drag",
+		)
 		return
 	var start_cursor := Vector2(icon_gift_drag.get("start_cursor", cursor))
 	if cursor.distance_to(start_cursor) >= ICON_GIFT_DRAG_THRESHOLD_PX:
 		icon_gift_drag["moved"] = true
-	if _screen_point_hits_pet(cursor):
-		icon_gift_drag["entered_pet"] = true
-	if now - float(icon_gift_drag.get("started_at", now)) > ICON_TRANSFER_TIMEOUT_MS:
-		icon_gift_drag.clear()
+	icon_gift_drag["over_pet"] = _screen_point_hits_pet(cursor)
+
+func _reject_icon_gift_bag_full(drag: Dictionary) -> void:
+	_queue_icon_gift_return(str(drag.get("name", "")), drag.get("original", {}))
+	_emit_dialogue("icon_bag_full")
+
+func _queue_icon_gift_return(icon_name: String, original: Dictionary) -> void:
+	if icon_name.is_empty() or original.is_empty():
+		return
+	for index in range(icon_gift_return_queue.size() - 1, -1, -1):
+		if str((icon_gift_return_queue[index] as Dictionary).get("name", "")) == icon_name:
+			icon_gift_return_queue.remove_at(index)
+	var now := _now_ms()
+	icon_gift_return_queue.append({
+		"name": icon_name,
+		"original": original.duplicate(true),
+		"next_at": now,
+		"expires_at": now + 1000.0,
+	})
+
+func _update_icon_gift_returns(now: float) -> void:
+	if icon_gift_return_queue.is_empty() or (desktop != null and desktop.is_key_pressed(0x01)):
+		return
+	var pending: Array = []
+	for value in icon_gift_return_queue:
+		if not value is Dictionary:
+			continue
+		var task: Dictionary = value
+		if now < float(task.get("next_at", now)):
+			pending.append(task)
+			continue
+		var original: Dictionary = task.get("original", {})
+		desktop.set_desktop_icon_position(
+			str(task.get("name", "")),
+			int(original.get("x", 0)),
+			int(original.get("y", 0)),
+		)
+		if now < float(task.get("expires_at", now)):
+			task["next_at"] = now + 150.0
+			pending.append(task)
+	icon_gift_return_queue = pending
+
+func _icon_gift_drag_state_allowed() -> bool:
+	if not icon_collection or hidden or suspended:
+		return false
+	if machine.state not in ["idle", "notice", "cursor_track"]:
+		return false
+	if action_session.is_active() or not icon_transfer.is_empty() or not press.is_empty():
+		return false
+	return menu == null or not menu.visible
+
+func _icon_gift_drop_is_valid(drag: Dictionary, over_pet: bool) -> bool:
+	return bool(drag.get("moved", false)) \
+		and over_pet \
+		and not str(drag.get("name", "")).is_empty() \
+		and not Dictionary(drag.get("original", {})).is_empty()
+
+func _end_passive_cursor_tracking_for_icon_gift() -> void:
+	gaze_engaged = false
+	smoothed_cursor = null
+	gaze_tracker.reset()
+	gesture_recognizer.reset()
+	if machine.state in ["notice", "cursor_track"]:
+		machine.dispatch({"type": "POINTER_LEAVE"})
 
 func _update_icon_transfer(now: float) -> void:
 	if icon_transfer.is_empty():
@@ -1711,9 +1976,14 @@ func _begin_icon_transfer(
 ) -> bool:
 	if icon_transfer.size() > 0 or (not icon_collection and kind == "give"):
 		return false
+	# Keep the panel-owned menu_wait state until the animation transaction is
+	# actually startable. A still-ending autonomous clip must not consume the
+	# click and silently leave the panel unpaused.
+	if action_session.is_active() or (icon_name.is_empty() and kind != "restore_all"):
+		return false
 	if machine.state == "menu_wait":
 		machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
-	if machine.state != "idle" or action_session.is_active() or (icon_name.is_empty() and kind != "restore_all"):
+	if machine.state != "idle":
 		return false
 	if kind == "give":
 		if _bag_carry_count() >= ICON_BAG_CAPACITY or _icon_bag_entry_index(icon_name) >= 0:
@@ -1760,7 +2030,7 @@ func _complete_icon_transfer() -> void:
 	var reopen_panel := bool(transfer.get("panel_was_visible", false))
 	if kind == "give":
 		if needs_model != null:
-			needs_model.apply_event("friendly_interaction")
+			needs_model.apply_event("icon_give_completed")
 		_bump_interaction("positive", true)
 		if machine.state == "icon_transfer":
 			machine.dispatch({"type": "ACTION_END"})
@@ -1770,25 +2040,7 @@ func _complete_icon_transfer() -> void:
 			backpack_panel.popup_centered()
 		return
 	if kind == "reclaim":
-		var drop_position := _icon_drop_position_at_pet()
-		var index := _icon_bag_entry_index(name)
-		if index < 0:
-			if machine.state == "icon_transfer":
-				machine.dispatch({"type": "ACTION_END"})
-			return
-		var entry: Dictionary = icon_bag_entries[index]
-		icon_bag_entries.remove_at(index)
-		_save_icon_bag()
-		_queue_icon_restore({
-			"refresh": true,
-			"wait_names": [name],
-			"position_map": {name: drop_position},
-			"rehide_names": _carried_icon_names(),
-			"rollback_entries": [entry],
-			"done_kind": "reclaim",
-			"done_name": name,
-			"reopen_panel": reopen_panel,
-		})
+		_queue_reclaim_icon(name, reopen_panel)
 		if machine.state == "icon_transfer":
 			machine.dispatch({"type": "ACTION_END"})
 		return
@@ -1829,103 +2081,373 @@ func _icon_drop_position_at_pet() -> Vector2:
 	var foot := position + Vector2(WINDOW_FOOT_OFFSET_X, WINDOW_FOOT_OFFSET_Y)
 	return Vector2(roundf(foot.x + ICON_DROP_FROM_FOOT.x), roundf(foot.y + ICON_DROP_FROM_FOOT.y))
 
-## ---- Cursor confiscation ("绝对没收") ----
-## Chase → grab → absolute confiscation hold (mouse pinned, hidden, swallowed)
-## → release. Esc is the sole escape valve; the 60s hold times out on its own.
-## Everything here is idempotent: _release_cursor_capture() is safe to call from
-## any exit path (Esc, timeout, interrupt, quit).
+func _queue_reclaim_icon(icon_name: String, reopen_panel: bool) -> bool:
+	var index := _icon_bag_entry_index(icon_name)
+	if index < 0:
+		return false
+	var entry: Dictionary = icon_bag_entries[index]
+	icon_bag_entries.remove_at(index)
+	_save_icon_bag()
+	_queue_icon_restore({
+		"refresh": true,
+		"force_refresh": true,
+		"wait_names": [icon_name],
+		"position_map": {icon_name: _icon_drop_position_at_pet()},
+		"rehide_names": _carried_icon_names(),
+		"rollback_entries": [entry],
+		"done_kind": "reclaim",
+		"done_name": icon_name,
+		"reopen_panel": reopen_panel,
+	})
+	_refresh_backpack_panel()
+	return true
+
+## ---- Cursor interactions (playful chase + absolute confiscation) -----------
 
 func _cursor_in_confiscate_reach() -> bool:
+	# While custody is active the native cursor is pinned to the bag. Treating
+	# that synthetic position as a live target would make gaze/play candidates
+	# react to a cursor the player cannot see or control.
+	if not cursor_capture_phase.is_empty():
+		return false
 	var cursor := Vector2(desktop.get_cursor_position())
 	var foot := _pet_foot_global()
 	var dx := absf(cursor.x - foot.x)
 	var dy := cursor.y - foot.y
 	return dx <= 480.0 and dy >= -360.0 and dy <= 180.0
 
-func _can_snatch_cursor(cursor: Vector2) -> bool:
+func _update_cursor_provocation_decay(now: float) -> void:
+	if cursor_provocation_stage <= 0:
+		return
+	if not _cursor_punishment_ready():
+		_reset_cursor_provocation()
+		return
+	if cursor_provocation_last_at < 0.0:
+		cursor_provocation_last_at = now
+	while cursor_provocation_stage > 0 and now - cursor_provocation_last_at >= CURSOR_PROVOCATION_DECAY_MS:
+		cursor_provocation_stage -= 1
+		cursor_provocation_last_at += CURSOR_PROVOCATION_DECAY_MS
+	if cursor_provocation_stage <= 0:
+		_reset_cursor_provocation()
+
+func _reset_cursor_provocation() -> void:
+	cursor_provocation_stage = 0
+	cursor_provocation_last_at = -1.0
+
+func _apply_cursor_gesture_effect(circle: bool, sweep: bool) -> void:
+	if needs_model == null:
+		return
+	if sweep:
+		needs_model.apply_event("cursor_sweep")
+	elif circle:
+		needs_model.apply_event("cursor_circle")
+
+func _handle_cursor_provocation(_gesture_type: String, _normal_event: String, now: float) -> bool:
+	_update_cursor_provocation_decay(now)
+	if not _cursor_punishment_ready():
+		return false
+	cursor_provocation_last_at = now
+	if cursor_provocation_stage <= 0:
+		cursor_provocation_stage = 1
+		_emit_dialogue("cursor_warning")
+		_trigger_cursor_reaction("CURSOR_WARNING")
+		return true
+	if cursor_provocation_stage == 1:
+		cursor_provocation_stage = 2
+		# The second provocation is a final warning. There is no punishment chase:
+		# the current skin has no dedicated pursuit performance, and reusing the
+		# patrol clip made the escalation read as an unrelated walk cycle.
+		_emit_dialogue("cursor_warning_second")
+		_trigger_cursor_reaction("CURSOR_WARNING")
+		return true
+	cursor_provocation_stage = 3
+	_emit_dialogue("cursor_stage3_remote")
+	var duration := _cursor_remote_hold_duration()
+	if _start_cursor_confiscation_from_source("gesture_third_warning", true, duration):
+		return true
+	cursor_provocation_stage = 2
+	return true
+
+func _cursor_remote_hold_duration() -> float:
+	if needs_model == null:
+		return CURSOR_REMOTE_HOLD_MIN_MS
+	var irritation := needs_model.get_need("irritation")
+	var curiosity := needs_model.get_need("curiosity")
+	var boredom := needs_model.get_need("boredom")
+	var seconds := _cursor_remote_hold_base_seconds(irritation, curiosity, boredom)
+	seconds += randf_range(0.0, 10.0)
+	return clampf(seconds * 1000.0, CURSOR_REMOTE_HOLD_MIN_MS, CURSOR_REMOTE_HOLD_MAX_MS)
+
+func _cursor_remote_hold_base_seconds(irritation: float, curiosity: float, boredom: float) -> float:
+	var seconds := 30.0
+	seconds += maxf(irritation - CURSOR_PUNISHMENT_THRESHOLD, 0.0) * 0.5
+	seconds -= maxf(curiosity - 60.0, 0.0) * 0.25
+	seconds += maxf(boredom - 65.0, 0.0) * 0.1
+	return seconds
+
+func _cursor_confiscation_intent(source: String, direct: bool, hold_ms: float) -> Dictionary:
+	if behavior_director == null or needs_model == null:
+		return {}
+	# This is an event-triggered, non-selectable behavior. Its punishment gates
+	# were checked by _handle_cursor_provocation(), so constructing the intent must
+	# not enumerate desktop icons or re-run unrelated autonomous context work.
+	var intent_context := {
+		"available_clips": manifest.animation_names() if manifest != null else [],
+		"relationship_tier": needs_model.relationship_tier(),
+	}
+	var intent := behavior_director.create_intent("cursor_confiscate", needs_model, intent_context, int(_now_ms()))
+	if intent.is_empty():
+		return {}
+	intent["source"] = source
+	intent["direct_remote"] = direct
+	intent["hold_duration_ms"] = clampf(hold_ms, CURSOR_REMOTE_HOLD_MIN_MS, CURSOR_CONFISCATE_HOLD_MS)
+	return intent
+
+func _start_cursor_confiscation_from_source(source: String, direct: bool, hold_ms: float) -> bool:
+	var intent := _cursor_confiscation_intent(source, direct, hold_ms)
+	return not intent.is_empty() and _begin_cursor_confiscation(intent)
+
+func _begin_cursor_play_chase(intent: Dictionary) -> bool:
+	current_intent = intent.duplicate(true)
+	cursor_play_phase = "observe"
+	cursor_play_started_at = _now_ms()
+	cursor_play_duration_ms = randf_range(CURSOR_PLAY_CHASE_MIN_MS, CURSOR_PLAY_CHASE_MAX_MS)
+	cursor_play_target = Vector2(desktop.get_cursor_position())
+	if machine.dispatch({"type": "ACTION_START", "state": "cursor_play_chase"}) != "cursor_play_chase":
+		current_intent.clear()
+		_abort_cursor_play_chase()
+		return false
+	_emit_dialogue("cursor_play_chase")
+	return true
+
+func _update_cursor_play_chase(now: float) -> void:
+	if not cursor_mischief or suspended:
+		_abort_cursor_play_chase()
+		if machine.state == "cursor_play_chase":
+			machine.dispatch({"type": "ACTION_END"})
+		return
+	if cursor_play_phase == "observe":
+		if now - cursor_play_started_at >= CURSOR_PLAY_OBSERVE_MS:
+			cursor_play_phase = "chase"
+			cursor_play_started_at = now
+			cursor_play_target = Vector2(desktop.get_cursor_position())
+			_start_behavior_walk(Vector2(cursor_play_target.x, position.y), CURSOR_PLAY_CHASE_SPEED)
+			if not behavior_walk.is_empty():
+				_play_cursor_play_chase_clip()
+		return
+	if cursor_play_phase == "ending":
+		if now - cursor_play_started_at >= CURSOR_PLAY_END_FALLBACK_MS:
+			_complete_cursor_play_chase()
+		return
+	if cursor_play_duration_ms >= 0.0 and now - cursor_play_started_at >= cursor_play_duration_ms:
+		_finish_cursor_play_chase()
+		return
+	var cursor := Vector2(desktop.get_cursor_position())
 	var foot := _pet_foot_global()
-	var dy := cursor.y - foot.y
-	return absf(cursor.x - foot.x) <= CURSOR_CONFISCATE_GRAB_RANGE_PX + 40.0 and dy >= -300.0 and dy <= 120.0
+	if absf(cursor.x - foot.x) <= CURSOR_PLAY_CHASE_RANGE_PX:
+		_finish_cursor_play_chase()
+		return
+	if behavior_walk.is_empty():
+		_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_PLAY_CHASE_SPEED)
+		if not behavior_walk.is_empty():
+			_play_cursor_play_chase_clip()
+		return
+	if _advance_behavior_walk(now):
+		_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_PLAY_CHASE_SPEED)
+		if not behavior_walk.is_empty():
+			_play_cursor_play_chase_clip()
+
+func _finish_cursor_play_chase() -> void:
+	if cursor_play_phase == "ending":
+		return
+	cursor_play_phase = "ending"
+	cursor_play_started_at = _now_ms()
+	behavior_walk = {}
+	_emit_dialogue("cursor_play_end")
+	var ending_clip := "reason_pose" if manifest.has_clip("reason_pose") else "react"
+	sprite_player.play_clip(ending_clip)
+
+func _complete_cursor_play_chase() -> void:
+	cursor_play_phase = ""
+	cursor_play_started_at = -1.0
+	cursor_play_duration_ms = -1.0
+	_finish_special_behavior("cursor_play_chase", "completed")
+
+func _abort_cursor_play_chase() -> void:
+	cursor_play_phase = ""
+	cursor_play_started_at = -1.0
+	cursor_play_duration_ms = -1.0
+	behavior_walk = {}
+	if str(current_intent.get("id", "")) == "cursor_play_chase":
+		current_intent.clear()
+
+func _play_cursor_play_chase_clip() -> void:
+	_set_direction(1)
+	sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
+
+func _handle_cursor_play_chase_clip(clip_name: String) -> void:
+	if cursor_play_phase == "ending" and clip_name in ["reason_pose", "react"]:
+		_complete_cursor_play_chase()
+		return
+	if clip_name in ["patrol_floor_left", "patrol_floor_right"] and cursor_play_phase == "chase":
+		_play_cursor_play_chase_clip()
 
 func _begin_cursor_confiscation(intent: Dictionary) -> bool:
 	current_intent = intent.duplicate(true)
+	cursor_capture_anchor = Vector2.ZERO
+	cursor_capture_started_ms = -1.0
 	if machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) != "cursor_confiscate":
 		current_intent.clear()
 		return false
-	cursor_capture_phase = "chase"
+	cursor_capture_source = str(intent.get("source", "autonomous"))
+	cursor_capture_hold_ms = clampf(float(intent.get("hold_duration_ms", CURSOR_CONFISCATE_HOLD_MS)), CURSOR_REMOTE_HOLD_MIN_MS, CURSOR_CONFISCATE_HOLD_MS)
+	cursor_capture_direct = bool(intent.get("direct_remote", false))
+	cursor_capture_phase = ""
 	cursor_capture_end_reason = ""
-	cursor_capture_started_ms = _now_ms()
-	var cursor := Vector2(desktop.get_cursor_position())
-	_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_CONFISCATE_WALK_SPEED)
-	if not behavior_walk.is_empty():
-		_play_confiscate_chase_clip()
+	cursor_capture_success = false
+	_cursor_capture_installed = false
+	# Confiscation has no pursuit presentation. Both the punishment path and any
+	# future event source go straight through arming into the bagging one-shot.
+	_begin_cursor_hold(_now_ms())
 	return true
 
 func _update_cursor_confiscate(now: float) -> void:
+	if hidden or suspended or not cursor_mischief:
+		_cancel_cursor_confiscation_immediately(false)
+		return
 	match cursor_capture_phase:
-		"chase":
-			var cursor := Vector2(desktop.get_cursor_position())
-			if _can_snatch_cursor(cursor):
-				_begin_cursor_hold(now)
-				return
-			if now - cursor_capture_started_ms >= CURSOR_CONFISCATE_CHASE_MS:
-				cursor_capture_end_reason = "miss"
-				_finish_special_behavior("cursor_confiscate", "completed")
-				return
-			if behavior_walk.is_empty():
-				# The cursor sits on top of her x (or she already reached it). Stand
-				# still until it re-enters the grab band or the chase times out.
-				return
-			if _advance_behavior_walk(now):
-				# Reached the old target — re-aim at the live cursor. Re-issue the
-				# walk clip so a direction flip picks the correct baked-direction loop.
-				_start_behavior_walk(Vector2(cursor.x, position.y), CURSOR_CONFISCATE_WALK_SPEED)
-				if not behavior_walk.is_empty():
-					_play_confiscate_chase_clip()
-		"hold":
-			# Absolute: pin to her hand, hide it, swallow every mouse event. If the
-			# player was mid-drag when grabbed, wait for the button release before
-			# arming the hook so a swallowed button-up can never leave a sticky drag.
-			desktop.set_cursor_position(roundi(cursor_capture_anchor.x), roundi(cursor_capture_anchor.y))
-			desktop.set_cursor_visible(false)
-			if not _cursor_capture_installed:
-				if _mouse_button_held():
-					return
-				_install_cursor_capture()
+		"arming":
 			if desktop.is_key_pressed(VK_ESCAPE):
-				_end_cursor_confiscation("escape")
-			elif now - cursor_capture_started_ms >= CURSOR_CONFISCATE_HOLD_MS:
+				_cancel_cursor_confiscation_immediately(true)
+			elif now - cursor_capture_started_ms >= CURSOR_ARMING_MAX_MS:
+				_end_cursor_confiscation("arming_timeout")
+			elif not _mouse_button_held():
+				_activate_cursor_capture(now)
+		"bagging", "hold":
+			cursor_capture_anchor = _cursor_bag_anchor()
+			_desktop_pin_confiscated_cursor()
+			if desktop.is_key_pressed(VK_ESCAPE):
+				_cancel_cursor_confiscation_immediately(true)
+			elif now - cursor_capture_started_ms >= cursor_capture_hold_ms:
 				_end_cursor_confiscation("timeout")
+		"release":
+			# Recompute from the live reverse-bag pose. The character may have moved
+			# during custody, so a stale world-space point would release elsewhere.
+			cursor_capture_anchor = _cursor_bag_anchor()
+			_desktop_pin_confiscated_cursor()
+			if desktop.is_key_pressed(VK_ESCAPE):
+				_cancel_cursor_confiscation_immediately(true)
+			elif now - cursor_capture_started_ms >= CURSOR_RELEASE_FALLBACK_MS:
+				_complete_cursor_release()
 
-func _begin_cursor_hold(now: float) -> void:
-	cursor_capture_phase = "hold"
-	cursor_capture_started_ms = now
-	_cursor_capture_installed = false
-	var cursor := Vector2(desktop.get_cursor_position())
-	# The cursor is stuffed into her bag, held at her side where the sprite keeps it.
-	cursor_capture_anchor = position + Vector2(facing * 26.0, 48.0)
+func _cursor_bag_anchor() -> Vector2:
+	# The bag hit zone is authored in the skin's 512px texture space. Resolve its
+	# visual centre through the currently playing clip so scale, dock, custom
+	# canvas and mirroring all match what is actually on screen.
+	var texture_point := Vector2(303.0, 285.0)
+	if manifest != null:
+		var zones: Dictionary = manifest.data.get("hitZones", {})
+		var bag_points: Array = zones.get("bag", [])
+		if not bag_points.is_empty():
+			var minimum := Vector2(INF, INF)
+			var maximum := Vector2(-INF, -INF)
+			for value in bag_points:
+				if not value is Dictionary:
+					continue
+				var point := Vector2(float(value.get("x", 0.0)), float(value.get("y", 0.0)))
+				minimum.x = minf(minimum.x, point.x)
+				minimum.y = minf(minimum.y, point.y)
+				maximum.x = maxf(maximum.x, point.x)
+				maximum.y = maxf(maximum.y, point.y)
+			if minimum.x < INF and maximum.x > -INF:
+				texture_point = (minimum + maximum) * 0.5
+	var local_anchor := sprite_player.texture_point_to_window(texture_point) if sprite_player != null else Vector2(float(pet_window_size.x) * 0.57, float(pet_window_size.y) * 0.62)
+	return position + local_anchor
+
+func _desktop_pin_confiscated_cursor() -> void:
 	desktop.set_cursor_position(roundi(cursor_capture_anchor.x), roundi(cursor_capture_anchor.y))
 	desktop.set_cursor_visible(false)
+
+func _begin_cursor_hold(now: float) -> void:
+	# Confiscation owns the pointer from arming through release. Clear any gaze
+	# pose immediately instead of waiting for the next sampling tick.
+	_reset_cursor_tracking()
+	cursor_capture_phase = "arming"
+	cursor_capture_started_ms = now
+	cursor_capture_success = false
+	_cursor_capture_installed = false
+	cursor_capture_anchor = _cursor_bag_anchor()
 	if not _mouse_button_held():
-		_install_cursor_capture()
+		_activate_cursor_capture(now)
+
+func _activate_cursor_capture(now: float) -> bool:
+	if not _install_cursor_capture():
+		cursor_capture_end_reason = "hook_failed"
+		_release_cursor_capture()
+		_emit_dialogue("cursor_capture_miss")
+		cursor_capture_phase = ""
+		_finish_special_behavior("cursor_confiscate", "aborted")
+		return false
+	cursor_capture_phase = "bagging"
+	cursor_capture_started_ms = now
+	cursor_capture_success = true
+	_reset_cursor_provocation()
+	# Only hide and pin after the absolute-input hook is live. Before this point
+	# the user must never see a merely frozen, still-clickable pointer.
+	_desktop_pin_confiscated_cursor()
 	sprite_player.play_clip("straighten_bag")
 	sfx_player.play("bag")
-	_emit_dialogue("cursor_grab")
+	return true
 
 func _end_cursor_confiscation(reason: String) -> void:
-	cursor_capture_end_reason = reason
-	_release_cursor_capture()
-	if reason == "timeout":
-		# Release the hold, then play her "考察完毕" pose before returning.
-		cursor_capture_phase = "release"
-		sprite_player.play_clip("reason_pose")
+	if cursor_capture_phase == "release":
+		_complete_cursor_release()
 		return
-	_finish_special_behavior("cursor_confiscate", "completed")
+	cursor_capture_end_reason = reason
+	var was_captured := cursor_capture_success or cursor_capture_phase in ["bagging", "hold"]
+	if not was_captured:
+		_release_cursor_capture()
+		cursor_capture_phase = ""
+		_emit_dialogue("cursor_capture_miss")
+		_finish_special_behavior("cursor_confiscate", "aborted")
+		return
+	# Time-based release gets its own reverse bag animation. It may pre-empt the
+	# autonomous action that happened to be playing when custody expired; the
+	# absolute hook remains active until the reverse animation has completed.
+	_interrupt_action("fullscreen")
+	_stop_roam()
+	if machine.state == "manual_control":
+		_exit_manual_control()
+	if machine.state != "cursor_confiscate":
+		machine.dispatch({"type": "CURSOR_RELEASE_START"})
+	cursor_capture_phase = "release"
+	cursor_capture_started_ms = _now_ms()
+	cursor_capture_anchor = _cursor_bag_anchor()
+	desktop.set_cursor_visible(false)
+	sprite_player.play_clip("straighten_bag", true, "", true)
+
+func _cancel_cursor_confiscation_immediately(play_feedback: bool) -> void:
+	var had_capture := cursor_capture_success or cursor_capture_phase in ["bagging", "hold", "release"]
+	_release_cursor_capture()
+	cursor_capture_phase = ""
+	cursor_capture_end_reason = "escape" if play_feedback else "interrupted"
+	cursor_capture_success = false
+	cursor_capture_direct = false
+	behavior_walk = {}
+	if str(current_intent.get("id", "")) == "cursor_confiscate":
+		current_intent.clear()
+	if play_feedback and had_capture:
+		_emit_dialogue("cursor_bag_release")
+	if machine.state == "cursor_confiscate":
+		machine.dispatch({"type": "ACTION_END"})
 
 func _abort_cursor_confiscation() -> void:
 	_release_cursor_capture()
 	cursor_capture_phase = ""
 	cursor_capture_end_reason = ""
+	cursor_capture_success = false
+	cursor_capture_direct = false
+	behavior_walk = {}
 	if str(current_intent.get("id", "")) == "cursor_confiscate":
 		current_intent.clear()
 
@@ -1933,40 +2455,61 @@ func _release_cursor_capture() -> void:
 	_cursor_capture_installed = false
 	if desktop.is_cursor_capture_active():
 		desktop.stop_cursor_capture()
+	var release_anchor := cursor_capture_anchor
+	cursor_capture_anchor = Vector2.ZERO
+	if release_anchor != Vector2.ZERO:
+		desktop.set_cursor_position(roundi(release_anchor.x), roundi(release_anchor.y))
 	desktop.set_cursor_visible(true)
 
-func _install_cursor_capture() -> void:
-	if _cursor_capture_installed:
+func _complete_cursor_release() -> void:
+	if cursor_capture_phase != "release":
 		return
-	_cursor_capture_installed = true
-	if not desktop.start_cursor_capture():
-		# Keep the flag set for this hold so we degrade to pin+hide without
-		# re-warning every frame; _release_cursor_capture() clears it for the
-		# next hold, which gets a fresh attempt.
-		push_warning("小千寻：无法安装鼠标没收钩子，退化为仅锁定位置")
+	# Clip completion can arrive after the main process tick. Resolve once more
+	# from the final reverse frame before stopping the hook and showing the cursor.
+	cursor_capture_anchor = _cursor_bag_anchor()
+	_release_cursor_capture()
+	_emit_dialogue("cursor_bag_release")
+	cursor_capture_phase = ""
+	cursor_capture_success = false
+	cursor_capture_direct = false
+	if machine.state == "cursor_confiscate":
+		machine.dispatch({"type": "ACTION_END"})
+
+func _install_cursor_capture() -> bool:
+	if _cursor_capture_installed and desktop.is_cursor_capture_active():
+		return true
+	if desktop.start_cursor_capture():
+		_cursor_capture_installed = true
+		return true
+	push_warning("小千寻：无法安装鼠标绝对没收钩子，本次没收已取消")
+	return false
 
 func _mouse_button_held() -> bool:
 	return desktop.is_key_pressed(0x01) or desktop.is_key_pressed(0x02) or desktop.is_key_pressed(0x04)
 
-func _play_confiscate_chase_clip() -> void:
-	_set_direction(1)
-	sprite_player.play_clip("patrol_floor_right" if facing > 0 else "patrol_floor_left")
-
 func _handle_cursor_confiscate_clip(clip_name: String) -> void:
 	if cursor_capture_phase == "release":
-		if clip_name == "reason_pose":
-			_finish_special_behavior("cursor_confiscate", "completed")
+		if clip_name == "straighten_bag":
+			_complete_cursor_release()
 		return
-	if clip_name in ["patrol_floor_left", "patrol_floor_right"]:
-		if cursor_capture_phase == "chase":
-			_play_confiscate_chase_clip()
+	if clip_name == "straighten_bag" and cursor_capture_phase == "bagging":
+		cursor_capture_phase = "hold"
+		_emit_dialogue("cursor_capture_success")
+		# Keep the final bagging frame while the cursor is confiscated. Starting a
+		# second clip here made the character repeat an unrelated animation for the
+		# entire hold duration.
+		_finish_cursor_bagging_to_autonomy()
 		return
-	if clip_name == "straighten_bag":
-		# The grab gesture finished — the hold loop keeps guarding the bag.
-		sprite_player.play_clip("guard_bag_annoyed")
-		return
-	if clip_name == "guard_bag_annoyed" and cursor_capture_phase == "hold":
-		sprite_player.play_clip("guard_bag_annoyed")
+
+func _finish_cursor_bagging_to_autonomy() -> void:
+	var finished := current_intent.duplicate(true)
+	if str(finished.get("id", "")) == "cursor_confiscate":
+		current_intent.clear()
+		resumable_platform_intent.clear()
+		if needs_model != null:
+			needs_model.apply_event("cursor_behavior_completed", {"effects": finished.get("effects", {})})
+	if machine.state == "cursor_confiscate":
+		machine.dispatch({"type": "ACTION_END"})
 
 ## ---- Icon collection ("归档桌面图标") ----
 ## approach → grab/hide → timed storage. Both ordinary icons and keepsakes are
@@ -2196,6 +2739,7 @@ func _grab_icon(now: float) -> void:
 	sfx_player.play("bag")
 	if icon_collect_keepsaked:
 		_emit_dialogue("icon_keepsake")
+
 func _finish_icon_collection() -> void:
 	_finish_special_behavior("icon_collect", "completed")
 
@@ -2304,11 +2848,12 @@ func _finish_special_behavior(intent_id: String, outcome: String) -> void:
 	current_intent.clear()
 	resumable_platform_intent.clear()
 	if outcome in ["completed", "timeout"] and needs_model != null:
-		needs_model.apply_event("behavior_completed", {"effects": finished.get("effects", {})})
+		var completion_event := "cursor_behavior_completed" if intent_id in ["cursor_play_chase", "cursor_confiscate"] else "behavior_completed"
+		needs_model.apply_event(completion_event, {"effects": finished.get("effects", {})})
 		var dialogue_event := _dialogue_event_for_intent(intent_id)
 		if not dialogue_event.is_empty():
 			_emit_dialogue(dialogue_event)
-	if machine.state in ["cursor_confiscate", "icon_collect"]:
+	if machine.state in ["cursor_play_chase", "cursor_confiscate", "icon_collect"]:
 		machine.dispatch({"type": "ACTION_END"})
 	if routine_session.is_active() and ecology_step_mode == "intent" and not routine_session.is_paused():
 		_complete_ecology_step("completed")
@@ -2585,7 +3130,10 @@ func _update_icon_restore(now: float) -> void:
 		return
 	var task: Dictionary = icon_restore_queue[0]
 	if bool(task.get("refresh", false)) and not bool(task.get("refresh_issued", false)):
-		desktop.refresh_desktop_icons()
+		if bool(task.get("force_refresh", false)):
+			desktop.force_desktop_icon_refresh()
+		else:
+			desktop.refresh_desktop_icons()
 		task["refresh_issued"] = true
 	# 1) Wait for every target name to reappear.
 	var missing: Array = []
@@ -2643,7 +3191,6 @@ func _finish_icon_restore(task: Dictionary) -> void:
 	match str(task.get("done_kind", "")):
 		"reclaim":
 			_refresh_backpack_panel()
-			_emit_dialogue("icon_reclaim")
 		"arrange":
 			_refresh_backpack_panel()
 			_emit_dialogue("icon_arrange")
@@ -2933,6 +3480,19 @@ func _open_backpack_panel() -> void:
 	_refresh_backpack_panel()
 	backpack_panel.popup_centered()
 
+func _on_backpack_visibility_changed() -> void:
+	if backpack_panel.visible:
+		# A native panel can stay open after its context menu has disappeared. Own
+		# menu_wait for that whole interval so autonomy cannot start behind the panel
+		# and make a visible "要回" button silently fail its idle-only transaction.
+		_interrupt_action("menu")
+		if machine.state != "menu_wait":
+			menu_resume = _capture_resume_state()
+			machine.dispatch({"type": "MENU_OPEN"})
+		return
+	if machine.state == "menu_wait" and not menu.visible:
+		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
+
 func _refresh_backpack_panel() -> void:
 	var desktop_icons: Array = desktop.enumerate_desktop_icons() if desktop.desktop_listview_available() else []
 	backpack_panel.update_view(icon_bag_entries, desktop_icons, ICON_BAG_CAPACITY)
@@ -2943,7 +3503,14 @@ func _on_backpack_reclaim(icon_name: String) -> void:
 		return
 	var entry: Dictionary = icon_bag_entries[index]
 	var original: Dictionary = entry.get("original_pos", {})
-	_begin_icon_transfer("reclaim", icon_name, original, backpack_panel.visible, "backpack")
+	if _begin_icon_transfer("reclaim", icon_name, original, backpack_panel.visible, "backpack"):
+		_emit_dialogue("icon_reclaim")
+		return
+	# The button is a direct safety action. If an animation state is temporarily
+	# unavailable (for example a wake-up exit clip is still active), reclaim the
+	# rendered icon anyway instead of presenting a button that appears dead.
+	if _queue_reclaim_icon(icon_name, false):
+		_emit_dialogue("icon_reclaim")
 
 func _on_backpack_give(icon_name: String) -> void:
 	var original := _desktop_icon_position(icon_name)
@@ -3093,7 +3660,10 @@ func _standing_platform() -> WindowPlatform:
 		return active_platform
 	if pending_platform != null:
 		return pending_platform
-	if manual_control_model != null:
+	# A ManualControlModel is retained between sessions, but its standing identity
+	# is session-local. Consulting it after Esc exits control resurrects a stale HWND
+	# and can leave ordinary notice/idle states hovering over a closed window.
+	if machine.state == "manual_control" and manual_control_model != null:
 		var handle: int = manual_control_model.standing_plane_handle()
 		if handle != 0:
 			return _platform_for_identity(handle, manual_control_model.standing_plane_pid())
@@ -3241,39 +3811,30 @@ func _update_window_platforms(now: float) -> void:
 		if pending_platform != null:
 			_track_pending_platform(track_elapsed_ms)
 		else:
-			var tracking := window_platform_service.track_platform(standing, null, _pet_foot_global().x, track_elapsed_ms)
+			var tracking := window_platform_service.track_platform(standing, null, _pet_foot_global().x, track_elapsed_ms, true)
 			if bool(tracking.get("lost", false)):
 				_on_standing_window_lost(standing, tracking, track_elapsed_ms)
 			elif active_platform != null:
-				# The standing point is covered by a front window: hold position (no
-				# follow, no y-pin) and, after the grace, drop. A transient mid-drag
-				# occlusion recovers once the occluder rects refresh; a persistent one
-				# is a real occlusion, so the rider falls instead of riding a hidden edge.
-				if str(tracking.get("status", "")) == "occluded":
-					if track_elapsed_ms > 0.0:
-						_rider_occlusion_ms += track_elapsed_ms
-					if _rider_occlusion_ms >= RIDER_OCCLUSION_GRACE_MS:
-						_rider_occlusion_ms = 0.0
-						_drop_from_platform("occluded")
-					return
+				# Existing riders use a private full-width support surface. Snap Assist,
+				# topmost overlays and screen-edge clipping can hide the top visually but
+				# cannot turn that still-live HWND into a collision that pushes her off.
 				_rider_occlusion_ms = 0.0
 				var prev_rect := standing.rect
 				var fresh := tracking.get("platform") as WindowPlatform
-				var center_delta := fresh.center().x - standing.center().x
+				var window_delta := Vector2(tracking.get("delta", Vector2i.ZERO))
 				active_platform = fresh
 				_feed_standing_feedback(now, fresh, prev_rect)
-				# Riding follows the window: the visible-segment center displacement
-				# (drag + resize both move it, matching the model's center-delta
-				# follow) plus an absolute foot pin to the window's top edge.
+				# Follow the HWND rect itself, not the visible-segment centre. Occlusion
+				# can split/merge that segment and manufacture a horizontal shove even
+				# when the actual window barely moved.
 				# Manual standing follows inside the model, so it never reaches
 				# this branch.
-				if not is_zero_approx(center_delta):
+				if not is_zero_approx(window_delta.x) or not is_zero_approx(window_delta.y):
 					_observe_ecology("moving_platform")
-					var delta := Vector2(center_delta, 0.0)
-					position += delta
+					position.x += window_delta.x
 					if not platform_walk_motion.is_empty():
-						platform_walk_motion.from += delta
-						platform_walk_motion.to += delta
+						platform_walk_motion.from += window_delta
+						platform_walk_motion.to += window_delta
 				# Pin the foot with the CURRENT pose's offset, not the standing
 				# constant: riding clips like the window sit keep their feet at a
 				# different supportContactY offset (e.g. ~261 vs 356 for standing).
@@ -3283,6 +3844,7 @@ func _update_window_platforms(now: float) -> void:
 				_apply_position()
 			else:
 				_feed_manual_standing_feedback(now, tracking.get("platform") as WindowPlatform)
+	_recover_unsupported_grounded_state()
 	if machine.state == "platform_walk" and not platform_walk_motion.is_empty():
 		_update_platform_walk(now)
 	if active_platform != null and machine.state == "idle" and auto_wander and now >= next_platform_swap:
@@ -3430,6 +3992,36 @@ func _drop_from_platform(_reason: String) -> void:
 	_emit_dialogue("window_lost")
 
 
+## Final physical invariant for presentation states: if no platform owns the pet
+## and no airborne/special locomotion is active, an elevated character cannot stay
+## parked in mid-air. This catches a failed manual-control handoff and any future
+## transition that accidentally clears the platform before starting the fall.
+func _recover_unsupported_grounded_state() -> void:
+	if active_platform != null or pending_platform != null or not motion.is_empty():
+		return
+	if position.y >= _floor_y() - 2.0:
+		return
+	if machine.state not in [
+		"idle", "notice", "cursor_track", "cursor_startle", "cursor_annoyed",
+		"cursor_dizzy", "cursor_warning", "head_pat", "poke_cheek", "menu_wait",
+		"clock_scare", "react", "ambient_action", "sleeping", "platform_walk",
+		"platform_sit", "cursor_play_chase", "cursor_confiscate", "icon_transfer",
+		"land",
+	]:
+		return
+	last_platform_lost_reason = "unsupported"
+	_log_ride_drop("orphan", {"reason": "unsupported"})
+	_unmount_from_window()
+	resumable_platform_intent.clear()
+	_interrupt_action("platform_lost")
+	var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
+	var fall_distance := maxf(0.0, floor_target.y - position.y)
+	drag_fall_mode = "umbrella" if PetUmbrellaFall.should_use(fall_distance, _has_umbrella_family()) else "direct"
+	_prepare_motion(floor_target, _fall_duration_ms(fall_distance), 0.0)
+	machine.dispatch({"type": "PLATFORM_LOST"})
+	_emit_dialogue("window_lost")
+
+
 ## Empirical diagnostic: append one line per ride drop so a drag-induced drop can
 ## be attributed from the log instead of guessed at. Written to an absolute path
 ## because the pet is usually run from the exported exe. Remove after diagnosis.
@@ -3535,8 +4127,11 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	blink_deadline = -1.0
 	idle_side_pose_deadline = -1.0
 	side_pose_reverting = false
-	if from == "cursor_confiscate" and to != "cursor_confiscate":
+	var keeps_cursor_custody := cursor_capture_phase == "hold" and desktop.is_cursor_capture_active()
+	if from == "cursor_confiscate" and to != "cursor_confiscate" and not keeps_cursor_custody:
 		_abort_cursor_confiscation()
+	if from == "cursor_play_chase" and to != "cursor_play_chase":
+		_abort_cursor_play_chase()
 	if from == "icon_collect" and to != "icon_collect":
 		_abort_icon_collection()
 	if from == "icon_transfer" and to != "icon_transfer":
@@ -3566,7 +4161,7 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 			call_deferred("_try_resume_platform_action")
 		if not deferred_wake_action.is_empty():
 			call_deferred("_run_deferred_wake_action")
-		if routine_session.is_paused() and from in ["menu_wait", "head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy"]:
+		if routine_session.is_paused() and from in ["menu_wait", "head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy", "cursor_warning"]:
 			if routine_session.resume(ecology_clock.elapsed_ms()):
 				call_deferred("_run_current_routine_step")
 		elif routine_session.is_active() and ecology_step_mode in ["travel", "special"]:
@@ -3614,10 +4209,19 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 			sprite_player.play_clip("head_pat_accept")
 	elif to == "cursor_track":
 		_play_gaze_clip()
+	elif to == "cursor_play_chase":
+		_set_direction(1)
+		sprite_player.play_clip("look_around" if cursor_play_phase == "observe" else ("patrol_floor_right" if facing > 0 else "patrol_floor_left"))
+	elif to == "cursor_confiscate":
+		# The confiscation phase machine starts its own arming/bagging clip after
+		# the state transition; there is no standalone cursor_confiscate clip.
+		pass
 	elif to == "cursor_startle":
 		sprite_player.play_clip("react")
 	elif to == "cursor_annoyed":
 		sprite_player.play_clip("poke_cheek")
+	elif to == "cursor_warning":
+		sprite_player.play_clip("guard_bag_annoyed")
 	elif to == "poke_cheek":
 		sprite_player.play_clip(poke_visual_clip if manifest.has_clip(poke_visual_clip) else "poke_cheek")
 	elif to in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
@@ -3641,6 +4245,9 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	if to == "idle": _advance_or_schedule_wander()
 
 func _on_clip_completed(clip_name: String, _segment: String) -> void:
+	if machine.state == "cursor_play_chase":
+		_handle_cursor_play_chase_clip(clip_name)
+		return
 	if machine.state == "cursor_confiscate":
 		_handle_cursor_confiscate_clip(clip_name)
 		return
@@ -3730,6 +4337,9 @@ func _on_clip_completed(clip_name: String, _segment: String) -> void:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
 	if (clip_name == "react" and machine.state == "cursor_startle") or (clip_name == "poke_cheek" and machine.state == "cursor_annoyed") or (clip_name == "cursor_dizzy" and machine.state == "cursor_dizzy"):
+		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
+		return
+	if clip_name == "guard_bag_annoyed" and machine.state == "cursor_warning":
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(interaction_resume)})
 		return
 	if machine.state == "land" and active_platform != null and manifest.has_clip("window_land_recover"):
@@ -3885,10 +4495,10 @@ func _finish_press(cancelled: bool) -> void:
 		var grounded := absf(position.y - _floor_y()) < SLIDE_GROUND_THRESHOLD
 		if grounded and absf(velocity.x) >= SLIDE_MIN_VELOCITY:
 			_start_ground_slide(velocity)
-			_emit_control_quip("fling_slide")
+			_emit_dialogue("fling_slide")
 		elif not grounded and velocity.y < -THROW_MIN_UP_VELOCITY:
 			_start_air_throw(velocity)
-			_emit_control_quip("fling_throw")
+			_emit_dialogue("fling_throw")
 		else:
 			var floor_target := _clamp_position(Vector2(position.x, _floor_y()), true)
 			var fall_distance := maxf(0.0, floor_target.y - position.y)
@@ -3912,7 +4522,7 @@ func _finish_press(cancelled: bool) -> void:
 			_prepare_travel_facing(target.x)
 			facing = pending_facing
 			machine.dispatch({"type": "DRAG_END"})
-			_emit_control_quip("fling")
+			_emit_dialogue("fling")
 		_save_position()
 	elif intent == "long_press":
 		_end_head_pat()
@@ -3929,7 +4539,7 @@ func _trigger_click() -> void:
 	if not _claim_click():
 		return
 	_interrupt_action("direct_interaction")
-	needs_model.apply_event("friendly_interaction")
+	needs_model.apply_event("gentle_click")
 	_bump_interaction("positive", true)
 	machine.dispatch({"type": "CLICK"})
 
@@ -3946,12 +4556,14 @@ func _trigger_poke() -> void:
 			retained.append(timestamp)
 	retained.append(now)
 	poke_timestamps = retained
-	if poke_timestamps.size() >= 3:
+	var rapid_threshold := RelationshipRulesScript.rapid_poke_threshold(needs_model.relationship_tier())
+	if poke_timestamps.size() >= rapid_threshold:
 		needs_model.apply_event("rapid_poke")
+		_emit_dialogue("rapid_poke")
 	else:
-		needs_model.apply_event("rapid_poke", {"effects": {"affection": 0.3, "irritation": -6.0}})
+		needs_model.apply_event("poke_single")
+		_emit_dialogue("poke")
 	_bump_interaction("pokes")
-	_emit_dialogue("poke")
 	poke_visual_clip = "poke_cheek"
 	var resume := _resume_for_new_interaction()
 	_leave_menu_for_interaction(resume)
@@ -3973,9 +4585,13 @@ func _start_head_pat(resume: String) -> void:
 		return
 	_interrupt_action("direct_interaction")
 	interaction_resume = resume
-	head_pat_refused = needs_model.get_need("irritation") >= 45.0 or (needs_model.relationship_tier() == "distant" and randf() < 0.65)
+	var refusal_probability := RelationshipRulesScript.head_pat_refusal_probability(
+		needs_model.relationship_tier(),
+		needs_model.get_need("irritation"),
+	)
+	head_pat_refused = randf() < refusal_probability
 	if head_pat_refused:
-		needs_model.apply_event("head_pat_accepted", {"effects": {"affection": -0.08, "irritation": 6.0}})
+		needs_model.apply_event("head_pat_refused")
 		_emit_dialogue("head_pat_refuse")
 	else:
 		needs_model.apply_event("head_pat_accepted")
@@ -3995,9 +4611,9 @@ func _trigger_bag_guard() -> void:
 	if not _claim_click():
 		return
 	_interrupt_action("direct_interaction")
-	needs_model.apply_event("rapid_poke", {"effects": {"affection": 0.3, "irritation": -2.0}})
+	needs_model.apply_event("bag_touch")
 	_bump_interaction("pokes")
-	_emit_dialogue("adjust_bag", ["bag"])
+	_emit_dialogue("bag_touch", ["bag"])
 	var resume := _resume_for_new_interaction()
 	_leave_menu_for_interaction(resume)
 	interaction_resume = resume
@@ -4062,35 +4678,46 @@ func _exit_manual_control() -> void:
 	_last_control_clip = ""
 	_last_control_segment = ""
 	var resume := _resolve_resume(interaction_resume)
+	var standing_handle: int = int(manual_control_model.standing_plane_handle()) if manual_control_model != null else 0
+	var handed_off := _handoff_manual_platform()
 	# Exiting control mid-air (the pet fell off a ledge or was knocked loose during
 	# the session) must not resume a ground state: that would park the pet hovering
 	# at the exit position. Hand it off as a fall from where it actually stands so
 	# the exit keeps the same position while the normal physics take over.
-	if manual_control_model != null and manual_control_model.standing_plane_handle() == 0:
-		if manual_control_model.subphase in ["fall", "flight", "wall", "jump"] and position.y < _floor_y() - 2.0:
+	if position.y < _floor_y() - 2.0:
+		if standing_handle != 0 and not handed_off:
+			# The model still remembers a perch, but the HWND is now gone/minimized.
+			# Never resume notice/idle at the stale height.
 			resume = "drag_fall"
-	_handoff_manual_platform()
+		elif standing_handle == 0 and manual_control_model != null and manual_control_model.subphase in ["fall", "flight", "wall", "jump"]:
+			resume = "drag_fall"
 	machine.dispatch({"type": "INTERACTION_END", "resume": resume})
 
 ## When manual control ends with the pet standing on a window (the model tracks
 ## the standing plane), hand the platform over so riding/tracking resume. Off a
 ## platform the pet just keeps its current position.
-func _handoff_manual_platform() -> void:
+func _handoff_manual_platform() -> bool:
 	if manual_control_model == null:
-		return
+		return false
 	var handle: int = manual_control_model.standing_plane_handle()
 	if handle == 0:
-		return
+		return false
 	var pid: int = manual_control_model.standing_plane_pid()
 	var platform := _platform_for_identity(handle, pid)
 	if platform == null:
-		return
+		# The normal platform list contains only visible fragments. Existing support
+		# may be covered by Snap Assist/another top layer, so validate the live HWND
+		# privately before deciding the window actually disappeared.
+		platform = window_platform_service.private_support_platform(handle, pid)
+	if platform == null:
+		return false
 	active_platform = platform
 	# Anchor to the platform's top edge without clamping to the work area: the
 	# window may sit at or past the screen edge and the pet must stand on it.
 	position = _position_for_platform(platform, _pet_foot_global().x)
 	_apply_position()
 	_save_position()
+	return true
 
 func _handle_manual_up_tap() -> void:
 	if manual_control_model == null:
@@ -4146,6 +4773,8 @@ func _update_manual_control(delta: float, now: float) -> void:
 	_apply_control_clip(result, now, dir_y)
 	if not _control_long_emitted and _control_started_at >= 0.0 and now - _control_started_at >= CONTROL_LONG_MS:
 		_control_long_emitted = true
+		if needs_model != null:
+			needs_model.apply_event("manual_control_long")
 		_emit_control_quip("control_long")
 	if int(result.get("landed_platform_handle", 0)) != 0:
 		_emit_dialogue("window_land")
@@ -4215,11 +4844,9 @@ func _live_climb_wall() -> Dictionary:
 	return window_platform_service.live_wall_edge(handle, model.climbing_wall_pid(), model.wall_side)
 
 
-## Per-frame VISIBLE standable segments for the window the pet is standing on in
-## control mode: the window's live rect minus the cached front occluders, so a
-## dragged window carries it smoothly AND an occluded standing point drops instead
-## of riding the hidden full edge. Returns [] when not standing or the window is
-## gone/not eligible/fully covered.
+## Per-frame private support for the window she already stands on in control mode.
+## Its full live top ignores higher overlays and screen-edge clipping; this does
+## not publish hidden geometry as a normal navigation/landing target.
 func _live_standing_segments() -> Array:
 	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
 	if model == null:
@@ -4227,7 +4854,7 @@ func _live_standing_segments() -> Array:
 	var handle: int = model.standing_plane_handle()
 	if handle == 0:
 		return []
-	return window_platform_service.live_top_segment_planes(handle, model.standing_plane_pid(), WINDOW_FOOT_OFFSET_Y)
+	return window_platform_service.live_top_segment_planes(handle, model.standing_plane_pid(), WINDOW_FOOT_OFFSET_Y, null, true)
 
 
 ## Per-frame horizontal displacement of the standing window's live rect center —
@@ -4423,7 +5050,7 @@ func _leave_menu_for_interaction(resume: String) -> void:
 func _capture_resume_state() -> String:
 	if machine.state == "menu_wait": return menu_resume
 	if machine.state == "manual_control": return "manual_control"
-	if machine.state in ["head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy"]:
+	if machine.state in ["head_pat", "poke_cheek", "clock_scare", "cursor_startle", "cursor_annoyed", "cursor_dizzy", "cursor_warning"]:
 		return interaction_resume
 	if machine.state == "edge_patrol" and not edge_session.is_empty():
 		_pause_edge_patrol()
@@ -4600,33 +5227,53 @@ func _update_drag_throw(now: float) -> void:
 			machine.dispatch({"type": "ARRIVE"})
 
 func _sample_cursor_tracking(now: float) -> void:
-	var gaze := manifest.gaze()
-	if gaze.is_empty() or not cursor_tracking or suspended or machine.state == "edge_patrol":
+	# The cursor position during confiscation is synthetic: it is continuously
+	# pinned beneath the transparent capture window at the bag. Never feed it into
+	# gaze or gesture recognition, otherwise she visibly follows a hidden cursor.
+	if not cursor_capture_phase.is_empty():
+		_reset_cursor_tracking()
 		return
+	# A desktop-icon drag is an intentional gift gesture, not a cursor tease. Let
+	# that short session own the pointer until release so NOTICE/cursor_track cannot
+	# cancel it halfway across the pet window or escalate the punishment chain.
+	if not icon_gift_drag.is_empty():
+		_end_passive_cursor_tracking_for_icon_gift()
+		return
+	var gaze := manifest.gaze()
 	var cursor := Vector2(desktop.get_cursor_position())
 	var eye_origin := _gaze_eye_origin_global()
 	var distance := cursor.distance_to(eye_origin)
-	var was_engaged := gaze_engaged
-	if gaze_engaged:
-		if distance > float(gaze.get("disengageDistancePx", 540.0)): gaze_engaged = false
-	elif distance <= float(gaze.get("engageDistancePx", 420.0)):
-		gaze_engaged = true
-	if not gaze_engaged:
+	var gaze_allowed := not gaze.is_empty() and cursor_tracking and not suspended and machine.state != "edge_patrol"
+	if not gaze_allowed:
+		gaze_engaged = false
 		smoothed_cursor = null
-		gesture_recognizer.reset()
-		if was_engaged: gaze_tracker.reset()
+		gaze_tracker.reset()
 		if machine.state in ["notice", "cursor_track"]:
 			machine.dispatch({"type": "POINTER_LEAVE"})
+	else:
+		var was_engaged := gaze_engaged
+		if gaze_engaged:
+			if distance > float(gaze.get("disengageDistancePx", 540.0)): gaze_engaged = false
+		elif distance <= float(gaze.get("engageDistancePx", 420.0)):
+			gaze_engaged = true
+		if not gaze_engaged:
+			smoothed_cursor = null
+			if was_engaged: gaze_tracker.reset()
+			if machine.state in ["notice", "cursor_track"]:
+				machine.dispatch({"type": "POINTER_LEAVE"})
+		else:
+			smoothed_cursor = cursor if smoothed_cursor == null else Vector2(smoothed_cursor).lerp(cursor, 0.35)
+			var logical_offset := Vector2((Vector2(smoothed_cursor).x - eye_origin.x) * direction, Vector2(smoothed_cursor).y - eye_origin.y)
+			var result := gaze_tracker.update(logical_offset)
+			if bool(result.changed) and machine.state == "cursor_track":
+				var direction_frames: Dictionary = gaze.get("directionFrames", {})
+				sprite_player.set_manual_frame(int(direction_frames.get(str(result.direction), 0)))
+			if machine.state == "idle":
+				machine.dispatch({"type": "NOTICE"})
+	if not cursor_mischief or suspended or machine.state == "edge_patrol":
+		gesture_recognizer.reset()
 		return
-	smoothed_cursor = cursor if smoothed_cursor == null else Vector2(smoothed_cursor).lerp(cursor, 0.35)
-	var logical_offset := Vector2((Vector2(smoothed_cursor).x - eye_origin.x) * direction, Vector2(smoothed_cursor).y - eye_origin.y)
-	var result := gaze_tracker.update(logical_offset)
-	if bool(result.changed) and machine.state == "cursor_track":
-		var direction_frames: Dictionary = gaze.get("directionFrames", {})
-		sprite_player.set_manual_frame(int(direction_frames.get(str(result.direction), 0)))
-	if machine.state == "idle":
-		machine.dispatch({"type": "NOTICE"})
-	if machine.state not in ["idle", "notice", "cursor_track"]:
+	if distance > float(gaze.get("disengageDistancePx", 540.0)) or machine.state not in ["idle", "notice", "cursor_track"]:
 		gesture_recognizer.reset()
 		return
 	var observation := gesture_recognizer.update(cursor, now, eye_origin)
@@ -4638,15 +5285,23 @@ func _sample_cursor_tracking(now: float) -> void:
 			"circle": circle = true
 			"repeated_sweep": sweep = true
 			"fast_move": fast = true
-	if circle or sweep or fast:
-		needs_model.apply_event("cursor_gesture")
+	if circle or sweep:
+		_apply_cursor_gesture_effect(circle, sweep)
+		# A recognizer sample can contain both gestures. Treat the repeated sweep as
+		# the stronger provocation consistently for effects, escalation and visuals.
+		var provocation_is_sweep := sweep
+		if _handle_cursor_provocation("sweep" if provocation_is_sweep else "circle", "CURSOR_SWEEP" if provocation_is_sweep else "CURSOR_CIRCLE", now):
+			if not provocation_is_sweep:
+				_observe_ecology("cursor_circle")
+			return
 		_emit_dialogue("cursor")
-	if circle:
-		_observe_ecology("cursor_circle")
-		_trigger_cursor_reaction("CURSOR_CIRCLE")
-	elif sweep:
-		_trigger_cursor_reaction("CURSOR_SWEEP")
+		if not provocation_is_sweep:
+			_observe_ecology("cursor_circle")
+			_trigger_cursor_reaction("CURSOR_CIRCLE")
+		else:
+			_trigger_cursor_reaction("CURSOR_SWEEP")
 	elif fast and distance <= FAST_MOVE_REACTION_DISTANCE:
+		_emit_dialogue("cursor")
 		_trigger_cursor_reaction("CURSOR_STARTLE")
 
 func _trigger_cursor_reaction(event_type: String) -> void:
@@ -4732,27 +5387,88 @@ func _schedule_wander() -> void:
 	if not auto_wander or machine.state != "idle": return
 	wander_deadline = _now_ms() + randf_range(IDLE_WANDER_MIN_MS, IDLE_WANDER_MAX_MS)
 
+func _autonomy_clock_active() -> bool:
+	if not auto_wander or hidden or suspended or menu.visible or backpack_panel.visible:
+		return false
+	if desktop != null and (not desktop.is_visible() or desktop.is_minimized()):
+		return false
+	if not press.is_empty():
+		return false
+	return machine.state not in [
+		"menu_wait", "manual_control", "dragged", "drag_fall", "drag_slide", "drag_throw",
+		"head_pat", "poke_cheek", "clock_scare", "react", "notice", "cursor_track",
+		"cursor_startle", "cursor_annoyed", "cursor_dizzy", "cursor_warning",
+		"cursor_confiscate", "icon_transfer",
+	]
+
+func _collect_autonomy_channels(ignore_runtime_busy := false) -> Dictionary:
+	var ecology_candidates: Array[Dictionary] = []
+	if goal_director != null and goal_director.is_valid() and ecology_progression != null:
+		ecology_candidates = goal_director.candidate_scores(needs_model, _ecology_context(), ecology_clock.elapsed_ms())
+	var behavior_candidates: Array[Dictionary] = []
+	if behavior_director != null and behavior_director.is_valid():
+		behavior_candidates = behavior_director.candidate_scores(needs_model, _behavior_context(ignore_runtime_busy), int(_now_ms()))
+	var chance := clampf(float(manifest.behavior_value("edgePatrolChance", 0.4)), 0.0, 1.0) if manifest != null else 0.4
+	var movement_candidates: Array[Dictionary] = []
+	if chance > 0.0001:
+		movement_candidates.append({"id": "edge_patrol", "score": chance * 100.0})
+	if chance < 0.9999:
+		movement_candidates.append({"id": "wander", "score": (1.0 - chance) * 100.0})
+	return {
+		"ecology": ecology_candidates,
+		"behavior": behavior_candidates,
+		"movement": movement_candidates,
+	}
+
+func _recent_autonomy_ids() -> Array:
+	var result: Array = []
+	if goal_director != null:
+		result.append_array(goal_director.recent_goals())
+	if behavior_director != null:
+		result.append_array(behavior_director.recent_intents())
+	return result
+
+func _start_movement_candidate(candidate_id: String) -> bool:
+	match candidate_id:
+		"edge_patrol":
+			return _trigger_edge_patrol()
+		"wander":
+			return _trigger_wander()
+		_:
+			return false
+
 func _trigger_ambient_behavior() -> void:
 	if machine.state != "idle" or not pending_front_intent.is_empty(): return
 	if routine_session.is_active():
 		call_deferred("_run_current_routine_step")
 		return
-	if goal_director != null and goal_director.is_valid() and ecology_progression != null:
-		var goal: Dictionary = goal_director.select_goal(needs_model, _ecology_context(), ecology_clock.elapsed_ms())
-		if _start_ecology_goal(goal):
-			return
-	if behavior_director != null and behavior_director.is_valid():
-		var intent := behavior_director.select_intent(needs_model, _behavior_context(), int(_now_ms()))
-		if _start_autonomous_intent(intent):
-			return
-	var chance := clampf(float(manifest.behavior_value("edgePatrolChance", 0.4)), 0.0, 1.0)
-	if randf() < chance:
-		_trigger_edge_patrol()
+	var choice := autonomy_scheduler.choose(_collect_autonomy_channels(false), _recent_autonomy_ids())
+	if choice.is_empty():
+		_schedule_wander()
+		return
+	var channel := str(choice.get("channel", ""))
+	var candidate: Dictionary = choice.get("candidate", {}) if choice.get("candidate", {}) is Dictionary else {}
+	var candidate_id := str(candidate.get("id", ""))
+	var started_action := false
+	match channel:
+		"ecology":
+			started_action = _start_ecology_goal(candidate)
+			if started_action:
+				goal_director.commit_goal(candidate, ecology_clock.elapsed_ms())
+		"behavior":
+			started_action = _start_autonomous_intent(candidate)
+			if started_action:
+				behavior_director.commit_intent(candidate, int(_now_ms()))
+		"movement":
+			started_action = _start_movement_candidate(candidate_id)
+	if started_action:
+		autonomy_scheduler.mark_executed(channel, candidate_id)
 	else:
-		_trigger_wander()
+		autonomy_scheduler.mark_unavailable(channel, candidate_id)
+		_schedule_wander()
 
-func _trigger_wander() -> void:
-	if machine.state != "idle" or not pending_front_intent.is_empty(): return
+func _trigger_wander() -> bool:
+	if machine.state != "idle" or not pending_front_intent.is_empty(): return false
 	if not platforms.is_empty() and (active_platform != null or needs_model.get_need("curiosity") >= 45.0) and randf() < 0.42:
 		var target_platform: WindowPlatform = null
 		if active_platform != null:
@@ -4767,8 +5483,9 @@ func _trigger_wander() -> void:
 					best_distance = distance
 					target_platform = candidate
 		if target_platform != null and _travel_to_platform(target_platform):
-			return
+			return true
 	_start_random_roam()
+	return roam_active or machine.state != "idle"
 
 func _start_random_roam() -> void:
 	if machine.state != "idle" or not pending_front_intent.is_empty():
@@ -5309,9 +6026,9 @@ func _resolve_edge_patrol_box_size() -> Vector2i:
 		side = maxi(side, maxi(size.x, size.y))
 	return Vector2i(side, side)
 
-func _trigger_edge_patrol() -> void:
+func _trigger_edge_patrol() -> bool:
 	if machine.state != "idle" or edge_preparing:
-		return
+		return false
 	_unmount_from_window()
 	var route_box := _resolve_edge_patrol_box_size()
 	var variant := "b" if randf() < clampf(float(manifest.behavior_value("wallClimbVariantBChance", 0.5)), 0.0, 1.0) else "a"
@@ -5327,8 +6044,7 @@ func _trigger_edge_patrol() -> void:
 	})
 	var poses: Array = plan.get("poses", [])
 	if str(plan.get("mode", "none")) == "none" or poses.is_empty():
-		_trigger_wander()
-		return
+		return _trigger_wander()
 	var names: Array[String] = []
 	for pose in poses:
 		if pose.has("clip_name") and str(pose.clip_name) not in names:
@@ -5338,6 +6054,7 @@ func _trigger_edge_patrol() -> void:
 	var token := edge_preparation_token
 	wander_deadline = -1.0
 	_prepare_edge_patrol(plan, variant, route_box, names, token)
+	return true
 
 func _prepare_edge_patrol(plan: Dictionary, variant: String, route_box: Vector2i, names: Array[String], token: int) -> void:
 	await sprite_player.prepare_clips(names)

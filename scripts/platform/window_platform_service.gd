@@ -370,14 +370,12 @@ static func is_foreground_snapshot_valid(snapshot: Dictionary, self_pid := -1) -
 ## reposition still reads as a teleport. With no timing info (first tick after a
 ## mount) the pet follows rather than dropping on distance alone.
 ##
-## While the window itself remains valid (handle found, eligible, not maximized),
-## occlusion of the top edge at the standing point makes the rider fall: the foot
-## is not on any visible segment, so the riding semantic is "stand on what you can
-## see". The caller applies its own grace window before the drop so a transient
-## mid-drag occlusion (cached occluder rects stale) does not eject the rider
-## instantly; the occlusion pass re-runs every tick, so once the overlap clears the
-## pet is back on a real segment before the grace expires.
-func track_platform(current: WindowPlatform, snapshots: Variant = null, standing_x: float = NAN, elapsed_ms: float = -1.0) -> Dictionary:
+## `preserve_support` is the riding contract: once the pet already stands on this
+## HWND, its full live top remains the support even when Snap Assist, a topmost
+## overlay, the screen edge, or another window hides that edge. Occlusion still
+## applies to navigation and pending landings; it must not squeeze an existing
+## rider off the window she is physically attached to.
+func track_platform(current: WindowPlatform, snapshots: Variant = null, standing_x: float = NAN, elapsed_ms: float = -1.0, preserve_support := false) -> Dictionary:
 	if current == null:
 		return _lost_result("invalid_platform")
 	var source_snapshots: Array = _snapshots_for_tracking(current.handle) if snapshots == null else snapshots
@@ -394,7 +392,7 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 		return _lost_result("missing")
 	if not is_snapshot_eligible(matching_snapshot, _self_process_id):
 		return _lost_result("filtered", matching_snapshot)
-	if bool(matching_snapshot.get("maximized", false)):
+	if bool(matching_snapshot.get("maximized", false)) and not preserve_support:
 		return _lost_result("maximized", matching_snapshot)
 
 	var next_rect := WindowPlatformData.rect_from_value(matching_snapshot.get("rect", Rect2i()))
@@ -428,42 +426,40 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 		if candidate.handle == current.handle and candidate.contains_x(expected_x):
 			selected = candidate
 			break
+	var support_preserved := false
 	if selected == null:
-		# The ridden window still exists but its top edge at the standing point is
-		# covered by a front window: the foot is on no visible segment, so under the
-		# visible-geometry semantics the rider must drop. Return the current platform
-		# (no motion, no y-pin) with an "occluded" status; the caller's grace window
-		# decides the drop so a transient mid-drag occlusion (cached occluder rects
-		# stale) does not eject the rider instantly.
-		return {
-			"status": "occluded",
-			"lost": false,
-			"reason": "occluded",
-			"delta": delta,
-			"platform": current,
-			"snapshot": matching_snapshot,
-		}
+		if preserve_support:
+			# The HWND itself is still live and eligible. Use its complete top edge as
+			# the private riding surface; this surface is never published to the normal
+			# navigation world, so hidden windows cannot become new landing targets.
+			selected = WindowPlatformData.from_snapshot(matching_snapshot, next_rect.position.x, next_rect.end.x)
+			support_preserved = true
+		else:
+			# Pending travel/navigation still uses visible geometry: a hidden target is
+			# not a valid new landing surface.
+			return {
+				"status": "occluded",
+				"lost": false,
+				"reason": "occluded",
+				"delta": delta,
+				"platform": current,
+				"snapshot": matching_snapshot,
+			}
 	var changed := delta != Vector2i.ZERO or next_rect.size != current.rect.size or selected.top_edge != current.top_edge
 	return {
 		"status": "moved" if changed else "stable",
 		"lost": false,
-		"reason": "",
+		"reason": "support_preserved" if support_preserved else "",
 		"delta": delta,
 		"platform": selected,
 		"snapshot": matching_snapshot,
 	}
 
 
-## Per-frame visible top-edge segments for a standing window: the window's LIVE
-## rect (native single-window query) minus the cached FRONT occluders from the last
-## full refresh. The refresh-built segments only move at the window-refresh cadence,
-## so during a drag the live rect is the authoritative edge; subtracting the cached
-## front occluders keeps the standing point occlusion-aware frame by frame (an
-## occluded top segment is not standable, matching the riding semantic). Returns []
-## when the window is absent/not eligible/maximized or its top edge is fully
-## covered. Planes carry the (handle, process_id) identity in the model's foot space
-## (window top minus the foot offset), matching standable_planes().
-func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapshots: Variant = null) -> Array:
+## Per-frame top-edge segments for a standing window. `preserve_support` exposes
+## the complete live top only to the pet already attached to that HWND, mirroring
+## track_platform's riding contract. Normal callers still receive visible geometry.
+func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapshots: Variant = null, preserve_support := false) -> Array:
 	var source_snapshots: Array = _snapshots_for_tracking(handle) if snapshots == null else snapshots
 	var matching_snapshot: Dictionary = {}
 	for value in source_snapshots:
@@ -478,9 +474,17 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		return []
 	if not is_snapshot_eligible(matching_snapshot, _self_process_id):
 		return []
-	if bool(matching_snapshot.get("maximized", false)):
+	if bool(matching_snapshot.get("maximized", false)) and not preserve_support:
 		return []
 	var rect := WindowPlatformData.rect_from_value(matching_snapshot.get("rect", Rect2i()))
+	if preserve_support:
+		return [{
+			"left": float(rect.position.x),
+			"right": float(rect.end.x),
+			"y": float(rect.position.y) - foot_offset_y,
+			"handle": handle,
+			"process_id": pid,
+		}]
 	var target_z := int(matching_snapshot.get("z_order", 0))
 	# Standing-point semantics: a window only occludes the foot if it is in front
 	# of the pet (z < pet_z) or maximized. Windows behind the always-on-top pet
@@ -517,6 +521,28 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 			"process_id": pid,
 		})
 	return planes
+
+
+## Returns the full live top of an HWND that the pet is already standing on.
+## Unlike last_platforms(), this private lookup is not visibility-fragment based:
+## an overlay may hide the top without invalidating the existing rider. A closed,
+## minimized, cloaked, hidden or PID-reused window still returns null, so callers
+## can distinguish "temporarily covered" from "the support actually vanished".
+func private_support_platform(handle: int, pid: int, snapshots: Variant = null) -> WindowPlatform:
+	if handle == 0:
+		return null
+	var source_snapshots: Array = _snapshots_for_tracking(handle) if snapshots == null else snapshots
+	for value in source_snapshots:
+		if not value is Dictionary:
+			continue
+		var snapshot := value as Dictionary
+		if int(snapshot.get("handle", 0)) != handle or int(snapshot.get("process_id", -1)) != pid:
+			continue
+		if not is_snapshot_eligible(snapshot, _self_process_id):
+			return null
+		var rect := WindowPlatformData.rect_from_value(snapshot.get("rect", Rect2i()))
+		return WindowPlatformData.from_snapshot(snapshot, rect.position.x, rect.end.x)
+	return null
 
 
 ## Horizontal displacement of the standing window's live rect center relative to the

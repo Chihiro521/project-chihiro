@@ -1,9 +1,11 @@
 class_name PetStateStore
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION := 2
+const CURRENT_SCHEMA_VERSION := 3
 const DEFAULT_PATH := "user://little_chihiro_state.json"
-const DEFAULT_AFFECTION := 40.0
+const DEFAULT_AFFECTION := 25.0
+const DEFAULT_RELATIONSHIP_TIER := "guarded"
+const DAILY_AFFECTION_CAP := 3.0
 const INTERACTION_KEYS := [
 	"head_pats",
 	"pokes",
@@ -28,6 +30,10 @@ func create_default_state() -> Dictionary:
 	return {
 		"schema_version": CURRENT_SCHEMA_VERSION,
 		"affection": DEFAULT_AFFECTION,
+		"current_relationship_tier": DEFAULT_RELATIONSHIP_TIER,
+		"relationship_day_key": "",
+		"positive_affection_today": 0.0,
+		"negative_affection_today": 0.0,
 		"interaction_stats": interaction_stats,
 		"total_companion_seconds": 0.0,
 		"last_seen_unix": 0,
@@ -133,6 +139,13 @@ func _migrate(source: Dictionary, from_version: int) -> Dictionary:
 		migrated["recent_ecology_events"] = migrated.get("recent_ecology_events", [])
 		migrated["home_anchor"] = migrated.get("home_anchor", {})
 		migrated.schema_version = 2
+	if int(migrated.get("schema_version", from_version)) == 2:
+		var affection := clampf(float(migrated.get("affection", DEFAULT_AFFECTION)), 0.0, 100.0)
+		migrated["current_relationship_tier"] = _relationship_tier_for_affection(affection)
+		migrated["relationship_day_key"] = ""
+		migrated["positive_affection_today"] = 0.0
+		migrated["negative_affection_today"] = 0.0
+		migrated.schema_version = 3
 	return migrated
 
 func _normalized_state(source: Dictionary, fallback: Dictionary) -> Dictionary:
@@ -154,9 +167,18 @@ func _normalized_state(source: Dictionary, fallback: Dictionary) -> Dictionary:
 	while recent_dialogue_ids.size() > RECENT_DIALOGUE_LIMIT:
 		recent_dialogue_ids.pop_front()
 	var recent_ecology_events := _normalize_ecology_events(source.get("recent_ecology_events", []))
+	var affection := clampf(float(source.get("affection", fallback.get("affection", DEFAULT_AFFECTION))), 0.0, 100.0)
+	var relationship_tier := _normalize_relationship_tier(str(source.get(
+		"current_relationship_tier",
+		fallback.get("current_relationship_tier", _relationship_tier_for_affection(affection)),
+	)))
 	return {
 		"schema_version": CURRENT_SCHEMA_VERSION,
-		"affection": clampf(float(source.get("affection", fallback.get("affection", DEFAULT_AFFECTION))), 0.0, 100.0),
+		"affection": affection,
+		"current_relationship_tier": relationship_tier,
+		"relationship_day_key": _normalize_day_key(str(source.get("relationship_day_key", fallback.get("relationship_day_key", "")))),
+		"positive_affection_today": clampf(float(source.get("positive_affection_today", fallback.get("positive_affection_today", 0.0))), 0.0, DAILY_AFFECTION_CAP),
+		"negative_affection_today": clampf(float(source.get("negative_affection_today", fallback.get("negative_affection_today", 0.0))), 0.0, DAILY_AFFECTION_CAP),
 		"interaction_stats": stats,
 		"total_companion_seconds": maxf(0.0, float(source.get(
 			"total_companion_seconds",
@@ -269,6 +291,33 @@ func _safe_id(value: Variant) -> String:
 		if character.to_lower() in "abcdefghijklmnopqrstuvwxyz0123456789_-":
 			result += character
 	return result
+
+func _normalize_relationship_tier(value: String) -> String:
+	match value.strip_edges().to_lower():
+		"distant": return "distant"
+		"guarded", "wary": return "guarded"
+		"familiar": return "familiar"
+		"trusted", "trust": return "trusted"
+		"close": return "close"
+		_: return DEFAULT_RELATIONSHIP_TIER
+
+func _relationship_tier_for_affection(affection: float) -> String:
+	if affection >= 80.0: return "close"
+	if affection >= 60.0: return "trusted"
+	if affection >= 40.0: return "familiar"
+	if affection >= 20.0: return "guarded"
+	return "distant"
+
+func _normalize_day_key(value: String) -> String:
+	var text := value.strip_edges()
+	if text.length() != 10 or text[4] != "-" or text[7] != "-":
+		return ""
+	for index in range(text.length()):
+		if index in [4, 7]:
+			continue
+		if text[index] < "0" or text[index] > "9":
+			return ""
+	return text
 
 func _legacy_interaction_key(key: String) -> String:
 	match key:

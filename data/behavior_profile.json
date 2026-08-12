@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "needs": {
-    "initial": {"energy": 72, "boredom": 20, "curiosity": 35, "irritation": 0, "affection": 40},
+    "initial": {"energy": 72, "boredom": 20, "curiosity": 35, "irritation": 0, "affection": 25},
     "rates_per_minute": {
       "awake": {"energy": -1.2, "boredom": 0.75, "curiosity": -3, "irritation": -5},
       "sleeping": {"energy": 12, "boredom": -1.5, "curiosity": -3, "irritation": -7}
@@ -9,10 +9,19 @@
     "event_effects": {
       "novel_window": {"curiosity": 18, "boredom": -5},
       "cursor_gesture": {"curiosity": 8, "boredom": -3},
-      "head_pat_accepted": {"affection": 0.15, "irritation": -4, "boredom": -2},
+      "cursor_circle": {"curiosity": 8, "irritation": 5, "boredom": -3, "affection": -0.1},
+      "cursor_sweep": {"curiosity": 3, "irritation": 12, "boredom": -3, "affection": -0.2},
+      "gentle_click": {"affection": 0.05, "boredom": -4},
+      "head_pat_accepted": {"affection": 0.3, "irritation": -4, "boredom": -2},
+      "head_pat_refused": {"affection": -0.1, "irritation": 6},
+      "poke_single": {"affection": -0.05, "irritation": 6},
+      "bag_touch": {"affection": -0.15, "irritation": 10},
+      "icon_give_completed": {"affection": 0.45, "boredom": -4},
+      "companion_completed": {"affection": 0.6, "boredom": -4},
+      "manual_control_long": {"affection": 0.2},
       "friendly_interaction": {"affection": 0.05, "boredom": -4},
-      "rapid_poke": {"affection": -0.3, "irritation": 12},
-      "rough_drag": {"affection": -0.5, "irritation": 18},
+      "rapid_poke": {"affection": -0.35, "irritation": 12},
+      "rough_drag": {"affection": -0.6, "irritation": 18},
       "behavior_completed": {"boredom": -3}
     }
   },
@@ -99,7 +108,7 @@
         "id": "return_wave", "clip": "return_wave", "fallback_clip": "react", "state": "relationship",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 300000,
         "preconditions": {"requires_any_clips": ["return_wave", "react"], "relationship": {"min": "familiar"}, "context": {"returned_after_seconds": {"min": 1800}}},
-        "score_weights": {"base": 90, "needs": {"affection": 0.3}},
+        "score_weights": {"base": 90, "needs": {"affection": 0.3}, "relationship": {"trusted": 4, "close": 12}},
         "effects": {"boredom": -8, "affection": 0.02}, "session": {"type": "one_shot"}
       },
       {
@@ -118,16 +127,28 @@
         "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
       },
       {
-        "id": "cursor_confiscate", "clip": "straighten_bag", "fallback_clip": "react", "state": "cursor_confiscate",
+        "id": "cursor_play_chase", "clip": "patrol_floor_right", "fallback_clip": "patrol_floor_left", "state": "cursor_play_chase",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 60000,
+        "preconditions": {
+          "requires_all": ["cursor_mischief", "cursor_playful_mood", "cursor_in_reach"],
+          "requires_any_clips": ["patrol_floor_left", "patrol_floor_right", "react"],
+          "relationship": {"min": "familiar"},
+          "needs": {"energy": {"min": 35}}
+        },
+        "score_weights": {"base": 12, "needs": {"curiosity": 0.25, "boredom": 0.22}, "relationship": {"trusted": 2, "close": 5}},
+        "effects": {"curiosity": -8, "boredom": -6, "energy": -2},
+        "session": {"type": "one_shot", "max_duration_ms": 5000}
+      },
+      {
+        "id": "cursor_confiscate", "clip": "straighten_bag", "fallback_clip": "react", "state": "cursor_confiscate", "selectable": false,
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 120000,
         "preconditions": {
-          "requires_all": ["cursor_mischief", "cursor_in_reach"],
+          "requires_all": ["cursor_mischief", "cursor_punishment_ready"],
           "requires_any_clips": ["straighten_bag", "guard_bag_annoyed", "reason_pose", "react"],
-          "relationship": {"min": "familiar"},
           "needs": {"energy": {"min": 25}}
         },
-        "score_weights": {"base": 22, "needs": {"curiosity": 0.3, "boredom": 0.25}},
-        "effects": {"boredom": -8, "irritation": 3}, "session": {"type": "one_shot", "max_duration_ms": 60000}
+        "score_weights": {"base": 0, "needs": {"irritation": 0.35}},
+        "effects": {"boredom": -8, "irritation": -15, "energy": -3}, "session": {"type": "one_shot", "max_duration_ms": 60000}
       },
       {
         "id": "icon_collect", "clip": "straighten_bag", "fallback_clip": "react", "state": "icon_collect",

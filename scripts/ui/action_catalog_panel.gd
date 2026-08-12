@@ -305,9 +305,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_RIGHT:
 			_step_frame(1)
 			set_input_as_handled()
-		KEY_ESCAPE:
-			hide()
-			set_input_as_handled()
 		KEY_F:
 			if key.ctrl_pressed:
 				_search.grab_focus()

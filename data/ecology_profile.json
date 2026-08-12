@@ -64,8 +64,8 @@
       ]
     },
     {
-      "id": "quiet_companion", "name": "安静陪伴", "base_weight": 9, "cooldown_ms": 150000,
-      "requires": ["has_foreground"], "need_weights": {"affection": 0.08, "energy": -0.03, "irritation": -0.10},
+      "id": "quiet_companion", "name": "安静陪伴", "base_weight": 9, "cooldown_ms": 150000, "min_relationship": "trusted",
+      "requires": ["has_foreground"], "need_weights": {"affection": 0.08, "energy": -0.03, "irritation": -0.10}, "relationship_weights": {"trusted": 2, "close": 8},
       "habit_ids": ["late_companion", "document_watch", "media_rest"],
       "steps": [
         {"type": "travel", "target": "foreground_floor", "optional": true, "max_duration_ms": 6000},

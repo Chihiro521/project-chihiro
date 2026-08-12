@@ -5,6 +5,7 @@ const EcologyClockScript := preload("res://scripts/core/pet_ecology_clock.gd")
 const HabitatModelScript := preload("res://scripts/core/desktop_habitat_model.gd")
 const RoutineSessionScript := preload("res://scripts/core/pet_routine_session.gd")
 const GoalDirectorScript := preload("res://scripts/core/pet_goal_director.gd")
+const AutonomySchedulerScript := preload("res://scripts/core/pet_autonomy_scheduler.gd")
 const EcologyRequestScript := preload("res://scripts/core/pet_ecology_request_controller.gd")
 const EcologyProgressionScript := preload("res://scripts/core/pet_ecology_progression.gd")
 const ManualControlModelScript := preload("res://scripts/core/manual_control_model.gd")
@@ -12,6 +13,20 @@ const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
 const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd")
 const WindowEventDebouncerScript := preload("res://scripts/core/window_event_debouncer.gd")
 const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
+const RelationshipRulesScript := preload("res://scripts/core/pet_relationship_rules.gd")
+
+const RELATIONSHIP_INTERACTION_EVENTS := [
+	"greeting", "return",
+	"head_pat_accept", "head_pat_refuse", "poke", "rapid_poke", "bag_touch",
+	"rough_drag", "fling", "fling_slide", "fling_throw",
+	"control_enter", "control_exit", "control_long", "control_jump", "control_climb",
+	"control_detach", "control_fly", "control_fly_cancel", "control_combo",
+	"control_step_off", "control_umbrella", "control_land",
+	"icon_give", "icon_bag_full", "icon_reclaim", "icon_restore",
+	"cursor_play_chase", "cursor_play_end", "cursor_warning", "cursor_warning_second",
+	"cursor_stage3_remote", "cursor_capture_success", "cursor_capture_miss", "cursor_bag_release",
+	"relationship_up", "relationship_down",
+]
 
 var failures: Array[String] = []
 var assertions := 0
@@ -29,7 +44,9 @@ func _run() -> void:
 	_test_drag_and_umbrella()
 	_test_edge_patrol()
 	_test_life_model()
+	_test_relationship_progression()
 	_test_behavior_director()
+	_test_autonomy_scheduler()
 	_test_action_session()
 	_test_state_store_and_dialogue()
 	_test_control_dialogue()
@@ -46,6 +63,7 @@ func _run() -> void:
 	_test_window_platforms()
 	_test_pet_z_occlusion_threshold()
 	_test_icon_visibility_and_reach()
+	_test_cursor_interactions()
 	_test_icon_storage_rules()
 	_test_window_bodies()
 	_test_n_way_occlusion()
@@ -333,8 +351,19 @@ func _test_state_machine() -> void:
 	_expect(machine.dispatch({"type": "FULLSCREEN_EXIT"}) == "idle", "fullscreen exit resumes idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "ambient_action"}) == "ambient_action", "autonomous action enters generic execution state")
 	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "autonomous action returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_play_chase"}) == "cursor_play_chase", "cursor play chase enters its bespoke state")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "cursor play chase returns to idle")
+	_expect(machine.dispatch({"type": "NOTICE"}) == "notice", "cursor warning can begin while the pet is noticing the pointer")
+	_expect(machine.dispatch({"type": "CURSOR_WARNING"}) == "cursor_warning", "first punishment stage enters the dedicated bag-warning state")
+	_expect(machine.dispatch({"type": "INTERACTION_END", "resume": "idle"}) == "idle", "bag warning returns to idle after its one-shot animation")
+	_expect(machine.dispatch({"type": "NOTICE"}) == "notice", "cursor gaze can be entered again after a warning")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) == "cursor_confiscate", "cursor confiscation can preempt passive cursor gaze")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "cursor confiscation from passive gaze returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) == "cursor_confiscate", "cursor confiscate enters its bespoke state")
 	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "cursor confiscate returns to idle")
+	_expect(machine.dispatch({"type": "ACTION_START", "state": "ambient_action"}) == "ambient_action", "ordinary autonomy can run before a custody release")
+	_expect(machine.dispatch({"type": "CURSOR_RELEASE_START"}) == "cursor_confiscate", "timed cursor release can pre-empt an ordinary autonomous action")
+	_expect(machine.dispatch({"type": "ACTION_END"}) == "idle", "timed cursor release returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "cursor_confiscate"}) == "cursor_confiscate", "cursor confiscate re-enters")
 	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "cursor confiscate clip end returns to idle")
 	_expect(machine.dispatch({"type": "ACTION_START", "state": "icon_collect"}) == "icon_collect", "icon collect enters its bespoke state")
@@ -525,6 +554,78 @@ func _test_life_model() -> void:
 	needs.tick(300.0, {"sleeping": true})
 	_expect(needs.get_need("energy") > 20.0, "sleep restores energy")
 
+func _test_relationship_progression() -> void:
+	var profile := _load_json("res://data/behavior_profile.json")
+	var needs := PetNeedsModel.new(profile)
+	_expect(is_equal_approx(needs.get_need("affection"), 25.0) and needs.relationship_tier() == "guarded", "new relationship state starts at affection 25 in the guarded tier")
+	_expect(is_equal_approx(RelationshipRulesScript.head_pat_refusal_probability("distant", 0.0), 0.85), "distant head-pat refusal probability is eighty-five percent")
+	_expect(is_equal_approx(RelationshipRulesScript.head_pat_refusal_probability("trusted", 50.0), 0.40), "mid irritation adds the thirty-five percent head-pat refusal modifier")
+	_expect(is_equal_approx(RelationshipRulesScript.head_pat_refusal_probability("close", 70.0), 1.0), "high irritation always refuses a head pat")
+	_expect([
+		RelationshipRulesScript.rapid_poke_threshold("distant"),
+		RelationshipRulesScript.rapid_poke_threshold("guarded"),
+		RelationshipRulesScript.rapid_poke_threshold("familiar"),
+		RelationshipRulesScript.rapid_poke_threshold("trusted"),
+		RelationshipRulesScript.rapid_poke_threshold("close"),
+	] == [2, 3, 3, 4, 4], "rapid-poke thresholds follow all five relationship tiers")
+	_expect(is_equal_approx(RelationshipRulesScript.control_quip_probability("distant"), 0.25) and is_equal_approx(RelationshipRulesScript.control_quip_probability("close"), 0.60), "manual-control quip probability grows with relationship")
+
+	var transitions: Array[String] = []
+	needs.relationship_tier_changed.connect(func(previous: String, current: String, _affection: float) -> void:
+		transitions.append("%s>%s" % [previous, current])
+	)
+	needs.set_need("affection", 85.0, "test_multi_tier_up")
+	_expect(needs.relationship_tier() == "close" and transitions == ["guarded>close"], "a multi-tier increase emits one transition for the final tier")
+	needs.set_need("affection", 77.0, "test_close_hysteresis_edge")
+	_expect(needs.relationship_tier() == "close", "close remains stable at the 77-point hysteresis boundary")
+	needs.set_need("affection", 76.9, "test_close_hysteresis_down")
+	_expect(needs.relationship_tier() == "trusted", "close drops to trusted only below 77")
+	needs.set_need("affection", 57.0, "test_trusted_hysteresis_edge")
+	_expect(needs.relationship_tier() == "trusted", "trusted remains stable at the 57-point hysteresis boundary")
+	needs.set_need("affection", 56.9, "test_trusted_hysteresis_down")
+	_expect(needs.relationship_tier() == "familiar", "trusted drops to familiar only below 57")
+	needs.set_need("affection", 37.0, "test_familiar_hysteresis_edge")
+	_expect(needs.relationship_tier() == "familiar", "familiar remains stable at the 37-point hysteresis boundary")
+	needs.set_need("affection", 36.9, "test_familiar_hysteresis_down")
+	_expect(needs.relationship_tier() == "guarded", "familiar drops to guarded only below 37")
+	needs.set_need("affection", 17.0, "test_guarded_hysteresis_edge")
+	_expect(needs.relationship_tier() == "guarded", "guarded remains stable at the 17-point hysteresis boundary")
+	needs.set_need("affection", 16.9, "test_guarded_hysteresis_down")
+	_expect(needs.relationship_tier() == "distant", "guarded drops to distant only below 17")
+
+	needs.reset_session(25.0)
+	var first_day := Time.get_date_string_from_system()
+	for _index in range(80):
+		needs.apply_event("gentle_click", {"relationship_day_key": first_day})
+	_expect(is_equal_approx(needs.get_need("affection"), 28.0), "daily positive affection is capped at three points")
+	var positive_daily := needs.relationship_daily_snapshot()
+	_expect(is_equal_approx(float(positive_daily.positive), 3.0) and is_equal_approx(float(positive_daily.negative), 0.0), "positive and negative daily ledgers are tracked separately")
+	needs.set_need("boredom", 50.0, "test_non_relationship_effect")
+	needs.apply_event("gentle_click", {"relationship_day_key": first_day})
+	_expect(is_equal_approx(needs.get_need("affection"), 28.0) and is_equal_approx(needs.get_need("boredom"), 46.0), "reaching the affection cap does not suppress other need effects")
+	for _index in range(20):
+		needs.apply_event("rapid_poke", {"relationship_day_key": first_day})
+	_expect(is_equal_approx(needs.get_need("affection"), 25.0), "daily negative affection has its own three-point cap")
+	needs.set_need("irritation", 0.0, "test_negative_cap_side_effect")
+	needs.apply_event("rapid_poke", {"relationship_day_key": first_day})
+	_expect(is_equal_approx(needs.get_need("affection"), 25.0) and is_equal_approx(needs.get_need("irritation"), 12.0), "negative-cap exhaustion still applies irritation")
+	var second_day := "2099-12-31" if first_day != "2099-12-31" else "2099-12-30"
+	needs.apply_event("head_pat_accepted", {"relationship_day_key": second_day})
+	var next_day := needs.relationship_daily_snapshot(second_day)
+	_expect(is_equal_approx(needs.get_need("affection"), 25.3) and is_equal_approx(float(next_day.positive), 0.3) and is_equal_approx(float(next_day.negative), 0.0), "a new local day resets both affection ledgers")
+
+	var expected_deltas := {
+		"gentle_click": 0.05, "head_pat_accepted": 0.30, "icon_give_completed": 0.45,
+		"companion_completed": 0.60, "manual_control_long": 0.20,
+		"head_pat_refused": -0.10, "poke_single": -0.05, "rapid_poke": -0.35,
+		"bag_touch": -0.15, "rough_drag": -0.60, "cursor_circle": -0.10, "cursor_sweep": -0.20,
+	}
+	var needs_config: Dictionary = profile.get("needs", {})
+	var configured_events: Dictionary = needs_config.get("event_effects", {})
+	for event_name in expected_deltas:
+		var effects: Dictionary = configured_events.get(event_name, {})
+		_expect(is_equal_approx(float(effects.get("affection", 0.0)), float(expected_deltas[event_name])), "relationship event %s uses its specified affection delta" % event_name)
+
 func _test_behavior_director() -> void:
 	var profile := _load_json("res://data/behavior_profile.json")
 	var needs := PetNeedsModel.new(profile)
@@ -540,7 +641,7 @@ func _test_behavior_director() -> void:
 		"returned_after_seconds": 3600.0,
 	}
 	var diagnostics := director.diagnostic_candidates(needs, context, 89000)
-	_expect(diagnostics.size() == 18, "behavior diagnostics expose all eighteen configured intents")
+	_expect(diagnostics.size() == 19, "behavior diagnostics expose all nineteen configured intents")
 	var eligible_diagnostic := false
 	var event_diagnostic := false
 	for diagnostic in diagnostics:
@@ -608,6 +709,124 @@ func _test_behavior_director() -> void:
 			if not intent.is_empty(): needs.apply_event("behavior_completed", {"effects": intent.get("effects", {})})
 	for key in PetNeedsModel.NEED_NAMES:
 		_expect(needs.get_need(key) >= 0.0 and needs.get_need(key) <= 100.0, "four-hour simulation keeps %s in range" % key)
+	var no_return_context := context.duplicate(true)
+	no_return_context["returned_after_seconds"] = 0.0
+	var gated_ids: Array[String] = []
+	for candidate in director.candidate_scores(needs, no_return_context, 20000000):
+		gated_ids.append(str(candidate.get("id", "")))
+	_expect("return_wave" not in gated_ids, "candidate enumeration keeps return-wave behind its real absence gate")
+	var guarded_context := context.duplicate(true)
+	needs.set_need("energy", 50.0, "test_relationship_behavior_gates")
+	needs.set_need("curiosity", 70.0, "test_relationship_behavior_gates")
+	needs.set_need("boredom", 70.0, "test_relationship_behavior_gates")
+	guarded_context["relationship_tier"] = "guarded"
+	guarded_context["cursor_mischief"] = true
+	guarded_context["cursor_playful_mood"] = true
+	guarded_context["cursor_in_reach"] = true
+	guarded_context["icon_collection"] = true
+	guarded_context["desktop_listview_available"] = true
+	guarded_context["has_desktop_icons"] = true
+	guarded_context["has_reachable_icons"] = true
+	guarded_context["bag_not_full"] = true
+	var guarded_ids: Array[String] = []
+	for candidate in director.candidate_scores(needs, guarded_context, 21000000):
+		guarded_ids.append(str(candidate.get("id", "")))
+	_expect("cursor_play_chase" not in guarded_ids and "icon_collect" not in guarded_ids, "guarded autonomy keeps familiar and trusted cursor/icon behaviors locked")
+	var familiar_context := guarded_context.duplicate(true)
+	familiar_context["relationship_tier"] = "familiar"
+	var familiar_ids: Array[String] = []
+	for candidate in director.candidate_scores(needs, familiar_context, 22000000):
+		familiar_ids.append(str(candidate.get("id", "")))
+	_expect("cursor_play_chase" in familiar_ids and "icon_collect" not in familiar_ids, "familiar autonomy unlocks cursor play but not icon collection")
+	var trusted_context := familiar_context.duplicate(true)
+	trusted_context["relationship_tier"] = "trusted"
+	var trusted_ids: Array[String] = []
+	for candidate in director.candidate_scores(needs, trusted_context, 23000000):
+		trusted_ids.append(str(candidate.get("id", "")))
+	_expect("cursor_play_chase" in trusted_ids and "icon_collect" in trusted_ids, "trusted autonomy unlocks icon collection")
+	var guarded_confiscate := director.create_intent("cursor_confiscate", needs, guarded_context, 24000000)
+	_expect(str(guarded_confiscate.get("id", "")) == "cursor_confiscate", "guarded relationships can still enter the direct cursor punishment chain")
+
+
+func _test_autonomy_scheduler() -> void:
+	var channels := {
+		"ecology": [{"id": "goal", "score": 1.0}],
+		"behavior": [{"id": "behavior", "score": 1.0}],
+		"movement": [{"id": "movement", "score": 1.0}],
+	}
+	var scheduler := AutonomySchedulerScript.new(424242)
+	var counts := {"ecology": 0, "behavior": 0, "movement": 0}
+	var gaps := {"ecology": 0, "behavior": 0, "movement": 0}
+	var max_gaps := {"ecology": 0, "behavior": 0, "movement": 0}
+	for round_index in range(12000):
+		scheduler.advance_clock(1000.0, true)
+		var choice: Dictionary = scheduler.choose(channels, [])
+		var channel := str(choice.get("channel", ""))
+		var candidate: Dictionary = choice.get("candidate", {})
+		scheduler.mark_executed(channel, str(candidate.get("id", "")))
+		counts[channel] = int(counts[channel]) + 1
+		for channel_name in ["ecology", "behavior", "movement"]:
+			if channel_name == channel:
+				gaps[channel_name] = 0
+			else:
+				gaps[channel_name] = int(gaps[channel_name]) + 1
+			max_gaps[channel_name] = maxi(int(max_gaps[channel_name]), int(gaps[channel_name]))
+	_expect(int(max_gaps.ecology) <= 2 and int(max_gaps.behavior) <= 3 and int(max_gaps.movement) <= 6, "channel debt enforces the 2/3/6 maximum missed-round bounds")
+	_expect(absf(float(counts.ecology) / 12000.0 - 0.50) <= 0.08, "long-run ecology share remains close to fifty percent")
+	_expect(absf(float(counts.behavior) / 12000.0 - 0.35) <= 0.08, "long-run behavior share remains close to thirty-five percent")
+	_expect(absf(float(counts.movement) / 12000.0 - 0.15) <= 0.08, "long-run movement share remains close to fifteen percent")
+
+	var candidate_scheduler := AutonomySchedulerScript.new(1313)
+	var behavior_candidates: Array[Dictionary] = []
+	for index in range(5):
+		behavior_candidates.append({"id": "b%d" % index, "score": 1.0})
+	var seen: Dictionary = {}
+	for round_index in range(80):
+		var choice: Dictionary = candidate_scheduler.choose({"behavior": behavior_candidates}, ["b0", "b1", "b2"])
+		var candidate: Dictionary = choice.get("candidate", {})
+		var intent_id := str(candidate.get("id", ""))
+		seen[intent_id] = true
+		candidate_scheduler.mark_executed("behavior", intent_id)
+	_expect(seen.size() == 5, "candidate aging eventually serves every continuously eligible behavior despite recent penalties")
+
+	var recent_scheduler := AutonomySchedulerScript.new(1717)
+	recent_scheduler.choose({"behavior": [{"id": "recent", "score": 10.0}, {"id": "fresh", "score": 10.0}]}, ["recent"])
+	var recent_scores: Dictionary = {}
+	for value in recent_scheduler.snapshot().get("candidates", []):
+		if value is Dictionary:
+			recent_scores[str(value.get("id", ""))] = float(value.get("effective_score", 0.0))
+	_expect(recent_scores.has("recent") and float(recent_scores.recent) < float(recent_scores.fresh), "recent candidates remain eligible with a soft 0.35 score penalty")
+
+	var cursor_guarantee := AutonomySchedulerScript.new(2020)
+	var cursor_channels := {"behavior": [{"id": "cursor_play_chase", "score": 0.01}, {"id": "other", "score": 999.0}]}
+	cursor_guarantee.observe(cursor_channels)
+	cursor_guarantee.advance_clock(120001.0, true)
+	var cursor_choice: Dictionary = cursor_guarantee.choose(cursor_channels, [])
+	_expect(str((cursor_choice.get("candidate", {}) as Dictionary).get("id", "")) == "cursor_play_chase" and bool(cursor_choice.get("forced", false)), "cursor play receives its hard guarantee after 120 eligible seconds")
+
+	var icon_guarantee := AutonomySchedulerScript.new(3030)
+	var icon_only := {"behavior": [{"id": "icon_collect", "score": 0.01}]}
+	icon_guarantee.observe(icon_only)
+	icon_guarantee.advance_clock(70000.0, true)
+	var both_special := {"behavior": [{"id": "icon_collect", "score": 0.01}, {"id": "cursor_play_chase", "score": 0.01}]}
+	icon_guarantee.observe(both_special)
+	icon_guarantee.advance_clock(120001.0, true)
+	var older_choice: Dictionary = icon_guarantee.choose(both_special, [])
+	_expect(str((older_choice.get("candidate", {}) as Dictionary).get("id", "")) == "icon_collect", "when both special guarantees are due, the longer-waiting icon collection wins")
+
+	var pause_scheduler := AutonomySchedulerScript.new(4040)
+	pause_scheduler.advance_clock(10000.0, true)
+	pause_scheduler.advance_clock(90000.0, false)
+	_expect(is_equal_approx(float(pause_scheduler.snapshot().get("clock_ms", 0.0)), 10000.0), "manual or hidden pauses do not advance the autonomy waiting clock")
+
+	var reset_scheduler := AutonomySchedulerScript.new(5050)
+	reset_scheduler.observe(cursor_channels)
+	reset_scheduler.advance_clock(90000.0, true)
+	reset_scheduler.observe({"behavior": []})
+	reset_scheduler.observe(cursor_channels)
+	reset_scheduler.advance_clock(30001.0, true)
+	var reset_choice: Dictionary = reset_scheduler.choose(cursor_channels, [])
+	_expect(str(reset_choice.get("reason", "")) != "special_deadline", "a candidate that loses eligibility restarts its guarantee age")
 
 func _test_action_session() -> void:
 	var session := PetActionSession.new()
@@ -660,8 +879,13 @@ func _test_state_store_and_dialogue() -> void:
 	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
 	var store := PetStateStore.new(test_path)
 	var state := store.create_default_state()
-	_expect(int(state.schema_version) == 2, "state store defaults to the v0.22 schema")
+	_expect(int(state.schema_version) == 3, "state store defaults to the relationship schema")
+	_expect(is_equal_approx(float(state.affection), 25.0) and str(state.current_relationship_tier) == "guarded", "new state stores the guarded 25-point relationship baseline")
 	state.affection = 73.5
+	state.current_relationship_tier = "trusted"
+	state.relationship_day_key = "2035-01-02"
+	state.positive_affection_today = 1.25
+	state.negative_affection_today = 0.75
 	state.interaction_stats.head_pats = 4
 	state.habitat_familiarity = 32.5
 	state.habits = {"morning_patrol": {"count": 3, "stage": 1, "last_credit_unix": 123}}
@@ -672,6 +896,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(store.save_state(state), "state store writes atomically")
 	var loaded := store.load_state()
 	_expect(is_equal_approx(float(loaded.affection), 73.5), "state store restores affection")
+	_expect(str(loaded.current_relationship_tier) == "trusted" and is_equal_approx(float(loaded.positive_affection_today), 1.25) and is_equal_approx(float(loaded.negative_affection_today), 0.75), "state store restores tier and both daily affection ledgers")
 	_expect(int(loaded.interaction_stats.head_pats) == 4, "state store restores interaction counters")
 	_expect(is_equal_approx(float(loaded.habitat_familiarity), 32.5) and int(loaded.habits.morning_patrol.stage) == 1, "state store restores familiarity and habit progress")
 	_expect(loaded.discoveries.has("time_morning") and not (loaded.recent_ecology_events[0] as Dictionary).has("window_title"), "state store persists discovery ids without retaining window titles")
@@ -683,7 +908,7 @@ func _test_state_store_and_dialogue() -> void:
 	_expect(is_equal_approx(float(recovered.affection), 73.5), "state store restores the previous file after an interrupted replacement")
 	var dialogue := PetDialogueDirector.new(99)
 	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "dialogue data loads")
-	_expect(dialogue.line_count() == 271, "dialogue catalog contains 271 lines")
+	_expect(dialogue.line_count() == 659, "dialogue catalog expands 370 five-tier interaction lines on top of the 289 base lines")
 	_expect(dialogue.sanitize_window_title("Password 登录") == "", "sensitive titles are suppressed")
 	_expect(dialogue.sanitize_window_title("pass​word") == "", "zero-width characters cannot bypass sensitive-title suppression")
 	_expect(dialogue.sanitize_window_title("Ｐａｓｓｗｏｒｄ") == "", "full-width text cannot bypass sensitive-title suppression")
@@ -693,6 +918,14 @@ func _test_state_store_and_dialogue() -> void:
 		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
 	}, 100000)
 	_expect(not line.is_empty(), "dialogue director selects a matching event line")
+	_expect(str(line.get("id", "")).begins_with("relationship_head_pat_accept_trusted_"), "a complete trusted interaction pool never falls back to a generic line")
+	for event_name in RELATIONSHIP_INTERACTION_EVENTS:
+		for tier in RelationshipRulesScript.TIERS:
+			var tier_ids: Array[String] = []
+			for entry in dialogue.entries:
+				if bool(entry.get("relationship_dedicated", false)) and event_name in (entry.get("events", []) as Array) and tier in (entry.get("relationship_tiers", []) as Array):
+					tier_ids.append(str(entry.get("id", "")))
+			_expect(tier_ids.size() == 2, "interaction %s has exactly two dedicated %s lines" % [event_name, tier])
 	var tidy_line := dialogue.select_line({
 		"event": "tidy_clothes", "relationship_tier": "familiar", "irritation": 0,
 		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
@@ -703,6 +936,14 @@ func _test_state_store_and_dialogue() -> void:
 		{"available_clips": ["land"], "relationship_tier": "familiar"}, 1000,
 	)
 	_expect(str(direct_intent.get("id", "")) == "window_land_recover", "non-selectable event behavior can be created directly")
+	var legacy_path := "user://little_chihiro_state_v2_test.json"
+	var legacy_absolute := ProjectSettings.globalize_path(legacy_path)
+	var legacy_file := FileAccess.open(legacy_path, FileAccess.WRITE)
+	legacy_file.store_string(JSON.stringify({"schema_version": 2, "affection": 63.0}))
+	legacy_file = null
+	var migrated_legacy := PetStateStore.new(legacy_path).load_state()
+	_expect(is_equal_approx(float(migrated_legacy.affection), 63.0) and str(migrated_legacy.current_relationship_tier) == "trusted", "schema-two saves preserve affection and derive the matching relationship tier")
+	if FileAccess.file_exists(legacy_path): DirAccess.remove_absolute(legacy_absolute)
 	if FileAccess.file_exists(test_path): DirAccess.remove_absolute(absolute)
 	if FileAccess.file_exists(previous_path): DirAccess.remove_absolute(previous_path)
 
@@ -775,10 +1016,7 @@ func _test_control_dialogue() -> void:
 		"mood": "neutral", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
 	}, now)
 	_expect(not distant_line.is_empty(), "distant control_enter selects a line")
-	_expect(
-		str(distant_line.get("id", "")) in ["control_enter_001", "control_enter_002", "control_enter_003", "control_enter_004"],
-		"distant control_enter avoids the close-tier line"
-	)
+	_expect(str(distant_line.get("id", "")).begins_with("relationship_control_enter_distant_"), "distant control_enter uses only its dedicated distant pool")
 
 func _test_dialogue_scheduler() -> void:
 	var scheduler := DialogueSchedulerScript.new()
@@ -915,7 +1153,14 @@ func _test_ecology_models() -> void:
 		"time_period": "afternoon",
 		"app_category": "development",
 		"habit_stages": {},
+		"relationship_tier": "guarded",
 	}
+	var candidate_director := GoalDirectorScript.new(profile, 22014)
+	var uncommitted_goals := candidate_director.candidate_scores(needs, goal_context, 90000)
+	_expect(not uncommitted_goals.is_empty() and candidate_director.recent_goals().is_empty(), "goal candidate enumeration is side-effect free")
+	var committed_goal: Dictionary = uncommitted_goals.front()
+	candidate_director.commit_goal(committed_goal, 90000)
+	_expect(candidate_director.cooldown_remaining_ms(str(committed_goal.get("id", "")), 90000) > 0, "goal cooldown begins only after the scheduler commits a started goal")
 	var selected_goals: Array[String] = []
 	for index in range(6):
 		var goal := director.select_goal(needs, goal_context, 100000 + index * 300000)
@@ -925,6 +1170,16 @@ func _test_ecology_models() -> void:
 			_expect(goal_id not in selected_goals.slice(selected_goals.size() - 3), "goal director avoids the latest three goal families when alternatives exist")
 		selected_goals.append(goal_id)
 	_expect(director.last_candidates.size() == 12, "goal diagnostics expose all twelve ecological goals")
+	var guarded_companion := GoalDirectorScript.new(profile, 22015).create_goal("quiet_companion", goal_context, 2000000)
+	_expect(guarded_companion.is_empty(), "guarded autonomy cannot start quiet companion")
+	var active_request_context := goal_context.duplicate(true)
+	active_request_context["player_requested"] = true
+	var requested_companion := GoalDirectorScript.new(profile, 22016).create_goal("quiet_companion", active_request_context, 2000000)
+	_expect(not requested_companion.is_empty(), "an active player companion request remains available before trusted")
+	var trusted_goal_context := goal_context.duplicate(true)
+	trusted_goal_context["relationship_tier"] = "trusted"
+	var trusted_companion := GoalDirectorScript.new(profile, 22017).create_goal("quiet_companion", trusted_goal_context, 2000000)
+	_expect(not trusted_companion.is_empty(), "trusted autonomy unlocks quiet companion")
 
 	var routine := RoutineSessionScript.new()
 	var routine_goal := {"id": "test_routine", "steps": [{"type": "travel"}, {"type": "intent"}]}
@@ -2344,6 +2599,13 @@ func _test_window_platforms() -> void:
 	], 400.0, 16.0)
 	_expect(not bool(drag_occluded.get("lost", false)) and str(drag_occluded.get("status", "")) == "occluded", "a drag that keeps the standing point covered reports occluded, not a full-edge follow")
 	_expect(Vector2(drag_occluded.get("delta", Vector2i.ZERO)) == Vector2(300.0, 0.0), "the occluded result still reports the window's drag delta for the grace/fall decision")
+	var preserved_drag := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 900, 300), "z_order": 0, "visible": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	], 400.0, 16.0, true)
+	var preserved_platform := preserved_drag.get("platform") as WindowPlatform
+	_expect(str(preserved_drag.get("status", "")) == "moved" and str(preserved_drag.get("reason", "")) == "support_preserved", "an existing rider ignores a front overlay instead of being squeezed off")
+	_expect(preserved_platform.segment_left() == 300 and preserved_platform.segment_right() == 1000, "preserved riding support uses the live HWND full top without publishing it globally")
 	# A standing point that stays visible while dragging keeps riding (regression
 	# guard: occlusion is about the point, not the motion).
 	var visible_drag := tracker.track_platform(ridden, [
@@ -2367,6 +2629,17 @@ func _test_window_platforms() -> void:
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
 	]
 	_expect(live_tracker.live_top_segment_planes(11, 21, 356.0, covered_live).is_empty(), "a front window covering the whole top edge leaves no live segment")
+	var preserved_live := live_tracker.live_top_segment_planes(11, 21, 356.0, covered_live, true)
+	_expect(preserved_live.size() == 1 and is_equal_approx(float(preserved_live[0].get("left", -1.0)), 0.0) and is_equal_approx(float(preserved_live[0].get("right", -1.0)), 700.0), "an already-standing controlled pet keeps the full live top under screen-edge overlays")
+	var private_support := live_tracker.private_support_platform(11, 21, covered_live)
+	_expect(private_support != null and private_support.segment_left() == 0 and private_support.segment_right() == 700, "manual-control exit can hand an occluded but live HWND back to riding")
+	_expect(live_tracker.private_support_platform(11, 21, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": false},
+	]) == null, "a hidden standing HWND is not valid private support")
+	_expect(live_tracker.private_support_platform(11, 21, [
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true, "minimized": true},
+	]) == null, "a minimized standing HWND is not valid private support")
+	_expect(live_tracker.private_support_platform(11, 21, []) == null, "a closed standing HWND cannot be handed off as ghost support")
 	var partly_live := [
 		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 320, 300), "z_order": 0, "visible": true},
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": true},
@@ -2570,6 +2843,25 @@ func _test_icon_visibility_and_reach() -> void:
 
 func _test_icon_storage_rules() -> void:
 	var pet := preload("res://scripts/main.gd").new()
+	pet.icon_collection = true
+	pet.machine.state = "idle"
+	_expect(pet._icon_gift_drag_state_allowed(), "desktop-icon gift drag can start while the pet is idle")
+	pet.machine.state = "notice"
+	_expect(pet._icon_gift_drag_state_allowed(), "passive cursor notice does not cancel a desktop-icon gift drag")
+	pet.machine.state = "cursor_track"
+	_expect(pet._icon_gift_drag_state_allowed(), "passive cursor tracking does not cancel a desktop-icon gift drag")
+	pet.machine.state = "ambient_action"
+	_expect(not pet._icon_gift_drag_state_allowed(), "a busy autonomous action rejects a new desktop-icon gift drag")
+	var gift_drag := {"name": "gift", "original": {"x": 10, "y": 20}, "moved": true, "over_pet": true}
+	_expect(not pet._icon_gift_drop_is_valid(gift_drag, false), "leaving the pet before mouse release cancels the gift")
+	_expect(pet._icon_gift_drop_is_valid(gift_drag, true), "a moved desktop icon released over the pet commits the gift")
+	var catalog := _load_json("res://data/dialogue_zh_CN.json")
+	var bag_full_lines := 0
+	for entry in catalog.get("entries", []):
+		if entry is Dictionary and "icon_bag_full" in (entry.get("events", []) as Array):
+			bag_full_lines += 1
+	_expect(bag_full_lines == 2, "a full backpack has exactly two randomized rejection lines")
+	pet.machine.state = "idle"
 	pet.icon_bag_entries = [
 		{"name": "one"},
 		{"name": "two"},
@@ -2591,6 +2883,212 @@ func _test_icon_storage_rules() -> void:
 	pet.icon_collect_icon = {"name": "one", "original": {"x": 10, "y": 20}}
 	pet._return_in_flight_icon()
 	_expect(pet.icon_collect_icon.is_empty() and pet._icon_bag_entry_index("one") >= 0, "interrupting collection never removes a journaled hidden icon")
+	pet.free()
+
+func _test_cursor_interactions() -> void:
+	var profile := _load_json("res://data/behavior_profile.json")
+	var pet := preload("res://scripts/main.gd").new()
+	pet.needs_model = PetNeedsModel.new(profile)
+	pet.cursor_mischief = true
+	pet.needs_model.set_need("curiosity", 20.0)
+	pet.needs_model.set_need("boredom", 50.0)
+	pet.needs_model.set_need("irritation", 20.0)
+	pet._apply_cursor_gesture_effect(true, false)
+	_expect(is_equal_approx(pet.needs_model.get_need("curiosity"), 28.0) and is_equal_approx(pet.needs_model.get_need("irritation"), 25.0) and is_equal_approx(pet.needs_model.get_need("boredom"), 47.0), "circle gestures apply curiosity +8, irritation +5 and boredom -3")
+	pet.needs_model.set_need("curiosity", 20.0)
+	pet.needs_model.set_need("boredom", 50.0)
+	pet.needs_model.set_need("irritation", 20.0)
+	pet._apply_cursor_gesture_effect(false, true)
+	_expect(is_equal_approx(pet.needs_model.get_need("curiosity"), 23.0) and is_equal_approx(pet.needs_model.get_need("irritation"), 32.0) and is_equal_approx(pet.needs_model.get_need("boredom"), 47.0), "sweep gestures apply curiosity +3, irritation +12 and boredom -3")
+	pet.needs_model.set_need("energy", 40.0)
+	pet.needs_model.set_need("curiosity", 60.0)
+	pet.needs_model.set_need("boredom", 65.0)
+	pet.needs_model.set_need("irritation", 54.0)
+	_expect(pet._cursor_playful_mood(), "high curiosity or boredom enables playful cursor chase")
+	_expect(not pet._cursor_punishment_ready(), "irritation below 55 does not arm cursor punishment")
+	pet.needs_model.set_need("irritation", 55.0)
+	_expect(pet._cursor_punishment_ready(), "irritation at 55 with enough energy arms cursor punishment")
+	pet.cursor_mischief = false
+	_expect(not pet._cursor_punishment_ready(), "disabling cursor mischief disarms cursor punishment")
+	pet.cursor_mischief = true
+	pet.needs_model.set_need("energy", 24.0)
+	_expect(not pet._cursor_punishment_ready(), "low energy disarms cursor punishment")
+	pet.needs_model.set_need("energy", 40.0)
+
+	var director := PetBehaviorDirector.load_from_file("res://data/behavior_profile.json", 17)
+	var playful_context := {
+		"cursor_mischief": true,
+		"cursor_playful_mood": true,
+		"cursor_in_reach": true,
+		"available_clips": ["patrol_floor_right"],
+		"relationship_tier": "familiar",
+	}
+	var playful_eligible := false
+	for candidate in director.candidate_scores(pet.needs_model, playful_context, 1000):
+		if str(candidate.get("id", "")) == "cursor_play_chase":
+			playful_eligible = true
+	_expect(playful_eligible, "behavior director selects the mood-gated playful chase when its real gates pass")
+	pet.needs_model.set_need("curiosity", 59.0)
+	pet.needs_model.set_need("boredom", 64.0)
+	playful_context["cursor_playful_mood"] = pet._cursor_playful_mood()
+	playful_eligible = false
+	for candidate in director.candidate_scores(pet.needs_model, playful_context, 2000):
+		if str(candidate.get("id", "")) == "cursor_play_chase":
+			playful_eligible = true
+	_expect(not playful_eligible, "behavior director rejects playful chase below both mood thresholds")
+	pet.needs_model.set_need("curiosity", 60.0)
+	pet.needs_model.set_need("boredom", 65.0)
+	var duration_valid := true
+	for _i in range(32):
+		var duration := pet._cursor_remote_hold_duration()
+		duration_valid = duration_valid and duration >= pet.CURSOR_REMOTE_HOLD_MIN_MS and duration <= pet.CURSOR_REMOTE_HOLD_MAX_MS
+	_expect(duration_valid, "remote confiscation duration stays within 30 to 60 seconds")
+	var base_default := pet._cursor_remote_hold_base_seconds(55.0, 60.0, 65.0)
+	_expect(pet._cursor_remote_hold_base_seconds(80.0, 60.0, 65.0) >= base_default, "higher irritation never shortens remote confiscation")
+	_expect(pet._cursor_remote_hold_base_seconds(55.0, 100.0, 65.0) <= base_default, "higher curiosity never lengthens remote confiscation")
+	_expect(pet._cursor_remote_hold_base_seconds(55.0, 60.0, 100.0) >= base_default, "higher boredom never shortens remote confiscation")
+
+	pet.cursor_provocation_stage = 2
+	pet.cursor_provocation_last_at = 1000.0
+	pet._update_cursor_provocation_decay(41000.0)
+	_expect(pet.cursor_provocation_stage == 1, "one 40-second quiet period decays one punishment stage")
+	pet._update_cursor_provocation_decay(81000.0)
+	_expect(pet.cursor_provocation_stage == 0 and pet.cursor_provocation_last_at < 0.0, "two quiet periods clear the punishment stage")
+	pet.cursor_provocation_stage = 3
+	pet.cursor_mischief = false
+	pet._update_cursor_provocation_decay(90000.0)
+	_expect(pet.cursor_provocation_stage == 0, "turning off mischief clears the punishment stage")
+	pet.cursor_mischief = true
+	var before_effects := pet.needs_model.snapshot()
+	pet.current_intent = {"id": "cursor_play_chase", "effects": {"curiosity": -8, "boredom": -6, "energy": -2}}
+	pet._finish_special_behavior("cursor_play_chase", "completed")
+	_expect(is_equal_approx(pet.needs_model.get_need("curiosity"), float(before_effects.curiosity) - 8.0), "playful chase applies exactly curiosity -8 without the generic completion bonus")
+	_expect(is_equal_approx(pet.needs_model.get_need("boredom"), float(before_effects.boredom) - 6.0), "playful chase applies exactly boredom -6")
+	_expect(is_equal_approx(pet.needs_model.get_need("energy"), float(before_effects.energy) - 2.0), "playful chase applies exactly energy -2")
+	pet.icon_collect_keepsaked = true
+	_expect(pet._dialogue_event_for_intent("icon_collect").is_empty(), "keepsake collection does not request its dialogue twice at completion")
+	pet.icon_collect_keepsaked = false
+	_expect(pet._dialogue_event_for_intent("icon_collect") == "icon_collect", "ordinary collection keeps its completion dialogue")
+
+	var cursor_events := [
+		"cursor_play_chase", "cursor_play_end", "cursor_warning", "cursor_warning_second",
+		"cursor_stage3_remote", "cursor_capture_success", "cursor_capture_miss", "cursor_bag_release",
+	]
+	var dialogue := PetDialogueDirector.new(19)
+	_expect(dialogue.load_data("res://data/dialogue_zh_CN.json"), "cursor interaction dialogue data loads")
+	var dialogue_now := 500000.0
+	for event_name in cursor_events:
+		var ids: Dictionary = {}
+		for entry in dialogue.entries:
+			if entry is Dictionary and bool(entry.get("relationship_dedicated", false)) and event_name in (entry.get("events", []) as Array) and "familiar" in (entry.get("relationship_tiers", []) as Array):
+				ids[str(entry.get("id", ""))] = true
+		_expect(ids.size() == 2, "cursor event %s has exactly two familiar-tier dialogue lines" % event_name)
+		dialogue.reset_session()
+		var line := dialogue.select_line({
+			"event": event_name, "relationship_tier": "familiar", "irritation": 60,
+			"mood": "irritated", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+		}, dialogue_now)
+		_expect(not line.is_empty() and ids.has(str(line.get("id", ""))), "cursor event %s selects one of its two lines" % event_name)
+		dialogue_now += 20000.0
+	dialogue.reset_session()
+	var first_priority := dialogue.select_line({
+		"event": "cursor_warning", "relationship_tier": "familiar", "irritation": 60,
+		"mood": "irritated", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+	}, 900000.0)
+	var second_priority := dialogue.select_line({
+		"event": "cursor_warning_second", "relationship_tier": "familiar", "irritation": 60,
+		"mood": "irritated", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+	}, 901000.0, true)
+	_expect(not first_priority.is_empty() and not second_priority.is_empty(), "priority interaction dialogue bypasses the ordinary 12-second cooldown")
+	dialogue.reset_session()
+	var repeated_priority_ok := true
+	for index in range(3):
+		var repeated_line := dialogue.select_line({
+			"event": "cursor_warning", "relationship_tier": "familiar", "irritation": 60,
+			"mood": "irritated", "app_name": "godot.exe", "window_title": "", "time_period": "afternoon",
+		}, 910000.0 + index, true)
+		repeated_priority_ok = repeated_priority_ok and not repeated_line.is_empty()
+	_expect(repeated_priority_ok, "priority feedback wraps its two-line pool instead of being swallowed on the third rapid event")
+
+	# Exercise the real warning -> warning -> direct-confiscation path rather than
+	# merely asking the director to manufacture an intent. This proves the third
+	# provocation really enters the event-triggered absolute-confiscation state.
+	pet.manifest = PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
+	var fake_sprite := FakeCursorSpritePlayer.new()
+	pet.sprite_player = fake_sprite
+	pet.add_child(pet.sprite_player)
+	pet.sfx_player = PetSfxPlayer.new()
+	pet.add_child(pet.sfx_player)
+	pet.behavior_director = director
+	pet.speech_bubbles_enabled = false
+	var fake_desktop := FakeCursorDesktop.new()
+	pet.add_child(fake_desktop)
+	pet.desktop = fake_desktop
+	pet.position = Vector2(100.0, 50.0)
+	var expected_bag_anchor: Vector2 = pet.position + fake_sprite.mapped_texture_point
+	_expect(pet._cursor_bag_anchor().is_equal_approx(expected_bag_anchor) and fake_sprite.last_texture_point.is_equal_approx(Vector2(303.0, 285.0)), "cursor bag anchor resolves the authored bag hit-zone through the active sprite mapping")
+	pet.needs_model.set_need("energy", 40.0)
+	pet.needs_model.set_need("irritation", 55.0)
+	pet.cursor_provocation_stage = 0
+	pet.machine.state = "idle"
+	_expect(pet._handle_cursor_provocation("sweep", "CURSOR_SWEEP", 1000.0) and pet.cursor_provocation_stage == 1 and pet.machine.state == "cursor_warning", "first qualifying gesture enters the warning stage")
+	pet.machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	_expect(pet._handle_cursor_provocation("sweep", "CURSOR_SWEEP", 2000.0) and pet.cursor_provocation_stage == 2 and pet.machine.state == "cursor_warning" and pet.cursor_capture_phase.is_empty(), "second qualifying gesture plays the final warning without starting a chase")
+	pet.machine.dispatch({"type": "INTERACTION_END", "resume": "idle"})
+	fake_desktop.mouse_held = true
+	_expect(pet._handle_cursor_provocation("sweep", "CURSOR_SWEEP", 3000.0) and pet.cursor_provocation_stage == 3 and pet.machine.state == "cursor_confiscate" and pet.cursor_capture_phase == "arming" and pet.cursor_capture_direct and fake_desktop.cursor_visible, "third qualifying gesture enters direct arming without prematurely freezing or hiding the cursor")
+	fake_desktop.escape_pressed = true
+	pet._update_cursor_confiscate(3001.0)
+	_expect(pet.cursor_capture_phase.is_empty() and fake_desktop.cursor_visible and not fake_desktop.capture_active, "Escape safely releases remote confiscation while arming")
+
+	# Every phase that can hide or pin the cursor has a bounded recovery path.
+	fake_desktop.escape_pressed = false
+	fake_desktop.mouse_held = true
+	pet.cursor_capture_phase = "arming"
+	pet.cursor_capture_started_ms = 0.0
+	pet.cursor_capture_anchor = Vector2(320.0, 240.0)
+	pet._update_cursor_confiscate(pet.CURSOR_ARMING_MAX_MS + 1.0)
+	_expect(pet.cursor_capture_phase.is_empty() and fake_desktop.cursor_visible, "a held mouse button cannot stall hidden-cursor arming beyond its timeout")
+	pet.cursor_capture_phase = "release"
+	pet.cursor_capture_started_ms = 0.0
+	pet.cursor_capture_anchor = Vector2(420.0, 260.0)
+	pet.cursor_capture_success = true
+	fake_desktop.cursor_visible = false
+	pet._update_cursor_confiscate(pet.CURSOR_RELEASE_FALLBACK_MS + 1.0)
+	_expect(pet.cursor_capture_phase.is_empty() and fake_desktop.cursor_visible and fake_desktop.cursor_position == Vector2i(roundi(expected_bag_anchor.x), roundi(expected_bag_anchor.y)), "release animation fallback recomputes and restores the cursor at the live bag anchor")
+
+	# Once the hook succeeds, bagging is the only hold presentation: the pointer
+	# is hidden and the one-shot remains on its final frame instead of starting a
+	# repeating guard animation.
+	fake_desktop.mouse_held = false
+	fake_desktop.escape_pressed = false
+	pet.machine.state = "cursor_confiscate"
+	pet.cursor_capture_anchor = Vector2(500.0, 300.0)
+	pet.cursor_capture_phase = "arming"
+	_expect(pet._activate_cursor_capture(10000.0) and pet.cursor_capture_phase == "bagging" and not fake_desktop.cursor_visible and fake_desktop.capture_active, "successful arming hides the cursor only after the absolute hook is active")
+	pet._handle_cursor_confiscate_clip("straighten_bag")
+	_expect(pet.cursor_capture_phase == "hold" and pet.machine.state == "idle" and fake_desktop.capture_active, "bagging completion returns character control to idle while cursor custody continues independently")
+	pet.gaze_engaged = true
+	pet.smoothed_cursor = Vector2(700.0, 400.0)
+	pet.machine.state = "cursor_track"
+	pet._sample_cursor_tracking(11000.0)
+	_expect(not pet.gaze_engaged and pet.smoothed_cursor == null and pet.machine.state == "idle", "hidden cursor custody clears gaze tracking instead of following the synthetic pinned pointer")
+	pet.machine.state = "ambient_action"
+	pet.cursor_capture_started_ms = 10000.0
+	pet.cursor_capture_hold_ms = 30000.0
+	pet._update_cursor_confiscate(20000.0)
+	_expect(pet.machine.state == "ambient_action" and pet.cursor_capture_phase == "hold" and not fake_desktop.cursor_visible, "ordinary character actions continue during the hidden-cursor hold")
+	pet._update_cursor_confiscate(40001.0)
+	_expect(pet.machine.state == "cursor_confiscate" and pet.cursor_capture_phase == "release" and fake_desktop.capture_active and not fake_desktop.cursor_visible and pet.sprite_player.current_clip == "straighten_bag" and pet.sprite_player.last_reverse, "custody timeout pre-empts the current action and starts the reverse bag animation before restoring input")
+	pet._handle_cursor_confiscate_clip("straighten_bag")
+	_expect(pet.cursor_capture_phase.is_empty() and pet.machine.state == "idle" and fake_desktop.cursor_visible and not fake_desktop.capture_active, "reverse bag completion restores the cursor and returns to idle")
+	pet.machine.state = "manual_control"
+	pet.cursor_capture_phase = "hold"
+	_expect(pet._escape_shortcut_target() == "cursor_capture", "Escape prioritizes cursor return when confiscation overlaps a focused mode")
+	pet.cursor_capture_phase = ""
+	_expect(pet._escape_shortcut_target() == "manual_control", "Escape exits manual control when no cursor confiscation is active")
+	pet.machine.state = "idle"
+	_expect(pet._escape_shortcut_target().is_empty(), "Escape has no unrelated action outside confiscation and manual control")
 	pet.free()
 
 func _window_snapshot(handle: int, z_order: int, rect: Rect2i, maximized := false) -> Dictionary:
@@ -2941,6 +3439,49 @@ class FakeEventBridge:
 		stop_calls += 1
 	func set_event_hook_tracked_handles(handles: Array) -> void:
 		pass
+
+
+class FakeCursorDesktop:
+	extends DesktopWindowBridge
+	var cursor_visible := true
+	var cursor_position := Vector2i.ZERO
+	var escape_pressed := false
+	var mouse_held := false
+	var capture_start_succeeds := true
+	var capture_active := false
+	func is_visible() -> bool:
+		return false
+	func get_cursor_position() -> Vector2i:
+		return cursor_position
+	func set_cursor_position(x: int, y: int) -> void:
+		cursor_position = Vector2i(x, y)
+	func set_cursor_visible(visible: bool) -> void:
+		cursor_visible = visible
+	func is_key_pressed(vk: int) -> bool:
+		if vk == 0x1B:
+			return escape_pressed
+		return mouse_held and vk in [0x01, 0x02, 0x04]
+	func start_cursor_capture() -> bool:
+		capture_active = capture_start_succeeds
+		return capture_active
+	func stop_cursor_capture() -> void:
+		capture_active = false
+	func is_cursor_capture_active() -> bool:
+		return capture_active
+
+
+class FakeCursorSpritePlayer:
+	extends PetSpritePlayer
+	var last_reverse := false
+	var mapped_texture_point := Vector2(206.0, 220.0)
+	var last_texture_point := Vector2.ZERO
+	func play_clip(name: String, _restart := true, segment := "", reverse := false) -> void:
+		current_clip = name
+		current_segment = segment
+		last_reverse = reverse
+	func texture_point_to_window(texture_point: Vector2) -> Vector2:
+		last_texture_point = texture_point
+		return mapped_texture_point
 
 
 func _test_ride_feedback() -> void:

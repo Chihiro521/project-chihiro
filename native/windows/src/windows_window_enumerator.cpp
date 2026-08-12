@@ -279,18 +279,68 @@ BOOL CALLBACK collect_window(HWND window, LPARAM user_data) {
 
 // --- Cursor capture (WH_MOUSE_LL) ------------------------------------------
 // Absolute mouse takeover for the cursor-confiscation behavior. The low-level
-// hook is only a conduit: it swallows every mouse event while the atomic
-// `active` flag is set and passes everything through otherwise. That flag is
-// the real gate, so even a forgotten UnhookWindowsHookEx can never lock the
-// user's mouse — the moment active clears, input flows again.
+// hook swallows input, while a tiny transparent topmost window follows the bag
+// anchor and owns WM_SETCURSOR. This prevents an underlying app from redrawing
+// its arrow after ShowCursor(FALSE). `active` remains the real safety gate: the
+// instant it clears, input flows again even before the worker is joined.
+constexpr wchar_t CURSOR_CAPTURE_WINDOW_CLASS[] = L"LittleChihiroCursorCaptureWindow";
+constexpr int CURSOR_CAPTURE_WINDOW_SIZE = 7;
+
 struct CursorCaptureState {
 	std::atomic<bool> active{false};
 	std::atomic<bool> installed{false};
 	std::atomic<DWORD> worker_thread_id{0};
+	std::atomic<HWND> window{nullptr};
+	std::atomic<int32_t> cursor_x{0};
+	std::atomic<int32_t> cursor_y{0};
 	std::thread worker;
 	HHOOK hook = nullptr;
 };
 static CursorCaptureState g_cursor_capture;
+
+LRESULT CALLBACK cursor_capture_window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
+	(void)w_param;
+	(void)l_param;
+	switch (message) {
+		case WM_NCHITTEST:
+			return HTCLIENT;
+		case WM_MOUSEACTIVATE:
+			return MA_NOACTIVATE;
+		case WM_SETCURSOR:
+			if (g_cursor_capture.active.load()) {
+				SetCursor(nullptr);
+				return TRUE;
+			}
+			break;
+		case WM_ERASEBKGND:
+			return 1;
+		case WM_PAINT: {
+			PAINTSTRUCT paint = {};
+			BeginPaint(window, &paint);
+			EndPaint(window, &paint);
+			return 0;
+		}
+		default:
+			break;
+	}
+	return DefWindowProcW(window, message, w_param, l_param);
+}
+
+void move_cursor_capture_window(int32_t x, int32_t y) {
+	HWND window = g_cursor_capture.window.load();
+	if (window == nullptr || !IsWindow(window)) {
+		return;
+	}
+	const int half = CURSOR_CAPTURE_WINDOW_SIZE / 2;
+	SetWindowPos(
+			window,
+			HWND_TOPMOST,
+			x - half,
+			y - half,
+			CURSOR_CAPTURE_WINDOW_SIZE,
+			CURSOR_CAPTURE_WINDOW_SIZE,
+			SWP_NOACTIVATE | SWP_SHOWWINDOW);
+}
 
 LRESULT CALLBACK mouse_hook_proc(int n_code, WPARAM w_param, LPARAM l_param) {
 	if (n_code >= 0 && g_cursor_capture.active.load()) {
@@ -302,16 +352,70 @@ LRESULT CALLBACK mouse_hook_proc(int n_code, WPARAM w_param, LPARAM l_param) {
 
 void cursor_capture_worker() {
 	g_cursor_capture.worker_thread_id = GetCurrentThreadId();
+	// Ensure PostThreadMessage has a queue to target even while this worker is
+	// still creating its native window and hook.
+	MSG queue_message = {};
+	PeekMessageW(&queue_message, nullptr, WM_USER, WM_USER, PM_NOREMOVE);
+
+	HINSTANCE instance = GetModuleHandleW(nullptr);
+	WNDCLASSEXW window_class = {};
+	window_class.cbSize = sizeof(window_class);
+	window_class.lpfnWndProc = cursor_capture_window_proc;
+	window_class.hInstance = instance;
+	window_class.hCursor = nullptr;
+	window_class.hbrBackground = nullptr;
+	window_class.lpszClassName = CURSOR_CAPTURE_WINDOW_CLASS;
+	const ATOM class_atom = RegisterClassExW(&window_class);
+	const bool registered_here = class_atom != 0;
+	if (!registered_here && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+		g_cursor_capture.installed = false;
+		g_cursor_capture.worker_thread_id = 0;
+		return;
+	}
+
+	HWND capture_window = CreateWindowExW(
+			WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED,
+			CURSOR_CAPTURE_WINDOW_CLASS,
+			L"",
+			WS_POPUP,
+			0,
+			0,
+			CURSOR_CAPTURE_WINDOW_SIZE,
+			CURSOR_CAPTURE_WINDOW_SIZE,
+			nullptr,
+			nullptr,
+			instance,
+			nullptr);
+	if (capture_window == nullptr) {
+		if (registered_here) {
+			UnregisterClassW(CURSOR_CAPTURE_WINDOW_CLASS, instance);
+		}
+		g_cursor_capture.installed = false;
+		g_cursor_capture.worker_thread_id = 0;
+		return;
+	}
+	// Uniform alpha 1 keeps the owner window practically invisible while still
+	// participating in hit-testing. Alpha 0 can become click-through on some
+	// Windows builds, which would let an underlying window own WM_SETCURSOR.
+	SetLayeredWindowAttributes(capture_window, 0, 1, LWA_ALPHA);
+	g_cursor_capture.window = capture_window;
+	move_cursor_capture_window(g_cursor_capture.cursor_x.load(), g_cursor_capture.cursor_y.load());
+
 	// lpfn lives in this DLL, which is loaded into the Godot process, so the
 	// hook can be installed with hMod = NULL (the documented in-process form).
 	g_cursor_capture.hook = SetWindowsHookExW(WH_MOUSE_LL, mouse_hook_proc, nullptr, 0);
 	if (g_cursor_capture.hook == nullptr) {
+		g_cursor_capture.window = nullptr;
+		DestroyWindow(capture_window);
+		if (registered_here) {
+			UnregisterClassW(CURSOR_CAPTURE_WINDOW_CLASS, instance);
+		}
 		g_cursor_capture.installed = false;
 		g_cursor_capture.worker_thread_id = 0;
 		return;
 	}
 	g_cursor_capture.installed = true;
-	MSG message;
+	MSG message = {};
 	while (GetMessageW(&message, nullptr, 0, 0) > 0) {
 		if (message.message == WM_APP) {
 			break;
@@ -321,6 +425,11 @@ void cursor_capture_worker() {
 	}
 	UnhookWindowsHookEx(g_cursor_capture.hook);
 	g_cursor_capture.hook = nullptr;
+	g_cursor_capture.window = nullptr;
+	DestroyWindow(capture_window);
+	if (registered_here) {
+		UnregisterClassW(CURSOR_CAPTURE_WINDOW_CLASS, instance);
+	}
 	g_cursor_capture.installed = false;
 }
 
@@ -335,6 +444,7 @@ void shutdown_cursor_capture_worker() {
 	if (g_cursor_capture.worker.joinable()) {
 		g_cursor_capture.worker.join();
 	}
+	g_cursor_capture.window = nullptr;
 	g_cursor_capture.active = false;
 }
 
@@ -655,17 +765,33 @@ void WindowsWindowEnumerator::set_event_hook_tracked_handles(const Array &handle
 }
 
 void WindowsWindowEnumerator::set_cursor_position(int32_t x, int32_t y) const {
+	g_cursor_capture.cursor_x = x;
+	g_cursor_capture.cursor_y = y;
+	if (g_cursor_capture.active.load()) {
+		// Put the native cursor owner under the hotspot before moving the pointer,
+		// so no underlying HWND gets an intervening WM_SETCURSOR opportunity.
+		move_cursor_capture_window(x, y);
+	}
 	SetCursorPos(x, y);
 }
 
 void WindowsWindowEnumerator::set_cursor_visible(bool visible) const {
 	// Force the system cursor's display counter negative/positive. Re-asserting
 	// every frame is the caller's job (other apps may bump the counter back).
+	// SetCursor(nullptr) also updates the currently rendered cursor immediately;
+	// without it some Windows 11 paths kept drawing a pinned arrow until the next
+	// WM_SETCURSOR update even though the display counter was already negative.
 	if (visible) {
 		while (ShowCursor(TRUE) < 0) {
 		}
+		SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)));
 	} else {
 		while (ShowCursor(FALSE) >= 0) {
+		}
+		SetCursor(nullptr);
+		HWND capture_window = g_cursor_capture.window.load();
+		if (g_cursor_capture.active.load() && capture_window != nullptr) {
+			PostMessageW(capture_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(capture_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
 		}
 	}
 }
@@ -682,6 +808,10 @@ bool WindowsWindowEnumerator::start_cursor_capture() {
 		g_cursor_capture.worker.join();
 	}
 	if (!g_cursor_capture.installed.load()) {
+		POINT cursor = {};
+		GetCursorPos(&cursor);
+		g_cursor_capture.cursor_x = cursor.x;
+		g_cursor_capture.cursor_y = cursor.y;
 		g_cursor_capture.worker_thread_id = 0;
 		g_cursor_capture.worker = std::thread(cursor_capture_worker);
 		for (int attempt = 0; attempt < 200 && !g_cursor_capture.installed.load(); ++attempt) {
@@ -692,6 +822,11 @@ bool WindowsWindowEnumerator::start_cursor_capture() {
 		}
 	}
 	g_cursor_capture.active = true;
+	move_cursor_capture_window(g_cursor_capture.cursor_x.load(), g_cursor_capture.cursor_y.load());
+	HWND capture_window = g_cursor_capture.window.load();
+	if (capture_window != nullptr) {
+		PostMessageW(capture_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(capture_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+	}
 	return true;
 }
 

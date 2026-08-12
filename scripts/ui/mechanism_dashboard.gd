@@ -34,6 +34,7 @@ var _relationship_bar: ProgressBar
 var _need_bars: Dictionary = {}
 var _need_values: Dictionary = {}
 var _runtime_values: Dictionary = {}
+var _scheduler_values: Dictionary = {}
 var _environment_values: Dictionary = {}
 var _dialogue_values: Dictionary = {}
 var _persistence_values: Dictionary = {}
@@ -217,24 +218,33 @@ func _build_director_column(parent: HBoxContainer) -> void:
 		["会话阶段", "phase"], ["心情", "mood"], ["抢占优先级", "priority"],
 	], 84.0)
 
-	var candidates := _card(column, "行为评分候选", "显示 16 个行为的实时分数、条件与冷却")
+	var scheduler := _card(column, "自主公平调度", "生态 50% · 行为 35% · 移动 15%")
+	_scheduler_values = _detail_grid(scheduler, [
+		["上次选择", "last"], ["通道债务", "debt"], ["下一保底", "guarantee"],
+		["强制队列", "forced"], ["自主时钟", "clock"],
+	], 76.0)
+
+	var candidates := _card(column, "行为评分候选", "显示 19 个行为的原始/有效分数、等待与门控")
 	candidates.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_candidate_tree = Tree.new()
 	_candidate_tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_candidate_tree.custom_minimum_size.y = 245.0
-	_candidate_tree.columns = 4
+	_candidate_tree.columns = 5
 	_candidate_tree.hide_root = true
 	_candidate_tree.column_titles_visible = true
 	_candidate_tree.set_column_title(0, "行为意图")
-	_candidate_tree.set_column_title(1, "分数")
-	_candidate_tree.set_column_title(2, "状态")
-	_candidate_tree.set_column_title(3, "动画片段")
+	_candidate_tree.set_column_title(1, "原始 → 有效")
+	_candidate_tree.set_column_title(2, "等待")
+	_candidate_tree.set_column_title(3, "状态")
+	_candidate_tree.set_column_title(4, "动画片段")
 	_candidate_tree.set_column_expand(0, true)
 	_candidate_tree.set_column_expand(1, false)
 	_candidate_tree.set_column_expand(2, false)
-	_candidate_tree.set_column_expand(3, true)
-	_candidate_tree.set_column_custom_minimum_width(1, 62)
-	_candidate_tree.set_column_custom_minimum_width(2, 96)
+	_candidate_tree.set_column_expand(3, false)
+	_candidate_tree.set_column_expand(4, true)
+	_candidate_tree.set_column_custom_minimum_width(1, 110)
+	_candidate_tree.set_column_custom_minimum_width(2, 72)
+	_candidate_tree.set_column_custom_minimum_width(3, 96)
 	_candidate_tree.add_theme_font_size_override("font_size", 12)
 	candidates.add_child(_candidate_tree)
 
@@ -311,8 +321,8 @@ func _apply_snapshot(snapshot: Dictionary) -> void:
 	_live_label.add_theme_color_override("font_color", Color("#63d69d"))
 	var needs := _dictionary(snapshot.get("needs", {}))
 	var relationship_tier := str(snapshot.get("relationship_tier", "familiar"))
-	var affection := clampf(float(needs.get("affection", snapshot.get("affection", 40.0))), 0.0, 100.0)
-	_update_relationship(relationship_tier, affection)
+	var affection := clampf(float(needs.get("affection", snapshot.get("affection", 25.0))), 0.0, 100.0)
+	_update_relationship(relationship_tier, affection, _dictionary(snapshot.get("relationship_daily", {})))
 	for need_name in NEED_ORDER:
 		var amount := clampf(float(needs.get(need_name, 0.0)), 0.0, 100.0)
 		(_need_bars[need_name] as ProgressBar).value = amount
@@ -326,6 +336,36 @@ func _apply_snapshot(snapshot: Dictionary) -> void:
 		"phase": _display_or_dash(session.get("phase", "inactive")),
 		"mood": mood_label(str(snapshot.get("mood", "neutral"))),
 		"priority": "%d  ·  %s" % [int(session.get("priority", 0)), priority_label(int(session.get("priority", 0)))],
+	})
+	var scheduler := _dictionary(snapshot.get("autonomy_scheduler", {}))
+	var last_selection := _dictionary(scheduler.get("last_selection", {}))
+	var scheduler_channels := _dictionary(scheduler.get("channels", {}))
+	var debt_parts: Array[String] = []
+	for channel_name in ["ecology", "behavior", "movement"]:
+		var channel := _dictionary(scheduler_channels.get(channel_name, {}))
+		debt_parts.append("%s %d/%d" % [
+			_channel_label(channel_name),
+			int(channel.get("missed_rounds", 0)),
+			int(channel.get("max_missed_rounds", 0)),
+		])
+	var guarantee := _dictionary(scheduler.get("next_guarantee", {}))
+	var forced_ids: Array[String] = []
+	for forced_value in scheduler.get("forced_queue", []):
+		if forced_value is Dictionary:
+			forced_ids.append(str(forced_value.get("id", "")))
+	_set_values(_scheduler_values, {
+		"last": "%s · %s%s" % [
+			_channel_label(str(last_selection.get("channel", ""))),
+			_display_or_dash(last_selection.get("candidate_id", "")),
+			" · 保底" if bool(last_selection.get("forced", false)) else "",
+		],
+		"debt": " · ".join(debt_parts),
+		"guarantee": "无持续可行的特殊行为" if guarantee.is_empty() else "%s · %s" % [
+			str(guarantee.get("id", "")),
+			"下次空闲强制" if bool(guarantee.get("due", false)) else "%.1f 秒后" % (float(guarantee.get("remaining_ms", 0.0)) / 1000.0),
+		],
+		"forced": "空" if forced_ids.is_empty() else " · ".join(forced_ids),
+		"clock": format_duration(float(scheduler.get("clock_ms", 0.0)) / 1000.0),
 	})
 
 	var environment := _dictionary(snapshot.get("environment", {}))
@@ -391,14 +431,18 @@ func _apply_snapshot(snapshot: Dictionary) -> void:
 	_history_snapshot = history_safe_snapshot(snapshot)
 
 
-func _update_relationship(tier: String, affection: float) -> void:
+func _update_relationship(tier: String, affection: float, daily: Dictionary = {}) -> void:
 	_relationship_label.text = "%s  ·  %.1f" % [relationship_label(tier), affection]
 	_relationship_bar.value = affection
 	var next_threshold := next_relationship_threshold(affection)
+	var daily_text := "今日 +%.2f / 3.00  ·  -%.2f / 3.00" % [
+		float(daily.get("positive", 0.0)),
+		float(daily.get("negative", 0.0)),
+	]
 	if affection >= 80.0:
-		_relationship_detail.text = "已进入最高关系阶段；亲密度仍会真实升降。"
+		_relationship_detail.text = "已进入最高关系阶段；亲密度仍会真实升降。\n%s" % daily_text
 	else:
-		_relationship_detail.text = "距离「%s」还差 %.1f" % [relationship_label(relationship_tier_for(next_threshold)), next_threshold - affection]
+		_relationship_detail.text = "距离「%s」还差 %.1f\n%s" % [relationship_label(relationship_tier_for(next_threshold)), next_threshold - affection, daily_text]
 
 
 func _update_flow(snapshot: Dictionary, needs: Dictionary, environment: Dictionary, bubble: Dictionary, persistence: Dictionary) -> void:
@@ -427,9 +471,11 @@ func _update_candidates(value: Variant, current_intent: String) -> void:
 	var signature_parts: Array[String] = [current_intent]
 	for candidate_value in value:
 		if candidate_value is Dictionary:
-			signature_parts.append("%s|%.1f|%s" % [
+			signature_parts.append("%s|%.1f|%.1f|%.0f|%s" % [
 				str(candidate_value.get("id", "")),
 				float(candidate_value.get("score", 0.0)),
+				float(candidate_value.get("scheduler_effective_score", candidate_value.get("score", 0.0))),
+				float(candidate_value.get("scheduler_wait_ms", 0.0)),
 				str(candidate_value.get("status", "")),
 			])
 	var signature := ";".join(signature_parts)
@@ -445,18 +491,19 @@ func _update_candidates(value: Variant, current_intent: String) -> void:
 		var item := _candidate_tree.create_item(root)
 		var intent_id := str(candidate.get("id", "?"))
 		item.set_text(0, ("▶  " if intent_id == current_intent else "") + intent_id)
-		item.set_text(1, "%.2f" % float(candidate.get("score", 0.0)))
-		item.set_text(2, str(candidate.get("status", "")))
-		item.set_text(3, _display_or_dash(candidate.get("clip", "")))
+		item.set_text(1, "%.2f → %.2f" % [float(candidate.get("score", 0.0)), float(candidate.get("scheduler_effective_score", candidate.get("score", 0.0)))])
+		item.set_text(2, "%.1fs" % (float(candidate.get("scheduler_wait_ms", 0.0)) / 1000.0))
+		item.set_text(3, str(candidate.get("status", "")))
+		item.set_text(4, _display_or_dash(candidate.get("clip", "")))
 		var color := Color("#70dca8") if bool(candidate.get("eligible", false)) else Color("#7c8fa2")
 		if not bool(candidate.get("selectable", true)):
 			color = Color("#7fb5e8")
 		if intent_id == current_intent:
 			color = Color("#f0c776")
-		for column in range(4):
+		for column in range(5):
 			item.set_custom_color(column, color)
 			item.set_selectable(column, false)
-		item.set_tooltip_text(0, "%s · %s" % [intent_id, str(candidate.get("status", ""))])
+		item.set_tooltip_text(0, "%s · %s · 通道内落选 %d 轮" % [intent_id, str(candidate.get("status", "")), int(candidate.get("scheduler_missed_rounds", 0))])
 
 
 func _append_timeline(event_text: String) -> void:
@@ -601,6 +648,14 @@ func _join_recent(value: Variant) -> String:
 
 func _on_off(value: Variant) -> String:
 	return "开启" if bool(value) else "关闭"
+
+
+func _channel_label(channel: String) -> String:
+	match channel:
+		"ecology": return "生态"
+		"behavior": return "行为"
+		"movement": return "移动"
+		_: return "尚未选择"
 
 
 static func relationship_label(tier: String) -> String:
