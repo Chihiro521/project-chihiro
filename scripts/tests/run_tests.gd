@@ -2606,6 +2606,12 @@ func _test_window_platforms() -> void:
 	var preserved_platform := preserved_drag.get("platform") as WindowPlatform
 	_expect(str(preserved_drag.get("status", "")) == "moved" and str(preserved_drag.get("reason", "")) == "support_preserved", "an existing rider ignores a front overlay instead of being squeezed off")
 	_expect(preserved_platform.segment_left() == 300 and preserved_platform.segment_right() == 1000, "preserved riding support uses the live HWND full top without publishing it globally")
+	var maximized_cover := [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 0, 1920, 1080), "z_order": 0, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(300, 100, 700, 500), "z_order": 1, "visible": true},
+	]
+	var maximized_rider := tracker.track_platform(ridden, maximized_cover, 400.0, 16.0, true)
+	_expect(str(maximized_rider.get("status", "")) == "occluded" and str(maximized_rider.get("reason", "")) == "occluded", "a maximized window removes private riding support immediately")
 	# A standing point that stays visible while dragging keeps riding (regression
 	# guard: occlusion is about the point, not the motion).
 	var visible_drag := tracker.track_platform(ridden, [
@@ -2631,8 +2637,15 @@ func _test_window_platforms() -> void:
 	_expect(live_tracker.live_top_segment_planes(11, 21, 356.0, covered_live).is_empty(), "a front window covering the whole top edge leaves no live segment")
 	var preserved_live := live_tracker.live_top_segment_planes(11, 21, 356.0, covered_live, true)
 	_expect(preserved_live.size() == 1 and is_equal_approx(float(preserved_live[0].get("left", -1.0)), 0.0) and is_equal_approx(float(preserved_live[0].get("right", -1.0)), 700.0), "an already-standing controlled pet keeps the full live top under screen-edge overlays")
+	_expect(live_tracker.live_top_segment_planes(11, 21, 356.0, maximized_cover, true, 400.0).is_empty(), "a maximized window removes controlled-mode private support at the foot point")
 	var private_support := live_tracker.private_support_platform(11, 21, covered_live)
 	_expect(private_support != null and private_support.segment_left() == 0 and private_support.segment_right() == 700, "manual-control exit can hand an occluded but live HWND back to riding")
+	_expect(live_tracker.private_support_platform(11, 21, maximized_cover, 400.0) == null, "manual-control exit cannot hand off a ledge hidden by a maximized window")
+	var forced_model := ManualControlModelScript.new(Vector2(220.0, -120.0))
+	forced_model._standing_plane_handle = 11
+	forced_model._standing_plane_pid = 21
+	_expect(forced_model.force_platform_loss(500.0, false), "maximized occlusion can force a controlled standing model off its ledge")
+	_expect(forced_model.standing_plane_handle() == 0 and forced_model.subphase == ManualControlModelScript.FALL, "forced controlled-platform loss clears the perch and enters fall immediately")
 	_expect(live_tracker.private_support_platform(11, 21, [
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 1, "visible": false},
 	]) == null, "a hidden standing HWND is not valid private support")

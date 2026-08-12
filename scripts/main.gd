@@ -3814,10 +3814,14 @@ func _update_window_platforms(now: float) -> void:
 			var tracking := window_platform_service.track_platform(standing, null, _pet_foot_global().x, track_elapsed_ms, true)
 			if bool(tracking.get("lost", false)):
 				_on_standing_window_lost(standing, tracking, track_elapsed_ms)
+			elif str(tracking.get("status", "")) == "occluded" and active_platform != null:
+				# A maximized window now covers the ridden contact point. Unlike a
+				# transient overlay, the visible ledge is gone and must drop immediately.
+				_drop_from_platform("occluded")
 			elif active_platform != null:
-				# Existing riders use a private full-width support surface. Snap Assist,
-				# topmost overlays and screen-edge clipping can hide the top visually but
-				# cannot turn that still-live HWND into a collision that pushes her off.
+				# Existing riders may keep a private full-width support through transient
+				# non-maximized overlays and screen-edge clipping. A maximized occluder is
+				# returned as `occluded` above and never reaches this branch.
 				_rider_occlusion_ms = 0.0
 				var prev_rect := standing.rect
 				var fresh := tracking.get("platform") as WindowPlatform
@@ -3844,6 +3848,7 @@ func _update_window_platforms(now: float) -> void:
 				_apply_position()
 			else:
 				_feed_manual_standing_feedback(now, tracking.get("platform") as WindowPlatform)
+	_drop_controlled_platform_if_maximized()
 	_recover_unsupported_grounded_state()
 	if machine.state == "platform_walk" and not platform_walk_motion.is_empty():
 		_update_platform_walk(now)
@@ -3974,6 +3979,23 @@ func _on_standing_window_lost(standing: WindowPlatform, tracking: Dictionary, el
 	})
 	if active_platform != null:
 		_drop_from_platform(str(tracking.get("reason", "missing")))
+
+
+## Manual control and autonomous wall-climb keep their own standing-plane identity
+## inside ManualControlModel. A maximized window covering that exact foot contact is
+## authoritative loss, so bypass the model's transient-query grace as well.
+func _drop_controlled_platform_if_maximized() -> void:
+	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model if machine.state == "manual_control" else null
+	if model == null:
+		return
+	var handle := int(model.standing_plane_handle())
+	if handle == 0:
+		return
+	var pid := int(model.standing_plane_pid())
+	if not window_platform_service.standing_point_occluded_by_maximized(handle, pid, _pet_foot_global().x):
+		return
+	if bool(model.force_platform_loss(_floor_y(), _has_umbrella_family())):
+		_log_ride_drop("drop", {"reason": "maximized_occlusion", "handle": handle, "process_id": pid})
 
 
 func _drop_from_platform(_reason: String) -> void:
@@ -4708,7 +4730,7 @@ func _handoff_manual_platform() -> bool:
 		# The normal platform list contains only visible fragments. Existing support
 		# may be covered by Snap Assist/another top layer, so validate the live HWND
 		# privately before deciding the window actually disappeared.
-		platform = window_platform_service.private_support_platform(handle, pid)
+		platform = window_platform_service.private_support_platform(handle, pid, null, _pet_foot_global().x)
 	if platform == null:
 		return false
 	active_platform = platform
@@ -4845,8 +4867,8 @@ func _live_climb_wall() -> Dictionary:
 
 
 ## Per-frame private support for the window she already stands on in control mode.
-## Its full live top ignores higher overlays and screen-edge clipping; this does
-## not publish hidden geometry as a normal navigation/landing target.
+## It may ignore transient non-maximized overlays and screen-edge clipping, but a
+## maximized window is checked separately and forces platform loss immediately.
 func _live_standing_segments() -> Array:
 	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
 	if model == null:
@@ -4854,7 +4876,9 @@ func _live_standing_segments() -> Array:
 	var handle: int = model.standing_plane_handle()
 	if handle == 0:
 		return []
-	return window_platform_service.live_top_segment_planes(handle, model.standing_plane_pid(), WINDOW_FOOT_OFFSET_Y, null, true)
+	return window_platform_service.live_top_segment_planes(
+		handle, model.standing_plane_pid(), WINDOW_FOOT_OFFSET_Y, null, true, _pet_foot_global().x
+	)
 
 
 ## Per-frame horizontal displacement of the standing window's live rect center —

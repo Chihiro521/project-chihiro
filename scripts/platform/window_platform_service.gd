@@ -370,11 +370,9 @@ static func is_foreground_snapshot_valid(snapshot: Dictionary, self_pid := -1) -
 ## reposition still reads as a teleport. With no timing info (first tick after a
 ## mount) the pet follows rather than dropping on distance alone.
 ##
-## `preserve_support` is the riding contract: once the pet already stands on this
-## HWND, its full live top remains the support even when Snap Assist, a topmost
-## overlay, the screen edge, or another window hides that edge. Occlusion still
-## applies to navigation and pending landings; it must not squeeze an existing
-## rider off the window she is physically attached to.
+## `preserve_support` is the riding contract for transient non-maximized overlays
+## and screen-edge clipping. A maximized window is different: it replaces the
+## visible desktop surface, so a covered standing point loses support immediately.
 func track_platform(current: WindowPlatform, snapshots: Variant = null, standing_x: float = NAN, elapsed_ms: float = -1.0, preserve_support := false) -> Dictionary:
 	if current == null:
 		return _lost_result("invalid_platform")
@@ -392,7 +390,7 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 		return _lost_result("missing")
 	if not is_snapshot_eligible(matching_snapshot, _self_process_id):
 		return _lost_result("filtered", matching_snapshot)
-	if bool(matching_snapshot.get("maximized", false)) and not preserve_support:
+	if bool(matching_snapshot.get("maximized", false)):
 		return _lost_result("maximized", matching_snapshot)
 
 	var next_rect := WindowPlatformData.rect_from_value(matching_snapshot.get("rect", Rect2i()))
@@ -428,7 +426,9 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 			break
 	var support_preserved := false
 	if selected == null:
-		if preserve_support:
+		if preserve_support and not standing_point_occluded_by_maximized(
+			current.handle, current.process_id, expected_x, source_snapshots
+		):
 			# The HWND itself is still live and eligible. Use its complete top edge as
 			# the private riding surface; this surface is never published to the normal
 			# navigation world, so hidden windows cannot become new landing targets.
@@ -459,7 +459,7 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 ## Per-frame top-edge segments for a standing window. `preserve_support` exposes
 ## the complete live top only to the pet already attached to that HWND, mirroring
 ## track_platform's riding contract. Normal callers still receive visible geometry.
-func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapshots: Variant = null, preserve_support := false) -> Array:
+func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapshots: Variant = null, preserve_support := false, standing_x: float = NAN) -> Array:
 	var source_snapshots: Array = _snapshots_for_tracking(handle) if snapshots == null else snapshots
 	var matching_snapshot: Dictionary = {}
 	for value in source_snapshots:
@@ -474,10 +474,12 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		return []
 	if not is_snapshot_eligible(matching_snapshot, _self_process_id):
 		return []
-	if bool(matching_snapshot.get("maximized", false)) and not preserve_support:
+	if bool(matching_snapshot.get("maximized", false)):
 		return []
 	var rect := WindowPlatformData.rect_from_value(matching_snapshot.get("rect", Rect2i()))
 	if preserve_support:
+		if standing_point_occluded_by_maximized(handle, pid, standing_x, source_snapshots):
+			return []
 		return [{
 			"left": float(rect.position.x),
 			"right": float(rect.end.x),
@@ -528,7 +530,7 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 ## an overlay may hide the top without invalidating the existing rider. A closed,
 ## minimized, cloaked, hidden or PID-reused window still returns null, so callers
 ## can distinguish "temporarily covered" from "the support actually vanished".
-func private_support_platform(handle: int, pid: int, snapshots: Variant = null) -> WindowPlatform:
+func private_support_platform(handle: int, pid: int, snapshots: Variant = null, standing_x: float = NAN) -> WindowPlatform:
 	if handle == 0:
 		return null
 	var source_snapshots: Array = _snapshots_for_tracking(handle) if snapshots == null else snapshots
@@ -540,9 +542,48 @@ func private_support_platform(handle: int, pid: int, snapshots: Variant = null) 
 			continue
 		if not is_snapshot_eligible(snapshot, _self_process_id):
 			return null
+		if bool(snapshot.get("maximized", false)):
+			return null
+		if standing_point_occluded_by_maximized(handle, pid, standing_x, source_snapshots):
+			return null
 		var rect := WindowPlatformData.rect_from_value(snapshot.get("rect", Rect2i()))
 		return WindowPlatformData.from_snapshot(snapshot, rect.position.x, rect.end.x)
 	return null
+
+
+## True when a maximized application window covers the exact point where the pet
+## contacts the ridden window's top. Maximized windows are intentional desktop
+## replacements in this world model, regardless of their z value relative to the
+## pet's always-on-top HWND; keeping the old private top here creates ghost support.
+func standing_point_occluded_by_maximized(handle: int, pid: int, standing_x: float, snapshots: Variant = null) -> bool:
+	if handle == 0 or not is_finite(standing_x):
+		return false
+	var source_snapshots: Array = _snapshots_for_tracking(handle) if snapshots == null else snapshots
+	var target_rect := Rect2i()
+	for value in source_snapshots:
+		if not value is Dictionary:
+			continue
+		var snapshot := value as Dictionary
+		if int(snapshot.get("handle", 0)) == handle and int(snapshot.get("process_id", -1)) == pid:
+			target_rect = WindowPlatformData.rect_from_value(snapshot.get("rect", Rect2i()))
+			break
+	if target_rect.size.x <= 0 or target_rect.size.y <= 0:
+		return false
+	var standing_point := Vector2i(roundi(standing_x), target_rect.position.y)
+	for value in source_snapshots:
+		if not value is Dictionary:
+			continue
+		var occluder := value as Dictionary
+		if int(occluder.get("handle", 0)) == handle:
+			continue
+		if not bool(occluder.get("maximized", false)):
+			continue
+		if not is_foreground_snapshot_valid(occluder, _self_process_id):
+			continue
+		var occluder_rect := WindowPlatformData.rect_from_value(occluder.get("rect", Rect2i()))
+		if occluder_rect.has_point(standing_point):
+			return true
+	return false
 
 
 ## Horizontal displacement of the standing window's live rect center relative to the

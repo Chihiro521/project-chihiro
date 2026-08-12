@@ -366,6 +366,27 @@ func standing_plane_pid() -> int:
 	return _standing_plane_pid
 
 
+## A maximized window has replaced the visible ledge under the pet. This is not a
+## transient live-query miss, so skip the normal occlusion grace and begin falling
+## on this tick while preserving the current screen position.
+func force_platform_loss(floor_y: float, umbrella_available: bool) -> bool:
+	if _standing_plane_handle == 0:
+		return false
+	_standing_plane_handle = 0
+	_standing_plane_pid = 0
+	_standing_plane_tracked_handle = 0
+	_standing_plane_prev_center = NAN
+	_standing_plane_prev_span = NAN
+	_standing_plane_gone_ms = 0.0
+	_standing_plane_teleported = false
+	_standing_perch_index = -1
+	_step_off_pending = false
+	_jump_pending = false
+	_init_fall(floor_y, umbrella_available)
+	subphase = FALL
+	return true
+
+
 ## The wall the pet is attached to while climbing (0 when not in the WALL
 ## subphase). Lets the host feed a per-frame live wall so a dragged window carries
 ## the pet smoothly instead of teleporting at the refresh cadence.
