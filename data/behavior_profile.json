@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
   "needs": {
-    "initial": {"energy": 72, "boredom": 20, "curiosity": 35, "irritation": 0, "affection": 25},
+    "initial": {"energy": 100, "boredom": 20, "curiosity": 35, "irritation": 0, "affection": 25},
     "rates_per_minute": {
       "awake": {"energy": -1.2, "boredom": 0.75, "curiosity": -3, "irritation": -5},
+      "resting": {"energy": 8, "boredom": -1.5, "curiosity": -3, "irritation": -7},
       "sleeping": {"energy": 12, "boredom": -1.5, "curiosity": -3, "irritation": -7}
     },
     "event_effects": {
@@ -94,7 +95,7 @@
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 150000,
         "preconditions": {"requires_clips": ["sit_enter", "sit_loop", "sit_exit"], "needs": {"energy": {"max": 58}}, "forbids_any": ["on_platform"]},
         "score_weights": {"base": 28, "needs": {"energy": -0.35, "boredom": 0.05}},
-        "effects": {"energy": 4, "boredom": -2},
+        "effects": {"boredom": -2},
         "session": {"type": "sequence", "enter": "sit_enter", "loop": "sit_loop", "exit": "sit_exit", "max_duration_ms": 22000}
       },
       {
@@ -123,7 +124,7 @@
         "priority": "autonomous", "interrupt_policy": "resume_if_platform_valid", "resume_policy": "platform_valid", "cooldown_ms": 70000,
         "preconditions": {"requires_all": ["has_platform", "on_platform"], "requires_clips": ["window_sit_enter", "window_sit_loop", "window_sit_exit"]},
         "score_weights": {"base": 14, "needs": {"energy": -0.18, "curiosity": 0.1}},
-        "effects": {"energy": 3, "boredom": -4},
+        "effects": {"boredom": -4},
         "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
       },
       {

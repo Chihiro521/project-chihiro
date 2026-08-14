@@ -6,7 +6,7 @@ native Godot runtime — no Electron, no WebView, no Node.js, no Rust.
 一只住在 Windows 桌面上的小桌宠。AI 逐帧作画，Godot 原生运行时，不依赖
 Electron / WebView / Node.js / Rust。
 
-![version](https://img.shields.io/badge/version-v0.21.0--beta.1-blue)
+![version](https://img.shields.io/badge/version-v0.21.0--beta.3-blue)
 ![platform](https://img.shields.io/badge/platform-Windows-blue)
 ![engine](https://img.shields.io/badge/engine-Godot%204.7-478cbf)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -48,7 +48,7 @@ affection` 五项生命状态，自主决定下一步做什么，用 140 条离�
 - Interactions: click, head-pat, poke, drag, brake/reverse, free-fall, umbrella descent
 - Gaze: nine-direction tracking, distance/angle hysteresis, glance reactions
 - Climbing family: A/B wall climbs, ground/wall/balloon flight, root motion fallbacks
-- Five life stats with five relationship tiers; reproducible behavior scoring with dedup, cooldown and preemption
+- Five life stats with five relationship tiers; low energy continuously favors timed sitting rest or sleep
 - 140 offline Chinese speech-bubble lines with privacy filtering
 - 9 CC0 sound effects with independent toggle
 - F10 debug panel; an action browser over 16 daily-behavior families
@@ -61,7 +61,7 @@ affection` 五项生命状态，自主决定下一步做什么，用 140 条离�
 - 交互：点击、摸头、戳脸、拖拽、急停/反向、直坠、持伞缓降
 - 九向注视、距离/角度迟滞、快速扫过与绕圈反应
 - A/B 攀墙家族、地面/墙面/气球飞行、root motion 降级路线
-- 五项生命状态与五档关系；可复现随机种子的行为评分、去重、冷却与抢占
+- 五项生命状态与五档关系；精力越低越倾向按实际时长坐下休息或睡眠
 - 140 条离线中文气泡台词与隐私过滤
 - 9 个 CC0 音效，独立开关
 - F10 调试面板；按 16 个生活行为族浏览全部动作的“动作总览”
@@ -71,20 +71,17 @@ affection` 五项生命状态，自主决定下一步做什么，用 140 条离�
 
 ## Download / 下载
 
-**EN** — The first public release is `v0.21.0-beta.1`. Download
-`LittleChihiroPet-cleanup.exe` from the
-[Releases](https://github.com/Chihiro521/project-chihiro/releases) page and run
-it directly. Build target is Windows x86_64; the window is transparent,
-borderless and always-on-top.
+**EN** — The latest desktop-integration test build is `v0.21.0-beta.3`.
+Download the Windows x86_64 ZIP or `LittleChihiroPet.exe` from the
+[Releases](https://github.com/Chihiro521/project-chihiro/releases) page. The
+window is transparent, borderless and always-on-top.
 
-**中文** — 首个公开发布版为 `v0.21.0-beta.1`。从
+**中文** — 最新桌面生态测试版为 `v0.21.0-beta.3`。从
 [Releases](https://github.com/Chihiro521/project-chihiro/releases) 页下载
-`LittleChihiroPet-cleanup.exe` 直接运行即可。构建目标为 Windows x86_64，
-窗口透明、无边框、置顶。
+Windows x86_64 ZIP 或 `LittleChihiroPet.exe` 即可。窗口透明、无边框、置顶。
 
-> Status: the v0.22 ecology / behavior system is under development on the local
-> line and is not part of this release. Updates are released irregularly.
-> 状态：v0.22 生态 / 行为系统仍在本地开发线中，未包含在本版本内。版本不定期更新。
+> `v0.21.0-beta.3` is a prerelease for the active desktop-integration line.
+> `v0.21.0-beta.3` 是当前桌面生态开发线的测试版本。
 
 ---
 
@@ -123,10 +120,8 @@ Output goes to `build/LittleChihiroPet.exe` with the GDExtension DLL.
 & 'D:\godot\引擎版本\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe' --headless --path 'D:\workspace\project-chihiro' --log-file 'D:\workspace\project-chihiro\godot-tests.log' --script res://scripts/tests/run_tests.gd
 ```
 
-Baseline: `PASS: 361 assertions` — animation resource closure, Texture2D
-loadability, import sidecar parity and A/B patrol fallbacks.
-基线：`PASS: 361 assertions`，覆盖动画资源闭包、Texture2D 可加载性、import
-sidecar 一一对应与 A/B 巡逻降级验证。
+Baseline: `PASS: 1167 assertions` with Godot 4.7.1.
+基线：Godot 4.7.1 自动回归 `PASS: 1167 assertions`。
 
 ---
 

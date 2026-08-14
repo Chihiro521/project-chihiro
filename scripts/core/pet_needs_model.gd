@@ -9,8 +9,9 @@ const RelationshipRules := preload("res://scripts/core/pet_relationship_rules.gd
 const MIN_VALUE := 0.0
 const MAX_VALUE := 100.0
 const NEED_NAMES := ["energy", "boredom", "curiosity", "irritation", "affection"]
+const ACTIVITY_MODES := ["awake", "resting", "sleeping"]
 const DEFAULT_INITIAL := {
-	"energy": 72.0,
+	"energy": 100.0,
 	"boredom": 20.0,
 	"curiosity": 35.0,
 	"irritation": 0.0,
@@ -22,6 +23,12 @@ const DEFAULT_RATES_PER_MINUTE := {
 		"boredom": 0.75,
 		"curiosity": -3.0,
 		"irritation": -5.0,
+	},
+	"resting": {
+		"energy": 8.0,
+		"boredom": -1.5,
+		"curiosity": -3.0,
+		"irritation": -7.0,
 	},
 	"sleeping": {
 		"energy": 12.0,
@@ -93,7 +100,12 @@ func reset_session(persistent_affection: float = -1.0, persistent_relationship_s
 func tick(delta_seconds: float, context: Dictionary = {}) -> bool:
 	if delta_seconds <= 0.0:
 		return false
-	var mode := "sleeping" if bool(context.get("sleeping", false)) else "awake"
+	var mode := str(context.get("activity_mode", "")).strip_edges()
+	if mode.is_empty():
+		# Keep the original boolean context working for older callers and tests.
+		mode = "sleeping" if bool(context.get("sleeping", false)) else "awake"
+	if mode not in ACTIVITY_MODES:
+		mode = "awake"
 	var configured_rates: Variant = _needs_config.get("rates_per_minute", DEFAULT_RATES_PER_MINUTE)
 	var rates_by_mode: Dictionary = configured_rates if configured_rates is Dictionary else DEFAULT_RATES_PER_MINUTE
 	var rates_value: Variant = rates_by_mode.get(mode, DEFAULT_RATES_PER_MINUTE.get(mode, {}))

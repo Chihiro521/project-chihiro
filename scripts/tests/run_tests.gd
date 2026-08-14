@@ -539,10 +539,16 @@ func _test_edge_patrol() -> void:
 func _test_life_model() -> void:
 	var profile := _load_json("res://data/behavior_profile.json")
 	var needs := PetNeedsModel.new(profile)
-	_expect(is_equal_approx(needs.get_need("energy"), 72.0), "life model starts with configured energy")
-	needs.tick(3600.0, {"sleeping": false})
+	_expect(is_equal_approx(needs.get_need("energy"), 100.0), "life model starts each run with full configured energy")
+	needs.tick(6000.0, {"activity_mode": "awake"})
 	_expect(is_equal_approx(needs.get_need("energy"), 0.0), "awake energy clamps at zero")
 	_expect(needs.get_need("boredom") > 20.0, "awake boredom rises")
+	needs.set_need("energy", 20.0)
+	needs.tick(30.0, {"activity_mode": "resting"})
+	_expect(is_equal_approx(needs.get_need("energy"), 24.0), "sitting rest restores eight energy per minute")
+	needs.set_need("energy", 99.0)
+	needs.tick(60.0, {"activity_mode": "resting"})
+	_expect(is_equal_approx(needs.get_need("energy"), 100.0), "timed rest recovery clamps at one hundred")
 	needs.reset_session(40.0)
 	needs.apply_event("rapid_poke")
 	_expect(needs.get_need("irritation") >= 12.0, "rapid poke raises irritation")
@@ -552,7 +558,52 @@ func _test_life_model() -> void:
 	_expect(needs.relationship_tier() == "close", "relationship tier follows affection")
 	needs.set_need("energy", 20.0)
 	needs.tick(300.0, {"sleeping": true})
-	_expect(needs.get_need("energy") > 20.0, "sleep restores energy")
+	_expect(is_equal_approx(needs.get_need("energy"), 80.0), "legacy sleeping context still restores twelve energy per minute")
+	needs.set_need("energy", 12.0)
+	needs.restore_persistent({"energy": 3.0, "affection": 40.0})
+	_expect(is_equal_approx(needs.get_need("energy"), 100.0), "restoring long-term state starts energy full instead of persisting the previous run")
+
+	var pet := preload("res://scripts/main.gd").new()
+	pet.needs_model = needs
+	var sit_intent := {
+		"id": "sit_rest", "clip": "sit_enter", "priority": "autonomous",
+		"session": {"type": "sequence", "enter": "sit_enter", "loop": "sit_loop", "exit": "sit_exit"},
+	}
+	_expect(pet.action_session.begin(sit_intent, 1000), "ground rest session begins")
+	_expect(pet._life_activity_mode() == "awake", "ground rest entry remains an awake phase")
+	pet.action_session.on_clip_finished(1010)
+	_expect(pet._life_activity_mode() == "resting", "ground rest recovers energy only in its loop")
+	pet.action_session.request_finish(1020)
+	_expect(pet._life_activity_mode() == "resting", "pending ground-rest finish keeps recovering until the visual loop seam")
+	pet.action_session.on_loop_boundary(1030)
+	_expect(pet._life_activity_mode() == "awake", "ground rest exit stops timed recovery")
+	pet.action_session.on_clip_finished(1040)
+
+	var window_sit_intent := {
+		"id": "window_sit", "clip": "window_sit_enter", "priority": "autonomous",
+		"session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit"},
+	}
+	_expect(pet.action_session.begin(window_sit_intent, 2000), "window rest session begins")
+	pet.action_session.on_clip_finished(2010)
+	_expect(pet._life_activity_mode() == "resting", "window rest recovers energy in its seated loop")
+	pet.action_session.request_interrupt("dragging", {}, 2020)
+	_expect(pet._life_activity_mode() == "awake", "interrupting window rest stops recovery without a completion grant")
+
+	var nap_intent := {
+		"id": "nap", "clip": "nap_enter", "priority": "autonomous", "interrupt_policy": "wake_then_idle",
+		"session": {"type": "sequence", "enter": "nap_enter", "loop": "nap_loop", "exit": "nap_wake", "interrupt_mode": "wake_then_idle"},
+	}
+	_expect(pet.action_session.begin(nap_intent, 3000), "timed sleep session begins")
+	_expect(pet._life_activity_mode() == "awake", "sleep entry remains an awake phase")
+	pet.action_session.on_clip_finished(3010)
+	_expect(pet._life_activity_mode() == "sleeping", "sleep restores energy only in its loop")
+	pet.needs_model.set_need("energy", 59.9)
+	pet.machine.state = "sleeping"
+	pet._update_life_systems(1.0, 3020.0)
+	_expect(pet.needs_model.get_need("energy") >= 60.0 and pet.action_session.finish_pending(), "sleep reaching sixty waits for the next loop seam before waking")
+	pet.action_session.on_loop_boundary(3030)
+	_expect(pet._life_activity_mode() == "awake" and pet.action_session.current_clip() == "nap_wake", "wake animation stops recovery and preserves the full exit phase")
+	pet.free()
 
 func _test_relationship_progression() -> void:
 	var profile := _load_json("res://data/behavior_profile.json")
@@ -683,15 +734,28 @@ func _test_behavior_director() -> void:
 	var window_sit_session: Dictionary = window_sit_intent.get("session", {})
 	_expect(str(window_sit_session.get("loop", "")) == "window_sit_loop" and str(window_sit_session.get("exit", "")) == "window_sit_exit", "window-seat behavior preserves enter-loop-exit routing")
 	needs.set_need("energy", 50.0)
+	var medium_sit_score := _candidate_score(director.candidate_scores(needs, context, 99895), "sit_rest")
+	var medium_window_sit_score := _candidate_score(director.candidate_scores(needs, platform_context, 99895), "window_sit")
 	var sit_intent := director.create_intent("sit_rest", needs, context, 99900)
 	_expect(str(sit_intent.get("clip", "")) == "sit_enter", "sit-rest behavior enters through the approved descent clip")
 	var sit_session: Dictionary = sit_intent.get("session", {})
 	_expect(str(sit_session.get("loop", "")) == "sit_loop" and str(sit_session.get("exit", "")) == "sit_exit", "sit-rest behavior preserves enter-loop-exit routing")
+	_expect(not (sit_intent.get("effects", {}) as Dictionary).has("energy"), "sit-rest no longer grants a fixed completion energy bonus")
 	needs.set_need("energy", 20.0)
+	var low_candidates := director.candidate_scores(needs, context, 99940)
+	var low_sit_score := _candidate_score(low_candidates, "sit_rest")
+	var low_window_sit_score := _candidate_score(director.candidate_scores(needs, platform_context, 99940), "window_sit")
+	_expect(low_sit_score > medium_sit_score and low_window_sit_score > medium_window_sit_score, "lower energy continuously raises both ground-rest and window-rest scores")
+	_expect(_candidate_score(low_candidates, "breathe_shift") > -INF, "low energy leaves non-rest autonomous behaviors eligible")
 	var nap_intent := director.create_intent("nap", needs, context, 99950)
 	_expect(str(nap_intent.get("clip", "")) == "nap_enter", "nap behavior enters through the approved sleep descent")
 	var nap_session: Dictionary = nap_intent.get("session", {})
 	_expect(str(nap_session.get("loop", "")) == "nap_loop" and str(nap_session.get("exit", "")) == "nap_wake", "nap behavior preserves enter-loop-wake routing")
+	var nap_score_at_twenty := _candidate_score(low_candidates, "nap")
+	needs.set_need("energy", 10.0)
+	_expect(_candidate_score(director.candidate_scores(needs, context, 99945), "nap") > nap_score_at_twenty, "sleep preference rises further as low energy approaches zero")
+	var window_sit_effects: Dictionary = window_sit_intent.get("effects", {})
+	_expect(not window_sit_effects.has("energy"), "window rest no longer grants a fixed completion energy bonus")
 	needs.set_need("energy", 72.0)
 	var selected_ids: Array[String] = []
 	for index in range(8):
@@ -3569,6 +3633,12 @@ func _collect_files_with_suffix(root: String, suffix: String, output: Array[Stri
 				output.append(absolute_path)
 		entry = directory.get_next()
 	directory.list_dir_end()
+
+func _candidate_score(candidates: Array, intent_id: String) -> float:
+	for candidate in candidates:
+		if candidate is Dictionary and str(candidate.get("id", "")) == intent_id:
+			return float(candidate.get("score", 0.0))
+	return -INF
 
 func _expect(condition: bool, message: String) -> void:
 	assertions += 1

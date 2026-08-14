@@ -200,7 +200,7 @@ func _build_needs_column(parent: HBoxContainer) -> void:
 		row.add_child(bar)
 		_need_values[need_name] = value
 		_need_bars[need_name] = bar
-	var rates := _make_label("清醒：精力下降、无聊上升；烦躁与好奇会自行消退。", Color("#71869a"), 12)
+	var rates := _make_label("清醒：精力 -1.2/分钟；坐下休息：+8/分钟；睡眠：+12/分钟。", Color("#71869a"), 12)
 	rates.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	needs.add_child(rates)
 

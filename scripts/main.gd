@@ -986,7 +986,7 @@ func _update_life_systems(delta: float, now: float) -> void:
 	if needs_model == null:
 		return
 	var ecology_delta := ecology_clock.advance(delta)
-	needs_model.tick(ecology_delta, {"sleeping": machine.state == "sleeping"})
+	needs_model.tick(ecology_delta, {"activity_mode": _life_activity_mode()})
 	session_unrecorded_seconds += maxf(0.0, delta)
 	_update_ecology(now)
 	if action_session.is_active():
@@ -1000,6 +1000,17 @@ func _update_life_systems(delta: float, now: float) -> void:
 	if now >= next_life_save:
 		next_life_save = now + LIFE_SAVE_INTERVAL_MS
 		_save_life_state()
+
+func _life_activity_mode() -> String:
+	if not action_session.is_active() or action_session.current_phase() != "loop":
+		return "awake"
+	match action_session.intent_id():
+		"nap":
+			return "sleeping"
+		"sit_rest", "window_sit":
+			return "resting"
+		_:
+			return "awake"
 
 func _update_dialogue_system(now: float) -> void:
 	if not relationship_dialogue_queue.is_empty() and not speech_bubble.is_showing():
