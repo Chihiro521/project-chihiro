@@ -14,6 +14,7 @@ const ACTIVE_STATES := {
 	"manual_control": true, "roam_walk": true,
 	"drag_slide": true, "drag_throw": true, "wall_climb": true,
 	"cursor_play_chase": true, "cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
+	"window_hop_up": true,
 }
 const DIRECT_INTERACTION_STATES := {
 	"idle": true, "notice": true, "cursor_track": true, "cursor_startle": true,
@@ -22,13 +23,14 @@ const DIRECT_INTERACTION_STATES := {
 	"land": true, "head_pat": true, "poke_cheek": true, "clock_scare": true,
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
 	"platform_walk": true, "platform_sit": true, "manual_control": true,
-	"roam_walk": true, "drag_slide": true, "drag_throw": true,
+	"roam_walk": true, "drag_slide": true, "drag_throw": true, "window_hop_up": true,
 }
 const PASSIVE_CURSOR_STATES := {"idle": true, "notice": true, "cursor_track": true}
 const AUTONOMOUS_ACTION_STATES := {
 	"ambient_action": true, "sleeping": true, "platform_transition": true,
 	"platform_walk": true, "platform_sit": true, "roam_walk": true, "wall_climb": true,
 	"cursor_play_chase": true, "cursor_confiscate": true, "icon_collect": true, "icon_transfer": true,
+	"window_hop_up": true,
 }
 
 var state := "boot"

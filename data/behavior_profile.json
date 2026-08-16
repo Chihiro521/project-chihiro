@@ -128,6 +128,17 @@
         "session": {"type": "sequence", "enter": "window_sit_enter", "loop": "window_sit_loop", "exit": "window_sit_exit", "max_duration_ms": 30000}
       },
       {
+        "id": "window_hop_up", "clip": "takeoff", "fallback_clip": "float", "state": "window_hop_up",
+        "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 45000,
+        "preconditions": {
+          "requires_all": ["has_platform", "on_platform", "has_frontmost_upward_window"],
+          "requires_clips": ["patrol_floor_left", "patrol_floor_right", "turn", "takeoff", "float", "land", "window_land_recover"],
+          "needs": {"energy": {"min": 35}}
+        },
+        "score_weights": {"base": 28, "needs": {"boredom": 0.20, "curiosity": 0.35}},
+        "effects": {"boredom": -8, "curiosity": -5, "energy": -6}, "session": {"type": "one_shot", "max_duration_ms": 8000}
+      },
+      {
         "id": "cursor_play_chase", "clip": "patrol_floor_right", "fallback_clip": "patrol_floor_left", "state": "cursor_play_chase",
         "priority": "autonomous", "interrupt_policy": "return_idle", "resume_policy": "never", "cooldown_ms": 60000,
         "preconditions": {

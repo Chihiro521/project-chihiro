@@ -18,6 +18,7 @@ const RoamPlannerScript := preload("res://scripts/core/pet_roam_planner.gd")
 const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd")
 const WindowEventDebouncerScript := preload("res://scripts/core/window_event_debouncer.gd")
 const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
+const WindowHopPlannerScript := preload("res://scripts/core/window_hop_planner.gd")
 const IDLE_BLINK_MIN_MS := 2400.0
 const IDLE_BLINK_MAX_MS := 5200.0
 const IDLE_WANDER_MIN_MS := 15000.0
@@ -72,6 +73,9 @@ const CONTROL_COMBO_MS := 800.0
 const WINDOW_FOOT_OFFSET_X := 180.0
 const WINDOW_FOOT_OFFSET_Y := 356.0
 const WINDOW_HOP_REACH_PX := 120.0
+const WINDOW_HOP_CONSIDER_MIN_MS := 3000.0
+const WINDOW_HOP_CONSIDER_MAX_MS := 8000.0
+const WINDOW_HOP_APPROACH_SPEED_PX_S := 82.0
 ## A window must exist for this long before its top is accepted as a standing
 ## surface, so a freshly-appeared popup (a toast, a tooltip, a splash) is never
 ## stood on. Only the standing list is gated — occlusion and walls always follow
@@ -241,6 +245,14 @@ var desktop_world := DesktopWorld.new()
 var active_platform: WindowPlatform = null
 var pending_platform: WindowPlatform = null
 var platform_walk_motion: Dictionary = {}
+## Independent frontmost-upward presentation behavior. These fields never feed the
+## legacy random platform swap, whose timer/selection/motion remain unchanged.
+var window_hop_candidate: Dictionary = {}
+var window_hop_candidate_since_ms := -1.0
+var window_hop_consider_at_ms := -1.0
+var window_hop_session: Dictionary = {}
+var window_hop_last_reason := ""
+var suspended_window_hop_fall := false
 
 var direction := 1
 var facing := 1
@@ -396,6 +408,14 @@ var icon_collect_icon: Dictionary = {}
 var icon_collect_target := Vector2.ZERO
 var icon_collect_keepsaked := false
 var icon_bag_entries: Array = []
+## Desktop-icon discovery crosses into Explorer and may briefly block the main
+## thread. Refresh it only at an idle boundary; continuous locomotion reuses the
+## most recent pair of gates so flight/wall animation cannot be interrupted by a
+## synchronous ListView scan.
+var desktop_icon_availability_cache := {
+	"has_desktop_icons": false,
+	"has_reachable_icons": false,
+}
 # FIFO of deferred desktop-icon restore tasks. A task:
 #   "refresh": bool        # issue refresh_desktop_icons() before waiting
 #   "refresh_issued": bool # internal
@@ -520,7 +540,9 @@ func _process(delta: float) -> void:
 		if offscreen_marker != null:
 			offscreen_marker.hide()
 	_update_motion(now)
-	if machine.state == "manual_control":
+	if machine.state == "window_hop_up":
+		_update_window_hop(now)
+	elif machine.state == "manual_control":
 		_update_manual_control(delta, now)
 	elif machine.state == "wall_climb":
 		_update_autonomous_climb(delta, now)
@@ -572,6 +594,11 @@ func _process(delta: float) -> void:
 			"relationship_tier": needs_model.relationship_tier() if needs_model != null else "guarded",
 			"scores": behavior_director.last_candidates if behavior_director != null else [],
 			"platform": active_platform.stable_id() if active_platform != null else "",
+			"window_hop": {
+				"phase": str(window_hop_session.get("phase", "")),
+				"target": str(window_hop_session.get("target_identity", window_hop_candidate.get("identity", ""))),
+				"reason": window_hop_last_reason,
+			},
 			"world": {
 				"platforms": platforms.size(),
 				"bodies": window_bodies.size(),
@@ -762,6 +789,7 @@ func _open_context_menu(local_position: Vector2) -> void:
 		_exit_manual_control()
 	if _defer_until_wake("menu", {"position": local_position}):
 		return
+	_interrupt_window_hop_for_overlay("menu")
 	_interrupt_action("menu")
 	menu_resume = _capture_resume_state()
 	machine.dispatch({"type": "MENU_OPEN"})
@@ -1171,6 +1199,7 @@ func _emit_control_quip(event_name: String) -> void:
 	_emit_dialogue(event_name)
 
 func _behavior_context(ignore_runtime_busy := false) -> Dictionary:
+	var icon_availability := _desktop_icon_availability()
 	return {
 		"now_ms": int(_now_ms()),
 		"hour": int(Time.get_datetime_dict_from_system().get("hour", 0)),
@@ -1178,6 +1207,7 @@ func _behavior_context(ignore_runtime_busy := false) -> Dictionary:
 		"available_clips": manifest.animation_names(),
 		"has_platform": not window_platform_service.last_platforms().is_empty(),
 		"on_platform": active_platform != null,
+		"has_frontmost_upward_window": _window_hop_candidate_ready(_now_ms()),
 		"relationship_tier": needs_model.relationship_tier(),
 		"returned_after_seconds": returned_after_seconds,
 		"autonomy_allowed": auto_wander and (ignore_runtime_busy or machine.state == "idle"),
@@ -1190,9 +1220,9 @@ func _behavior_context(ignore_runtime_busy := false) -> Dictionary:
 		"cursor_punishment_ready": _cursor_punishment_ready(),
 		"icon_collection": icon_collection,
 		"cursor_in_reach": _cursor_in_confiscate_reach(),
-		"desktop_listview_available": desktop.desktop_listview_available(),
-		"has_desktop_icons": _desktop_has_collectable_icons(),
-		"has_reachable_icons": _has_reachable_collectable_icon(),
+		"desktop_listview_available": bool(icon_availability.get("desktop_listview_available", false)),
+		"has_desktop_icons": bool(icon_availability.get("has_desktop_icons", false)),
+		"has_reachable_icons": bool(icon_availability.get("has_reachable_icons", false)),
 		"bag_not_full": _bag_carry_count() < ICON_BAG_CAPACITY,
 	}
 
@@ -1617,6 +1647,9 @@ func _mechanism_snapshot(now: float) -> Dictionary:
 			"wall_count": desktop_world.walls.size(),
 			"active_platform": active_platform.stable_id() if active_platform != null else "",
 			"last_lost": last_platform_lost_reason,
+			"window_hop_phase": str(window_hop_session.get("phase", "")),
+			"window_hop_target": str(window_hop_session.get("target_identity", window_hop_candidate.get("identity", ""))),
+			"window_hop_reason": window_hop_last_reason,
 		},
 		"dialogue": {
 			"event_cooldown_seconds": event_cooldown_seconds,
@@ -1651,6 +1684,8 @@ func _start_autonomous_intent(intent: Dictionary) -> bool:
 	# The two desktop-intervention behaviors are bespoke phase machines (they need
 	# real walk/grab clips and real-world effects, not a clip-session envelope).
 	var special_id := str(intent.get("id", ""))
+	if special_id == "window_hop_up":
+		return _begin_window_hop_up(intent)
 	if special_id == "cursor_play_chase":
 		return _begin_cursor_play_chase(intent)
 	if special_id == "cursor_confiscate":
@@ -1713,7 +1748,7 @@ func _play_intent_sfx(intent_id: String) -> void:
 func _machine_state_for_intent(intent: Dictionary) -> String:
 	var intent_id := str(intent.get("id", ""))
 	var configured_state := str(intent.get("state", ""))
-	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_play_chase", "cursor_confiscate", "icon_collect", "icon_transfer"]:
+	if configured_state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit", "cursor_play_chase", "cursor_confiscate", "icon_collect", "icon_transfer", "window_hop_up"]:
 		return configured_state
 	match intent_id:
 		"nap": return "sleeping"
@@ -1770,6 +1805,7 @@ func _dialogue_event_for_intent(intent_id: String) -> String:
 		"window_walk": return "window_walk"
 		"window_sit": return "window_sit"
 		"window_land_recover": return "window_land"
+		"window_hop_up": return ""
 		"cursor_play_chase", "cursor_confiscate":
 			# These states emit dialogue at their phase boundaries so a looped chase,
 			# bag guard, or release cannot emit a second generic line on completion.
@@ -2616,39 +2652,56 @@ func _pick_approach_mode(modes: Array) -> Dictionary:
 			return m
 	return modes[0]
 
-## The visibility gate: at least one un-collected desktop icon is actually drawn
-## on screen. A maximized window covering every icon → false → the behavior never
-## triggers while the player cannot see the icons being taken.
-func _desktop_has_collectable_icons() -> bool:
-	if not desktop.desktop_listview_available():
-		return false
+## Produce both behavior gates from one Explorer snapshot. The old implementation
+## enumerated the same cross-process ListView once for visibility and again for
+## reachability on every autonomy observation. During continuous motion we retain
+## the last idle snapshot: the director may keep observing the same eligibility,
+## but a fresh icon action can only start after idle has refreshed it.
+func _desktop_icon_availability() -> Dictionary:
+	var listview_available := desktop != null and desktop.desktop_listview_available()
+	if not listview_available or not icon_collection or _bag_carry_count() >= ICON_BAG_CAPACITY:
+		desktop_icon_availability_cache = {
+			"has_desktop_icons": false,
+			"has_reachable_icons": false,
+		}
+		return {
+			"desktop_listview_available": listview_available,
+			"has_desktop_icons": false,
+			"has_reachable_icons": false,
+		}
+	if machine.state != "idle":
+		return {
+			"desktop_listview_available": true,
+			"has_desktop_icons": bool(desktop_icon_availability_cache.get("has_desktop_icons", false)),
+			"has_reachable_icons": bool(desktop_icon_availability_cache.get("has_reachable_icons", false)),
+		}
 	var bag_names: Dictionary = {}
 	for entry in icon_bag_entries:
 		bag_names[str(entry.get("name", ""))] = true
+	var has_desktop_icons := false
+	var has_reachable_icons := false
 	for item in desktop.enumerate_desktop_icons():
-		if item is Dictionary and not str(item.get("name", "")).is_empty() and not bag_names.has(str(item.get("name", ""))):
-			var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
-			if _is_icon_visible(icon_pos):
-				return true
-	return false
-
-## The reachability gate: at least one visible, un-collected icon has a viable
-## approach mode. "触发前先确认真的够得着" — advertised to the director as
-## has_reachable_icons so it is an explicit trigger condition.
-func _has_reachable_collectable_icon() -> bool:
-	if not desktop.desktop_listview_available():
-		return false
-	var bag_names: Dictionary = {}
-	for entry in icon_bag_entries:
-		bag_names[str(entry.get("name", ""))] = true
-	for item in desktop.enumerate_desktop_icons():
-		if item is Dictionary and not str(item.get("name", "")).is_empty() and not bag_names.has(str(item.get("name", ""))):
-			var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
-			if not _is_icon_visible(icon_pos):
-				continue
-			if bool(_icon_reach_analysis(icon_pos).get("reachable", false)):
-				return true
-	return false
+		if not item is Dictionary:
+			continue
+		var name := str(item.get("name", ""))
+		if name.is_empty() or bag_names.has(name):
+			continue
+		var icon_pos := Vector2(float(item.get("x", 0.0)), float(item.get("y", 0.0)))
+		if not _is_icon_visible(icon_pos):
+			continue
+		has_desktop_icons = true
+		if bool(_icon_reach_analysis(icon_pos).get("reachable", false)):
+			has_reachable_icons = true
+			break
+	desktop_icon_availability_cache = {
+		"has_desktop_icons": has_desktop_icons,
+		"has_reachable_icons": has_reachable_icons,
+	}
+	return {
+		"desktop_listview_available": true,
+		"has_desktop_icons": has_desktop_icons,
+		"has_reachable_icons": has_reachable_icons,
+	}
 
 func _begin_icon_collection(intent: Dictionary) -> bool:
 	var target := _pick_collectable_icon()
@@ -2864,7 +2917,7 @@ func _finish_special_behavior(intent_id: String, outcome: String) -> void:
 		var dialogue_event := _dialogue_event_for_intent(intent_id)
 		if not dialogue_event.is_empty():
 			_emit_dialogue(dialogue_event)
-	if machine.state in ["cursor_play_chase", "cursor_confiscate", "icon_collect"]:
+	if machine.state in ["cursor_play_chase", "cursor_confiscate", "icon_collect", "window_hop_up"]:
 		machine.dispatch({"type": "ACTION_END"})
 	if routine_session.is_active() and ecology_step_mode == "intent" and not routine_session.is_paused():
 		_complete_ecology_step("completed")
@@ -3496,6 +3549,7 @@ func _on_backpack_visibility_changed() -> void:
 		# A native panel can stay open after its context menu has disappeared. Own
 		# menu_wait for that whole interval so autonomy cannot start behind the panel
 		# and make a visible "要回" button silently fail its idle-only transaction.
+		_interrupt_window_hop_for_overlay("backpack")
 		_interrupt_action("menu")
 		if machine.state != "menu_wait":
 			menu_resume = _capture_resume_state()
@@ -3792,6 +3846,7 @@ func _update_window_platforms(now: float) -> void:
 		window_bodies = window_platform_service.last_bodies()
 		_observe_window_first_seen(now)
 		_flatten_collision_world(now)
+		_refresh_window_hop_candidate(now)
 		for platform in platforms:
 			if not previous_handles.has(platform.handle):
 				needs_model.apply_event("novel_window")
@@ -3819,20 +3874,23 @@ func _update_window_platforms(now: float) -> void:
 		var track_elapsed_ms := now - _last_platform_track_at if _last_platform_track_at > 0.0 else -1.0
 		_last_platform_track_at = now
 		next_platform_track = now + PLATFORM_TRACK_INTERVAL_MS
-		if pending_platform != null:
+		if pending_platform != null and machine.state == "window_hop_up" and not window_hop_session.is_empty():
+			# The dedicated hop owns its target grace/reselection/fallback policy.
+			pass
+		elif pending_platform != null:
 			_track_pending_platform(track_elapsed_ms)
 		else:
 			var tracking := window_platform_service.track_platform(standing, null, _pet_foot_global().x, track_elapsed_ms, true)
 			if bool(tracking.get("lost", false)):
 				_on_standing_window_lost(standing, tracking, track_elapsed_ms)
 			elif str(tracking.get("status", "")) == "occluded" and active_platform != null:
-				# A maximized window now covers the ridden contact point. Unlike a
-				# transient overlay, the visible ledge is gone and must drop immediately.
+				# A maximized window in front of the pet now covers the ridden contact
+				# point. The visible ledge is gone and must drop immediately.
 				_drop_from_platform("occluded")
 			elif active_platform != null:
 				# Existing riders may keep a private full-width support through transient
-				# non-maximized overlays and screen-edge clipping. A maximized occluder is
-				# returned as `occluded` above and never reaches this branch.
+				# overlays behind the pet and screen-edge clipping. A maximized foreground
+				# occluder is returned as `occluded` above and never reaches this branch.
 				_rider_occlusion_ms = 0.0
 				var prev_rect := standing.rect
 				var fresh := tracking.get("platform") as WindowPlatform
@@ -3850,6 +3908,12 @@ func _update_window_platforms(now: float) -> void:
 					if not platform_walk_motion.is_empty():
 						platform_walk_motion.from += window_delta
 						platform_walk_motion.to += window_delta
+					if machine.state == "window_hop_up" and str(window_hop_session.get("phase", "")) == "approach":
+						var hop_walk: Dictionary = window_hop_session.get("walk", {})
+						if not hop_walk.is_empty():
+							hop_walk.from = Vector2(hop_walk.get("from", position)) + window_delta
+							hop_walk.to = Vector2(hop_walk.get("to", position)) + window_delta
+							window_hop_session.walk = hop_walk
 				# Pin the foot with the CURRENT pose's offset, not the standing
 				# constant: riding clips like the window sit keep their feet at a
 				# different supportContactY offset (e.g. ~261 vs 356 for standing).
@@ -3945,6 +4009,566 @@ func _travel_to_platform(platform: WindowPlatform) -> bool:
 	sfx_player.play("window_hop")
 	return true
 
+
+## ---- Frontmost upward-window hop ------------------------------------------
+## This is an independent autonomous presentation session. The legacy random
+## platform swap continues to use choose_nearby_platform/_travel_to_platform.
+
+func _current_window_hop_plan(snapshot_override: Variant = null) -> Dictionary:
+	if active_platform == null:
+		return {"eligible": false, "reason": "no_source"}
+	var screen := habitat_model.screen_for_pet_position(position, Vector2(pet_window_size))
+	var snapshots: Array = snapshot_override if snapshot_override is Array else window_platform_service.last_snapshots()
+	return WindowHopPlannerScript.select_frontmost_target(
+		active_platform,
+		_strict_window_hop_platforms(snapshots),
+		snapshots,
+		window_platform_service.self_process_id(),
+		window_platform_service.self_z_order(),
+		Rect2i(screen),
+		Rect2i(work_area),
+		_pet_foot_global().x,
+	)
+
+
+## New-hop targets use native front-to-back visibility, not beta.4's private
+## standing support. A window may continue supporting the already-mounted pet
+## while still being unsuitable as a newly acquired landing surface.
+func _strict_window_hop_platforms(snapshots: Array) -> Array[WindowPlatform]:
+	return WindowPlatformService.build_platforms(
+		snapshots,
+		window_platform_service.self_process_id(),
+		WindowHopPlannerScript.MIN_VISIBLE_WIDTH_PX,
+		0,
+		false,
+		WindowHopPlannerScript.MAX_WINDOW_AREA_RATIO,
+		Rect2i(work_area),
+		-1,
+	)
+
+
+func _clear_window_hop_candidate() -> void:
+	window_hop_candidate = {}
+	window_hop_candidate_since_ms = -1.0
+	window_hop_consider_at_ms = -1.0
+
+
+## Full window enumeration runs every 500ms. A candidate must remain the same
+## source+target identity for two seconds, then waits a further 3-8 seconds before
+## joining autonomy. Small live rect changes do not restart that stability clock.
+func _refresh_window_hop_candidate(now: float) -> void:
+	if not window_hop_session.is_empty():
+		return
+	if not auto_wander or active_platform == null:
+		_clear_window_hop_candidate()
+		return
+	var plan := _current_window_hop_plan()
+	if not bool(plan.get("eligible", false)):
+		_clear_window_hop_candidate()
+		return
+	var key := "%d:%d>%s" % [active_platform.handle, active_platform.process_id, str(plan.get("identity", ""))]
+	if str(window_hop_candidate.get("candidate_key", "")) != key:
+		window_hop_candidate_since_ms = now
+		window_hop_consider_at_ms = now + WINDOW_STAND_MIN_AGE_MS + randf_range(WINDOW_HOP_CONSIDER_MIN_MS, WINDOW_HOP_CONSIDER_MAX_MS)
+	plan["candidate_key"] = key
+	window_hop_candidate = plan
+	if machine.state == "idle" and window_hop_consider_at_ms >= 0.0:
+		wander_deadline = window_hop_consider_at_ms if wander_deadline < 0.0 else minf(wander_deadline, window_hop_consider_at_ms)
+
+
+func _window_hop_candidate_ready(now: float) -> bool:
+	if not auto_wander or active_platform == null or window_hop_candidate.is_empty():
+		return false
+	if now < window_hop_consider_at_ms or now - window_hop_candidate_since_ms < WINDOW_STAND_MIN_AGE_MS:
+		return false
+	var source: Variant = window_hop_candidate.get("source", null)
+	return (
+		source is WindowPlatform
+		and (source as WindowPlatform).handle == active_platform.handle
+		and (source as WindowPlatform).process_id == active_platform.process_id
+	)
+
+
+func _begin_window_hop_up(intent: Dictionary) -> bool:
+	if machine.state != "idle" or active_platform == null or not _window_hop_candidate_ready(_now_ms()):
+		return false
+	var plan := _current_window_hop_plan()
+	if not bool(plan.get("eligible", false)) or str(plan.get("identity", "")) != str(window_hop_candidate.get("identity", "")):
+		return false
+	var target: Variant = plan.get("platform", null)
+	if not target is WindowPlatform:
+		return false
+	var now := _now_ms()
+	var takeoff_x := float(plan.get("takeoff_x", _pet_foot_global().x))
+	var takeoff_position := _position_for_platform(active_platform, takeoff_x)
+	var configured_max_ms := float((intent.get("session", {}) as Dictionary).get("max_duration_ms", 8000.0))
+	var session_budget_ms := WindowHopPlannerScript.session_budget_ms(
+		configured_max_ms,
+		position.distance_to(takeoff_position),
+		WINDOW_HOP_APPROACH_SPEED_PX_S,
+	)
+	current_intent = intent.duplicate(true)
+	window_hop_last_reason = ""
+	window_hop_session = {
+		"phase": "approach",
+		"source_handle": active_platform.handle,
+		"source_pid": active_platform.process_id,
+		"target_handle": (target as WindowPlatform).handle,
+		"target_pid": (target as WindowPlatform).process_id,
+		"target_identity": str(plan.get("identity", "")),
+		"target": target,
+		"takeoff_x": takeoff_x,
+		"landing_x": float(plan.get("landing_x", (target as WindowPlatform).center().x)),
+		"rise_px": float(plan.get("rise_px", 0.0)),
+		"walk": {},
+		"missing_since_ms": -1.0,
+		"launch_z_missing_since_ms": -1.0,
+		"launch_pending": false,
+		"last_track_at_ms": now,
+		"started_at_ms": now,
+		"deadline_ms": now + session_budget_ms,
+	}
+	if machine.dispatch({"type": "ACTION_START", "state": "window_hop_up"}) != "window_hop_up":
+		current_intent.clear()
+		window_hop_session = {}
+		return false
+	return true
+
+
+func _play_window_hop_approach() -> void:
+	if window_hop_session.is_empty() or active_platform == null:
+		_cancel_window_hop_before_launch("source_missing")
+		return
+	var takeoff_x := float(window_hop_session.get("takeoff_x", _pet_foot_global().x))
+	var target_position := _position_for_platform(active_platform, takeoff_x)
+	var distance := position.distance_to(target_position)
+	if distance <= 6.0:
+		position = target_position
+		_apply_position()
+		window_hop_session.walk = {}
+		_begin_window_hop_turn_or_takeoff()
+		return
+	var foot_x := _pet_foot_global().x
+	var walk_facing := 1 if takeoff_x > foot_x else -1
+	facing = walk_facing
+	window_hop_session.walk = {
+		"from": position,
+		"to": target_position,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(450.0, distance / WINDOW_HOP_APPROACH_SPEED_PX_S * 1000.0),
+	}
+	_set_direction(1)
+	sprite_player.play_clip("patrol_floor_right" if walk_facing > 0 else "patrol_floor_left")
+
+
+func _retarget_window_hop_walk() -> void:
+	if str(window_hop_session.get("phase", "")) != "approach" or active_platform == null:
+		return
+	var takeoff_x := float(window_hop_session.get("takeoff_x", _pet_foot_global().x))
+	var target_position := _position_for_platform(active_platform, takeoff_x)
+	var walk: Dictionary = window_hop_session.get("walk", {})
+	if not walk.is_empty() and Vector2(walk.get("to", target_position)).distance_to(target_position) <= 1.0:
+		return
+	var distance := position.distance_to(target_position)
+	window_hop_session.walk = {
+		"from": position,
+		"to": target_position,
+		"started_at": _now_ms(),
+		"duration_ms": maxf(220.0, distance / WINDOW_HOP_APPROACH_SPEED_PX_S * 1000.0),
+	}
+
+
+func _update_window_hop(now: float) -> void:
+	if window_hop_session.is_empty():
+		return
+	if _window_hop_timeout_check(now):
+		return
+	var phase := str(window_hop_session.get("phase", ""))
+	if phase == "takeoff" and bool(window_hop_session.get("launch_pending", false)):
+		_launch_window_hop()
+		return
+	if phase in ["approach", "turn", "takeoff"]:
+		if not _track_window_hop_target(now, true):
+			return
+		if phase == "approach":
+			_update_window_hop_approach(now)
+	elif phase == "airborne":
+		if not _track_window_hop_target(now, false):
+			return
+		_update_window_hop_airborne(now)
+
+
+func _window_hop_timeout_check(now: float) -> bool:
+	var deadline := float(window_hop_session.get("deadline_ms", INF))
+	if now < deadline:
+		return false
+	var phase := str(window_hop_session.get("phase", ""))
+	match WindowHopPlannerScript.timeout_recovery_for_phase(phase):
+		"fall":
+			_fall_from_window_hop("timeout_airborne")
+		"finish":
+			window_hop_last_reason = "timeout_recover"
+			window_hop_session.last_reason = "timeout_recover"
+			_finish_special_behavior("window_hop_up", "timeout")
+		_:
+			_cancel_window_hop_before_launch("timeout_prelaunch")
+	return true
+
+
+func _tracked_window_hop_alternative(candidates: Array, prelaunch: bool, preferred_x := NAN) -> Dictionary:
+	var best: Dictionary = {}
+	var best_distance := INF
+	var best_horizontal := INF
+	var handle := int(window_hop_session.get("target_handle", 0))
+	var pid := int(window_hop_session.get("target_pid", 0))
+	var preferred := float(window_hop_session.get("landing_x", _pet_foot_global().x)) if not is_finite(preferred_x) else float(preferred_x)
+	for value in candidates:
+		if not value is WindowPlatform:
+			continue
+		var candidate := value as WindowPlatform
+		if candidate.handle != handle or candidate.process_id != pid or candidate.top_edge.size.x < WindowHopPlannerScript.MIN_VISIBLE_WIDTH_PX:
+			continue
+		if prelaunch:
+			var plan := WindowHopPlannerScript.plan_between(active_platform, candidate, _pet_foot_global().x)
+			if not bool(plan.get("eligible", false)):
+				continue
+			var distance := absf(float(plan.get("landing_x", preferred)) - preferred)
+			var horizontal := float(plan.get("horizontal_px", INF))
+			if distance < best_distance or (is_equal_approx(distance, best_distance) and horizontal < best_horizontal):
+				best_distance = distance
+				best_horizontal = horizontal
+				best = plan
+		else:
+			var left := float(candidate.segment_left()) + WindowHopPlannerScript.TARGET_SAFE_MARGIN_PX
+			var right := float(candidate.segment_right()) - WindowHopPlannerScript.TARGET_SAFE_MARGIN_PX
+			if right <= left:
+				continue
+			var landing_x := clampf(preferred, left, right)
+			var distance := absf(landing_x - preferred)
+			if distance < best_distance:
+				best_distance = distance
+				best = {"eligible": true, "platform": candidate, "landing_x": landing_x}
+	return best
+
+
+func _track_window_hop_target(now: float, prelaunch: bool) -> bool:
+	var target: Variant = window_hop_session.get("target", null)
+	if not target is WindowPlatform:
+		if prelaunch: _cancel_window_hop_before_launch("target_missing")
+		else: _fall_from_window_hop("target_missing")
+		return false
+	var previous_track := float(window_hop_session.get("last_track_at_ms", now))
+	var elapsed_ms := maxf(1.0, now - previous_track)
+	window_hop_session.last_track_at_ms = now
+	var landing_x := float(window_hop_session.get("landing_x", (target as WindowPlatform).center().x))
+	var tracking := window_platform_service.track_platform(target as WindowPlatform, null, landing_x, elapsed_ms)
+	var decision := WindowHopPlannerScript.resolve_tracking(
+		tracking,
+		float(window_hop_session.get("missing_since_ms", -1.0)),
+		now,
+	)
+	window_hop_session.missing_since_ms = float(decision.get("missing_since_ms", -1.0))
+	if str(decision.get("status", "")) == "waiting":
+		return true
+
+	if str(decision.get("status", "")) == "failed" and str(decision.get("reason", "")) != "occluded":
+		var reason := str(decision.get("reason", "target_lost"))
+		if prelaunch: _cancel_window_hop_before_launch(reason)
+		else: _fall_from_window_hop(reason)
+		return false
+
+	var delta := Vector2(tracking.get("delta", Vector2i.ZERO))
+	var tracked_preferred := _pet_foot_global().x if prelaunch else landing_x + delta.x
+	var strict_snapshots: Array = tracking.get("snapshots", window_platform_service.last_snapshots())
+	var alternative := _tracked_window_hop_alternative(_strict_window_hop_platforms(strict_snapshots), prelaunch, tracked_preferred)
+	if alternative.is_empty():
+		if prelaunch: _cancel_window_hop_before_launch("target_occluded")
+		else: _fall_from_window_hop("target_occluded")
+		return false
+
+	var fresh: Variant = alternative.get("platform", null)
+	if not fresh is WindowPlatform:
+		if prelaunch: _cancel_window_hop_before_launch("target_fragment_missing")
+		else: _fall_from_window_hop("target_fragment_missing")
+		return false
+	if (fresh as WindowPlatform).handle != int(window_hop_session.get("target_handle", 0)) or (fresh as WindowPlatform).process_id != int(window_hop_session.get("target_pid", 0)):
+		if prelaunch: _cancel_window_hop_before_launch("identity_replaced")
+		else: _fall_from_window_hop("identity_replaced")
+		return false
+
+	if prelaunch:
+		var strict_plan := _current_window_hop_plan()
+		if not bool(strict_plan.get("eligible", false)) or str(strict_plan.get("identity", "")) != str(window_hop_session.get("target_identity", "")):
+			_cancel_window_hop_before_launch("lost_frontmost")
+			return false
+		var plan := alternative if not alternative.is_empty() else WindowHopPlannerScript.plan_between(active_platform, fresh as WindowPlatform, _pet_foot_global().x)
+		if not bool(plan.get("eligible", false)):
+			_cancel_window_hop_before_launch(str(plan.get("reason", "unsafe_target")))
+			return false
+		window_hop_session.target = fresh
+		window_hop_session.takeoff_x = float(plan.get("takeoff_x", window_hop_session.get("takeoff_x", 0.0)))
+		window_hop_session.landing_x = float(plan.get("landing_x", window_hop_session.get("landing_x", 0.0)))
+		window_hop_session.rise_px = float(plan.get("rise_px", window_hop_session.get("rise_px", 0.0)))
+		_retarget_window_hop_walk()
+		return true
+
+	var next_landing_x := float(alternative.get("landing_x", landing_x + delta.x))
+	var safe_left := float((fresh as WindowPlatform).segment_left()) + WindowHopPlannerScript.TARGET_SAFE_MARGIN_PX
+	var safe_right := float((fresh as WindowPlatform).segment_right()) - WindowHopPlannerScript.TARGET_SAFE_MARGIN_PX
+	if safe_right <= safe_left:
+		_fall_from_window_hop("target_too_narrow")
+		return false
+	window_hop_session.target = fresh
+	window_hop_session.landing_x = clampf(next_landing_x, safe_left, safe_right)
+	if not motion.is_empty():
+		motion.to = _position_for_platform(fresh as WindowPlatform, float(window_hop_session.landing_x))
+	return true
+
+
+func _update_window_hop_approach(now: float) -> void:
+	var walk: Dictionary = window_hop_session.get("walk", {})
+	if walk.is_empty():
+		_play_window_hop_approach()
+		return
+	var duration := maxf(1.0, float(walk.get("duration_ms", 1.0)))
+	var progress := clampf((now - float(walk.get("started_at", now))) / duration, 0.0, 1.0)
+	var previous := position
+	var next := Vector2(walk.get("from", position)).lerp(Vector2(walk.get("to", position)), progress)
+	var blocked := _blocked_walk_wall(previous, next)
+	if not blocked.is_empty() and int(blocked.get("handle", 0)) != int(window_hop_session.get("source_handle", 0)):
+		_cancel_window_hop_before_launch("approach_blocked")
+		return
+	position = next
+	_apply_position()
+	if progress >= 1.0:
+		window_hop_session.walk = {}
+		_begin_window_hop_turn_or_takeoff()
+
+
+func _begin_window_hop_turn_or_takeoff() -> void:
+	if window_hop_session.is_empty():
+		return
+	var takeoff_x := float(window_hop_session.get("takeoff_x", _pet_foot_global().x))
+	var landing_x := float(window_hop_session.get("landing_x", takeoff_x))
+	var desired := facing
+	if absf(landing_x - takeoff_x) > 1.0:
+		desired = 1 if landing_x > takeoff_x else -1
+	else:
+		var target: Variant = window_hop_session.get("target", null)
+		if target is WindowPlatform and absf((target as WindowPlatform).center().x - _pet_foot_global().x) > 1.0:
+			desired = 1 if (target as WindowPlatform).center().x > _pet_foot_global().x else -1
+	window_hop_session.desired_facing = desired
+	if desired != facing and manifest.has_clip("turn"):
+		window_hop_session.phase = "turn"
+		pending_facing = desired
+		_set_direction(1)
+		sprite_player.play_clip("turn", true, _facing_segment(desired))
+		return
+	_begin_window_hop_takeoff()
+
+
+func _begin_window_hop_takeoff() -> void:
+	if window_hop_session.is_empty():
+		return
+	window_hop_session.phase = "takeoff"
+	facing = int(window_hop_session.get("desired_facing", facing))
+	_set_direction(1)
+	sprite_player.play_clip("takeoff", true, _facing_segment(facing))
+
+
+func _launch_window_hop() -> void:
+	if window_hop_session.is_empty():
+		return
+	window_hop_session.launch_pending = true
+	var now := _now_ms()
+	if not _track_window_hop_target(now, true) or window_hop_session.is_empty():
+		return
+	# A missing single-HWND sample is still inside its 250ms grace. Hold the final
+	# takeoff frame and retry instead of releasing the known-good source window.
+	if float(window_hop_session.get("missing_since_ms", -1.0)) >= 0.0:
+		return
+	var fresh_snapshots := window_platform_service.fresh_snapshots()
+	if fresh_snapshots.is_empty():
+		var z_decision := WindowHopPlannerScript.resolve_tracking(
+			{"lost": true, "reason": "missing"},
+			float(window_hop_session.get("launch_z_missing_since_ms", -1.0)),
+			now,
+		)
+		window_hop_session.launch_z_missing_since_ms = float(z_decision.get("missing_since_ms", -1.0))
+		if str(z_decision.get("status", "")) == "failed":
+			_cancel_window_hop_before_launch("z_order_query_missing")
+		return
+	window_hop_session.launch_z_missing_since_ms = -1.0
+	var strict_plan := _current_window_hop_plan(fresh_snapshots)
+	if (
+		not bool(strict_plan.get("eligible", false))
+		or str(strict_plan.get("identity", "")) != str(window_hop_session.get("target_identity", ""))
+	):
+		_cancel_window_hop_before_launch("lost_frontmost")
+		return
+	var target: Variant = strict_plan.get("platform", null)
+	if not target is WindowPlatform:
+		_cancel_window_hop_before_launch("target_fragment_missing")
+		return
+	window_hop_session.target = target
+	window_hop_session.takeoff_x = float(strict_plan.get("takeoff_x", window_hop_session.get("takeoff_x", 0.0)))
+	window_hop_session.landing_x = float(strict_plan.get("landing_x", window_hop_session.get("landing_x", 0.0)))
+	window_hop_session.rise_px = float(strict_plan.get("rise_px", window_hop_session.get("rise_px", 0.0)))
+	window_hop_session.launch_pending = false
+	window_hop_session.phase = "airborne"
+	active_platform = null
+	pending_platform = target as WindowPlatform
+	window_hop_session.last_track_at_ms = now
+	window_hop_session.missing_since_ms = -1.0
+	airborne_phase = ""
+	_play_airborne_phase("rise")
+	var landing_x := float(window_hop_session.get("landing_x", (target as WindowPlatform).center().x))
+	var target_position := _position_for_platform(target as WindowPlatform, landing_x)
+	var rise := float(window_hop_session.get("rise_px", 0.0))
+	_prepare_motion(
+		target_position,
+		_travel_duration_ms(position.distance_to(target_position)),
+		clampf(82.0 + rise * 0.5, 82.0, 142.0),
+		false,
+	)
+	sfx_player.play("window_hop")
+
+
+func _window_hop_target_plane(target: WindowPlatform) -> Dictionary:
+	var local_foot := _pet_foot_global(Vector2.ZERO)
+	return {
+		"left": float(target.segment_left()),
+		"right": float(target.segment_right()),
+		"y": float(target.top_edge.position.y) - local_foot.y,
+		"handle": target.handle,
+		"process_id": target.process_id,
+	}
+
+
+func _update_window_hop_airborne(now: float) -> void:
+	if motion.is_empty():
+		_fall_from_window_hop("missing_motion")
+		return
+	var duration := maxf(1.0, float(motion.get("duration_ms", 1.0)))
+	var progress := clampf((now - float(motion.get("started_at", now))) / duration, 0.0, 1.0)
+	_update_airborne_phase(progress)
+	var source := Vector2(motion.get("from", position))
+	var target_position := Vector2(motion.get("to", position))
+	var previous_position := position
+	var next := source.lerp(target_position, progress)
+	next.y -= 4.0 * float(motion.get("arc_height", 0.0)) * progress * (1.0 - progress)
+	var target := window_hop_session.get("target") as WindowPlatform
+	var previous_sweep := Vector2(_pet_foot_global(previous_position).x, previous_position.y)
+	var current_sweep := Vector2(_pet_foot_global(next).x, next.y)
+	var contact := WindowHopPlannerScript.swept_platform_contact(
+		previous_sweep,
+		current_sweep,
+		[_window_hop_target_plane(target)],
+		target.handle,
+		target.process_id,
+	)
+	position = next
+	_apply_position()
+	if not contact.is_empty():
+		_land_window_hop(target, float(contact.get("contact_x", _pet_foot_global().x)))
+		return
+	if progress >= 1.0:
+		_fall_from_window_hop("target_missed")
+
+
+func _land_window_hop(target: WindowPlatform, foot_x: float) -> void:
+	motion.clear()
+	pending_platform = null
+	active_platform = target
+	position = _position_for_platform(target, foot_x)
+	_apply_position()
+	_save_position()
+	window_hop_session.phase = "land"
+	idle_pose_facing = facing
+	_set_direction(1)
+	_play_segment_or_clip("land", _facing_segment(facing))
+	sfx_player.play("land")
+	needs_model.apply_event("novel_window")
+	_emit_dialogue("window_land")
+	_observe_ecology("window_land")
+
+
+func _handle_window_hop_clip_completed(clip_name: String) -> void:
+	var phase := str(window_hop_session.get("phase", ""))
+	if phase == "turn" and clip_name == "turn":
+		_begin_window_hop_takeoff()
+	elif phase == "takeoff" and clip_name == "takeoff":
+		_launch_window_hop()
+	elif phase == "land" and clip_name == "land":
+		window_hop_session.phase = "recover"
+		if manifest.has_clip("window_land_recover"):
+			sprite_player.play_clip("window_land_recover")
+		else:
+			window_hop_session.last_reason = "completed"
+			_finish_special_behavior("window_hop_up", "completed")
+	elif phase == "recover" and clip_name == "window_land_recover":
+		window_hop_session.last_reason = "completed"
+		_finish_special_behavior("window_hop_up", "completed")
+
+
+func _cancel_window_hop_before_launch(reason: String) -> void:
+	if window_hop_session.is_empty():
+		return
+	window_hop_last_reason = reason
+	window_hop_session.last_reason = reason
+	pending_platform = null
+	motion.clear()
+	_finish_special_behavior("window_hop_up", "aborted")
+
+
+func _fall_from_window_hop(reason: String) -> void:
+	if window_hop_session.is_empty():
+		return
+	window_hop_last_reason = reason
+	var horizontal_velocity_ms := 0.0
+	if not motion.is_empty():
+		horizontal_velocity_ms = (float(Vector2(motion.get("to", position)).x) - float(Vector2(motion.get("from", position)).x)) / maxf(1.0, float(motion.get("duration_ms", 1.0)))
+	window_hop_session.falling_out = true
+	window_hop_session.last_reason = reason
+	pending_platform = null
+	active_platform = null
+	current_intent.clear()
+	var projected_x := clampf(horizontal_velocity_ms * 180.0, -180.0, 180.0)
+	var floor_target := _clamp_position(Vector2(position.x + projected_x, _floor_y()), true)
+	var fall_distance := maxf(0.0, floor_target.y - position.y)
+	drag_fall_mode = "umbrella" if PetUmbrellaFall.should_use(fall_distance, _has_umbrella_family()) else "direct"
+	_prepare_motion(floor_target, _fall_duration_ms(fall_distance), 0.0)
+	motion["swept_landing"] = true
+	machine.dispatch({"type": "PLATFORM_LOST"})
+	_emit_dialogue("window_lost")
+
+
+## Modal overlays cancel safely while the source still owns the feet. Once the
+## takeoff clip has released that source they reuse the same swept natural-fall
+## handoff as a disappearing target, so opening UI can never park her in mid-air.
+func _interrupt_window_hop_for_overlay(reason: String) -> bool:
+	if machine.state != "window_hop_up" or window_hop_session.is_empty():
+		return false
+	if str(window_hop_session.get("phase", "")) == "airborne":
+		_fall_from_window_hop(reason)
+		return true
+	_cancel_window_hop_before_launch(reason)
+	return false
+
+
+func _abort_window_hop_session(reason: String, preserve_motion := false) -> void:
+	if not window_hop_session.is_empty() and reason.is_empty():
+		reason = str(window_hop_session.get("last_reason", "interrupted"))
+	if not reason.is_empty() and reason != "completed":
+		window_hop_last_reason = reason
+	window_hop_session = {}
+	pending_platform = null
+	if str(current_intent.get("id", "")) == "window_hop_up":
+		current_intent.clear()
+	if not preserve_motion:
+		motion.clear()
+	airborne_phase = ""
+
 ## Unmounts the pet from whatever window it is standing on (riding platform,
 ## pending travel target, or platform-walk motion) and clears the ride-feedback
 ## session. Every mode that abandons a window — drag, roam, edge patrol, manual
@@ -3993,8 +4617,8 @@ func _on_standing_window_lost(standing: WindowPlatform, tracking: Dictionary, el
 
 
 ## Manual control and autonomous wall-climb keep their own standing-plane identity
-## inside ManualControlModel. A maximized window covering that exact foot contact is
-## authoritative loss, so bypass the model's transient-query grace as well.
+## inside ManualControlModel. A maximized window in front of the pet covering that
+## exact foot contact is authoritative loss, so bypass transient-query grace too.
 func _drop_controlled_platform_if_maximized() -> void:
 	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model if machine.state == "manual_control" else null
 	if model == null:
@@ -4150,12 +4774,20 @@ func _position_for_platform(platform: WindowPlatform, foot_x: float) -> Vector2:
 	var local_foot := _pet_foot_global(Vector2.ZERO)
 	return Vector2(foot_x - local_foot.x, float(platform.top_edge.position.y) - local_foot.y)
 
-func _on_transition(from: String, to: String, _event: Dictionary) -> void:
+func _on_transition(from: String, to: String, event: Dictionary) -> void:
 	# Any state transition plays its own clip, interrupting a ride/window reaction
 	# mid-play. Drop the reaction bookkeeping so a stale flag cannot gate the next
 	# state's clip logic (e.g. manual control's _apply_control_clip yielding).
 	_ride_reaction_active = false
 	_ride_reaction_clip = ""
+	if from == "window_hop_up" and to != "window_hop_up":
+		var preserve_fall_motion := WindowHopPlannerScript.should_preserve_fall_motion(
+			to,
+			event,
+			bool(window_hop_session.get("falling_out", false)),
+			not motion.is_empty(),
+		)
+		_abort_window_hop_session(str(window_hop_session.get("last_reason", "interrupted")), preserve_fall_motion)
 	wander_deadline = -1.0
 	blink_deadline = -1.0
 	idle_side_pose_deadline = -1.0
@@ -4249,6 +4881,8 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 		# The confiscation phase machine starts its own arming/bagging clip after
 		# the state transition; there is no standalone cursor_confiscate clip.
 		pass
+	elif to == "window_hop_up":
+		_play_window_hop_approach()
 	elif to == "cursor_startle":
 		sprite_player.play_clip("react")
 	elif to == "cursor_annoyed":
@@ -4278,6 +4912,9 @@ func _on_transition(from: String, to: String, _event: Dictionary) -> void:
 	if to == "idle": _advance_or_schedule_wander()
 
 func _on_clip_completed(clip_name: String, _segment: String) -> void:
+	if machine.state == "window_hop_up":
+		_handle_window_hop_clip_completed(clip_name)
+		return
 	if machine.state == "cursor_play_chase":
 		_handle_cursor_play_chase_clip(clip_name)
 		return
@@ -4878,8 +5515,8 @@ func _live_climb_wall() -> Dictionary:
 
 
 ## Per-frame private support for the window she already stands on in control mode.
-## It may ignore transient non-maximized overlays and screen-edge clipping, but a
-## maximized window is checked separately and forces platform loss immediately.
+## It may ignore overlays behind the pet and screen-edge clipping, but a maximized
+## foreground window is checked separately and forces platform loss immediately.
 func _live_standing_segments() -> Array:
 	var model: Variant = _climb_model if machine.state == "wall_climb" else manual_control_model
 	if model == null:
@@ -5420,7 +6057,12 @@ func _trigger_idle_blink() -> void:
 
 func _schedule_wander() -> void:
 	if not auto_wander or machine.state != "idle": return
-	wander_deadline = _now_ms() + randf_range(IDLE_WANDER_MIN_MS, IDLE_WANDER_MAX_MS)
+	var now := _now_ms()
+	wander_deadline = now + randf_range(IDLE_WANDER_MIN_MS, IDLE_WANDER_MAX_MS)
+	if not window_hop_candidate.is_empty() and behavior_director != null and behavior_director.cooldown_remaining_ms("window_hop_up", int(now)) <= 0:
+		if window_hop_consider_at_ms <= now:
+			window_hop_consider_at_ms = now + randf_range(WINDOW_HOP_CONSIDER_MIN_MS, WINDOW_HOP_CONSIDER_MAX_MS)
+		wander_deadline = minf(wander_deadline, window_hop_consider_at_ms)
 
 func _autonomy_clock_active() -> bool:
 	if not auto_wander or hidden or suspended or menu.visible or backpack_panel.visible:
@@ -5433,7 +6075,7 @@ func _autonomy_clock_active() -> bool:
 		"menu_wait", "manual_control", "dragged", "drag_fall", "drag_slide", "drag_throw",
 		"head_pat", "poke_cheek", "clock_scare", "react", "notice", "cursor_track",
 		"cursor_startle", "cursor_annoyed", "cursor_dizzy", "cursor_warning",
-		"cursor_confiscate", "icon_transfer",
+		"cursor_confiscate", "icon_transfer", "window_hop_up",
 	]
 
 func _collect_autonomy_channels(ignore_runtime_busy := false) -> Dictionary:
@@ -5838,7 +6480,15 @@ func _update_motion(now: float) -> void:
 	next.x += sway
 	next.y -= 4.0 * float(motion.arc_height) * progress * (1.0 - progress)
 	if pending_platform == null and (machine.state == "drag_fall" or progress >= 0.62):
-		var plane := ManualControlModelScript.land_on_platform(previous_position.y, next.y, _pet_foot_global(next).x, desktop_world.platforms)
+		var plane: Dictionary = {}
+		if bool(motion.get("swept_landing", false)):
+			plane = WindowHopPlannerScript.swept_platform_contact(
+				Vector2(_pet_foot_global(previous_position).x, previous_position.y),
+				Vector2(_pet_foot_global(next).x, next.y),
+				desktop_world.platforms,
+			)
+		else:
+			plane = ManualControlModelScript.land_on_platform(previous_position.y, next.y, _pet_foot_global(next).x, desktop_world.platforms)
 		var landed_platform := _platform_for_identity(int(plane.get("handle", 0)), int(plane.get("process_id", 0))) if not plane.is_empty() else null
 		if landed_platform != null:
 			position = _position_for_platform(landed_platform, _pet_foot_global(next).x)
@@ -6016,8 +6666,10 @@ func _check_system_context() -> void:
 		speech_bubble.hide_message(true)
 		if machine.state == "manual_control":
 			_exit_manual_control()
+		suspended_window_hop_fall = _interrupt_window_hop_for_overlay("fullscreen")
 		_interrupt_action("fullscreen")
-		motion.clear()
+		if not suspended_window_hop_fall:
+			motion.clear()
 		_cancel_edge_patrol()
 		machine.dispatch({"type": "FULLSCREEN_ENTER"})
 		desktop.set_visible(false)
@@ -6026,6 +6678,10 @@ func _check_system_context() -> void:
 		if not hidden:
 			desktop.set_visible(true)
 		machine.dispatch({"type": "FULLSCREEN_EXIT"})
+		if suspended_window_hop_fall and active_platform == null and not motion.is_empty():
+			_rebase_motion()
+			machine.dispatch({"type": "PLATFORM_LOST"})
+		suspended_window_hop_fall = false
 
 func _refresh_habitat_screens() -> void:
 	if habitat_model == null or desktop == null:

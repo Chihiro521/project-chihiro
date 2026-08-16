@@ -44,8 +44,8 @@ var capture_titles := true
 var _native_bridge: Variant = null
 var _self_process_id := -1
 ## The pet's own always-on-top window z-order, the occlusion threshold for standing
-## points: only windows in front of it (z < self_z) or maximized ones truly cover
-## the pet's feet. -1 = unknown → full-occlusion fallback (old behavior).
+## points: only windows in front of it (z < self_z) truly cover the pet's feet.
+## Zero is a valid topmost z-order; -1 means unknown and uses the old fallback.
 var _self_z_order := -1
 var _last_snapshots: Array = []
 var _last_platforms: Array[WindowPlatform] = []
@@ -83,6 +83,13 @@ func self_z_order() -> int:
 ## every ~500ms). Read-only: consumers use them to decide what is on screen.
 func last_snapshots() -> Array:
 	return _last_snapshots.duplicate()
+
+
+## Immediate native z-order sample for launch-time validation. This intentionally
+## does not replace the refresh cache or rebuild collision geometry: callers use
+## it as an authoritative final gate without disturbing the 500ms world cadence.
+func fresh_snapshots() -> Array:
+	return enumerate_snapshots(NATIVE_ENUMERATION_CAP)
 
 
 ## This process's pid, used to exclude the pet's own windows from occlusion tests.
@@ -228,13 +235,10 @@ static func compute_visible_fragments(
 		var fragments: Array[Rect2i] = [rect]
 		for occluder_index in range(index):
 			var occluder: Dictionary = windows[occluder_index]
-			# Standing-point semantics: a window behind the pet (z >= pet_z, non-
-			# maximized) renders under the always-on-top pet and cannot cover its
-			# feet, so it is not an occluder. Maximized windows stay occluders —
-			# the user maximizes to focus, so the pet yields. -1 limit = full
-			# occlusion (navigation world / bridge missing z data).
-			if occluder_z_limit > 0 and int(occluder.get("z_order", 0)) >= occluder_z_limit \
-					and not bool(occluder.get("maximized", false)):
+			# Standing-point semantics: every window behind the always-on-top pet
+			# (z >= pet_z) renders under its feet and cannot occlude them, including
+			# maximized background windows. -1 keeps full navigation-world occlusion.
+			if occluder_z_limit >= 0 and int(occluder.get("z_order", 0)) >= occluder_z_limit:
 				continue
 			var occluder_rect := WindowPlatformData.rect_from_value(occluder.get("rect", Rect2i()))
 			fragments = _subtract_rect(fragments, occluder_rect, maxi(1, min_width))
@@ -370,9 +374,9 @@ static func is_foreground_snapshot_valid(snapshot: Dictionary, self_pid := -1) -
 ## reposition still reads as a teleport. With no timing info (first tick after a
 ## mount) the pet follows rather than dropping on distance alone.
 ##
-## `preserve_support` is the riding contract for transient non-maximized overlays
-## and screen-edge clipping. A maximized window is different: it replaces the
-## visible desktop surface, so a covered standing point loses support immediately.
+## `preserve_support` is the riding contract for transient overlays and screen-edge
+## clipping. A maximized window only removes support when it is actually in front
+## of the always-on-top pet and covers the standing point.
 func track_platform(current: WindowPlatform, snapshots: Variant = null, standing_x: float = NAN, elapsed_ms: float = -1.0, preserve_support := false) -> Dictionary:
 	if current == null:
 		return _lost_result("invalid_platform")
@@ -387,6 +391,9 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 			matching_snapshot = value
 			break
 	if matching_snapshot.is_empty():
+		for value in source_snapshots:
+			if value is Dictionary and int((value as Dictionary).get("handle", 0)) == current.handle:
+				return _lost_result("identity_replaced", value as Dictionary)
 		return _lost_result("missing")
 	if not is_snapshot_eligible(matching_snapshot, _self_process_id):
 		return _lost_result("filtered", matching_snapshot)
@@ -444,6 +451,8 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 				"delta": delta,
 				"platform": current,
 				"snapshot": matching_snapshot,
+				"candidates": candidates,
+				"snapshots": source_snapshots,
 			}
 	var changed := delta != Vector2i.ZERO or next_rect.size != current.rect.size or selected.top_edge != current.top_edge
 	return {
@@ -453,6 +462,8 @@ func track_platform(current: WindowPlatform, snapshots: Variant = null, standing
 		"delta": delta,
 		"platform": selected,
 		"snapshot": matching_snapshot,
+		"candidates": candidates,
+		"snapshots": source_snapshots,
 	}
 
 
@@ -489,10 +500,9 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		}]
 	var target_z := int(matching_snapshot.get("z_order", 0))
 	# Standing-point semantics: a window only occludes the foot if it is in front
-	# of the pet (z < pet_z) or maximized. Windows behind the always-on-top pet
-	# render under it and cannot cover its feet. -1 fallback (bridge lacks pet z)
-	# keeps the old full-occlusion behavior.
-	var occlusion_limit := _self_z_order if _self_z_order > 0 else target_z
+	# of the pet (z < pet_z). Maximized windows behind the always-on-top pet still
+	# render under its feet. -1 fallback keeps the old full-occlusion behavior.
+	var occlusion_limit := _self_z_order if _self_z_order >= 0 else target_z
 	var fragments: Array[Rect2i] = [rect]
 	# Subtract the cached front occluders in the same slab pass the refresh uses
 	# (lower z_order covers, front-to-back), dropping slivers below the min width so
@@ -503,8 +513,7 @@ func live_top_segment_planes(handle: int, pid: int, foot_offset_y: float, snapsh
 		var occluder := value as Dictionary
 		if int(occluder.get("handle", 0)) == handle:
 			continue
-		if int(occluder.get("z_order", 0)) >= occlusion_limit \
-				and not bool(occluder.get("maximized", false)):
+		if int(occluder.get("z_order", 0)) >= occlusion_limit:
 			continue
 		if not is_foreground_snapshot_valid(occluder, _self_process_id):
 			continue
@@ -551,10 +560,9 @@ func private_support_platform(handle: int, pid: int, snapshots: Variant = null, 
 	return null
 
 
-## True when a maximized application window covers the exact point where the pet
-## contacts the ridden window's top. Maximized windows are intentional desktop
-## replacements in this world model, regardless of their z value relative to the
-## pet's always-on-top HWND; keeping the old private top here creates ghost support.
+## True when a maximized application window is actually in front of the pet and
+## covers the exact point where it contacts the ridden window's top. A maximized
+## application behind the always-on-top pet cannot visually cover its feet.
 func standing_point_occluded_by_maximized(handle: int, pid: int, standing_x: float, snapshots: Variant = null) -> bool:
 	if handle == 0 or not is_finite(standing_x):
 		return false
@@ -579,6 +587,8 @@ func standing_point_occluded_by_maximized(handle: int, pid: int, standing_x: flo
 		if not bool(occluder.get("maximized", false)):
 			continue
 		if not is_foreground_snapshot_valid(occluder, _self_process_id):
+			continue
+		if _self_z_order >= 0 and int(occluder.get("z_order", 0)) >= _self_z_order:
 			continue
 		var occluder_rect := WindowPlatformData.rect_from_value(occluder.get("rect", Rect2i()))
 		if occluder_rect.has_point(standing_point):

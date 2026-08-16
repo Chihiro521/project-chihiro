@@ -14,6 +14,7 @@ const PetWallResolverScript := preload("res://scripts/core/pet_wall_resolver.gd"
 const WindowEventDebouncerScript := preload("res://scripts/core/window_event_debouncer.gd")
 const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
 const RelationshipRulesScript := preload("res://scripts/core/pet_relationship_rules.gd")
+const WindowHopPlannerScript := preload("res://scripts/core/window_hop_planner.gd")
 
 const RELATIONSHIP_INTERACTION_EVENTS := [
 	"greeting", "return",
@@ -61,6 +62,7 @@ func _run() -> void:
 	_test_control_and_roam_state()
 	_test_wall_resolver()
 	_test_window_platforms()
+	_test_window_hop_planner()
 	_test_pet_z_occlusion_threshold()
 	_test_icon_visibility_and_reach()
 	_test_cursor_interactions()
@@ -376,6 +378,24 @@ func _test_state_machine() -> void:
 	_expect(machine.dispatch({"type": "PLATFORM_LOST"}) == "drag_fall", "platform loss preempts into fall")
 	_expect(machine.dispatch({"type": "ARRIVE"}) == "land", "platform fall can land")
 	_expect(machine.dispatch({"type": "CLIP_END"}) == "idle", "platform landing returns idle")
+	var hop_machine := PetStateMachine.new()
+	hop_machine.dispatch({"type": "CLIP_END"})
+	_expect(hop_machine.dispatch({"type": "ACTION_START", "state": "window_hop_up"}) == "window_hop_up", "frontmost upward hop has its own autonomous state")
+	_expect(hop_machine.dispatch({"type": "ACTION_END"}) == "idle", "completed upward hop returns idle")
+	hop_machine.dispatch({"type": "ACTION_START", "state": "window_hop_up"})
+	_expect(hop_machine.dispatch({"type": "PLATFORM_LOST"}) == "drag_fall", "upward hop target loss can hand off to physical fall")
+	var dragged_hop := PetStateMachine.new()
+	dragged_hop.dispatch({"type": "CLIP_END"})
+	dragged_hop.dispatch({"type": "ACTION_START", "state": "window_hop_up"})
+	_expect(dragged_hop.dispatch({"type": "DRAG_START"}) == "dragged", "user drag has priority over an active upward hop")
+	var controlled_hop := PetStateMachine.new()
+	controlled_hop.dispatch({"type": "CLIP_END"})
+	controlled_hop.dispatch({"type": "ACTION_START", "state": "window_hop_up"})
+	_expect(controlled_hop.dispatch({"type": "MANUAL_CONTROL_START"}) == "manual_control", "manual control has priority over an active upward hop")
+	var menu_hop := PetStateMachine.new()
+	menu_hop.dispatch({"type": "CLIP_END"})
+	menu_hop.dispatch({"type": "ACTION_START", "state": "window_hop_up"})
+	_expect(menu_hop.dispatch({"type": "MENU_OPEN"}) == "menu_wait", "menu overlay preempts an active upward hop")
 
 func _test_render_box() -> void:
 	var manifest := PetManifestData.load_from_file("res://skins/little-chihiro/pet.json")
@@ -692,7 +712,7 @@ func _test_behavior_director() -> void:
 		"returned_after_seconds": 3600.0,
 	}
 	var diagnostics := director.diagnostic_candidates(needs, context, 89000)
-	_expect(diagnostics.size() == 19, "behavior diagnostics expose all nineteen configured intents")
+	_expect(diagnostics.size() == 20, "behavior diagnostics expose all twenty configured intents")
 	var eligible_diagnostic := false
 	var event_diagnostic := false
 	for diagnostic in diagnostics:
@@ -733,6 +753,12 @@ func _test_behavior_director() -> void:
 	_expect(str(window_sit_intent.get("clip", "")) == "window_sit_enter", "window-seat behavior enters through its approved contact-transfer clip")
 	var window_sit_session: Dictionary = window_sit_intent.get("session", {})
 	_expect(str(window_sit_session.get("loop", "")) == "window_sit_loop" and str(window_sit_session.get("exit", "")) == "window_sit_exit", "window-seat behavior preserves enter-loop-exit routing")
+	var hop_context := platform_context.duplicate(true)
+	hop_context["has_frontmost_upward_window"] = true
+	var hop_intent := director.create_intent("window_hop_up", needs, hop_context, 99910)
+	_expect(str(hop_intent.get("id", "")) == "window_hop_up" and int(hop_intent.get("cooldown_ms", 0)) == 45000, "frontmost upward hop has an independent forty-five-second cooldown")
+	_expect(_candidate_score(director.candidate_scores(needs, platform_context, 99910), "window_hop_up") == -INF, "upward hop stays gated without a stable frontmost target")
+	_expect(_candidate_score(director.candidate_scores(needs, hop_context, 99910), "window_hop_up") > -INF, "stable frontmost target exposes the upward-hop intent")
 	needs.set_need("energy", 50.0)
 	var medium_sit_score := _candidate_score(director.candidate_scores(needs, context, 99895), "sit_rest")
 	var medium_window_sit_score := _candidate_score(director.candidate_scores(needs, platform_context, 99895), "window_sit")
@@ -1138,7 +1164,7 @@ func _test_action_catalog() -> void:
 	var every_behavior_clip_exists := true
 	for clip_name in profile_clip_references.keys():
 		every_behavior_clip_exists = every_behavior_clip_exists and manifest.has_clip(str(clip_name))
-	_expect(profile_clip_references.size() == 28, "behavior profile should expose its complete active clip reference set")
+	_expect(profile_clip_references.size() == 31, "behavior profile should expose its complete active clip reference set")
 	_expect(every_behavior_clip_exists, "behavior profile should reference only manifest clips")
 	var behavior_map := PetActionCatalogPanel.build_behavior_clip_map(profile)
 	_expect(behavior_map.has("idle_breathe") and behavior_map.has("window_sit_loop"), "action browser maps one-shots and sequence loops back to behavior intents")
@@ -2813,10 +2839,144 @@ func _test_window_platforms() -> void:
 			titles_suppressed = false
 	_expect(titles_suppressed, "disabling title awareness prevents native title collection")
 
-## Pet-own-z occlusion threshold: only windows in FRONT of the pet (z < pet_z) or
-## maximized ones occlude a standing point. A window behind the always-on-top pet
-## renders under it and cannot cover its feet, so it must NOT drop the rider — this
-## is the "flash to ground + roam" false-drop fix. -1 fallback keeps old behavior.
+## Pet-own-z occlusion threshold: only windows in FRONT of the pet (z < pet_z)
+## occlude a standing point. Every window behind the always-on-top pet renders
+## under its feet, including maximized windows. -1 fallback keeps old behavior.
+func _test_window_hop_planner() -> void:
+	var source_snapshot := {"handle": 100, "process_id": 10, "rect": Rect2i(100, 300, 500, 400), "z_order": 5, "visible": true}
+	var target_snapshot := {"handle": 200, "process_id": 20, "rect": Rect2i(300, 220, 400, 250), "z_order": 1, "visible": true}
+	var behind_snapshot := {"handle": 300, "process_id": 30, "rect": Rect2i(900, 210, 300, 240), "z_order": 2, "visible": true}
+	var source := WindowPlatform.from_snapshot(source_snapshot, 100, 600)
+	var target := WindowPlatform.from_snapshot(target_snapshot, 300, 700)
+	var behind := WindowPlatform.from_snapshot(behind_snapshot, 900, 1200)
+	var screen := Rect2i(0, 0, 1920, 1080)
+	var selected := WindowHopPlannerScript.select_frontmost_target(
+		source, [target, behind, source], [behind_snapshot, source_snapshot, target_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(bool(selected.get("eligible", false)) and (selected.get("platform") as WindowPlatform).handle == 200, "upward-hop planner follows Windows z-order instead of snapshot input order")
+	_expect(is_equal_approx(float(selected.get("rise_px", 0.0)), 80.0), "upward-hop planner reports the target rise")
+	var unknown_pet_layer := WindowHopPlannerScript.select_frontmost_target(
+		source, [target, source], [target_snapshot, source_snapshot], 999, -1, screen, screen, 500.0,
+	)
+	_expect(str(unknown_pet_layer.get("reason", "")) == "pet_z_unknown", "upward-hop planner waits until the pet's native z-order is known")
+
+	var tool_snapshot := {"handle": 400, "process_id": 40, "rect": Rect2i(0, 180, 260, 180), "z_order": 0, "visible": true, "tool_window": true}
+	var strict_front := WindowHopPlannerScript.select_frontmost_target(
+		source, [target, behind, source], [target_snapshot, tool_snapshot, source_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(not bool(strict_front.get("eligible", false)) and str(strict_front.get("reason", "")) == "frontmost_not_standable", "an unsafe frontmost rendered window blocks fallback to windows behind it")
+	var maximized_snapshot := target_snapshot.duplicate(true)
+	maximized_snapshot["maximized"] = true
+	var maximized_front := WindowHopPlannerScript.select_frontmost_target(
+		source, [target, source], [maximized_snapshot, source_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(str(maximized_front.get("reason", "")) == "frontmost_maximized", "a maximized frontmost window is never an upward-hop target")
+	var ahead_of_pet := target_snapshot.duplicate(true)
+	ahead_of_pet["z_order"] = -1
+	var ahead_result := WindowHopPlannerScript.select_frontmost_target(
+		source, [target, source], [ahead_of_pet, source_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(str(ahead_result.get("reason", "")) == "in_front_of_pet", "a window rendered ahead of the pet cannot become its platform")
+	var huge_snapshot := target_snapshot.duplicate(true)
+	huge_snapshot["rect"] = Rect2i(0, 100, 1800, 900)
+	var huge_platform := WindowPlatform.from_snapshot(huge_snapshot, 0, 1800)
+	var huge_result := WindowHopPlannerScript.select_frontmost_target(
+		source, [huge_platform, source], [huge_snapshot, source_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(str(huge_result.get("reason", "")) == "frontmost_too_large", "a window covering over seventy percent of the work area is not a small-window target")
+
+	var left_fragment := WindowPlatform.from_snapshot(target_snapshot, 300, 460)
+	var right_fragment := WindowPlatform.from_snapshot(target_snapshot, 600, 900)
+	var fragmented := WindowHopPlannerScript.select_frontmost_target(
+		source, [left_fragment, right_fragment, source], [target_snapshot, source_snapshot], 999, 0, screen, screen, 720.0,
+	)
+	_expect((fragmented.get("platform") as WindowPlatform).segment_left() == 600, "multiple visible top fragments choose the closest safe landing interval")
+	var clipped_snapshot := target_snapshot.duplicate(true)
+	clipped_snapshot["rect"] = Rect2i(1761, 220, 298, 250)
+	var clipped_platform := WindowPlatform.from_snapshot(clipped_snapshot, 1761, 2059)
+	var clipped_result := WindowHopPlannerScript.select_frontmost_target(
+		source, [clipped_platform, source], [clipped_snapshot, source_snapshot], 999, 0, screen, screen, 500.0,
+	)
+	_expect(str(clipped_result.get("reason", "")) == "no_safe_visible_top", "less than 160 on-screen pixels of top edge cannot become a landing target")
+
+	var covering_tool := {"handle": 401, "process_id": 40, "rect": Rect2i(250, 180, 600, 300), "z_order": 0, "visible": true, "tool_window": true}
+	var fully_covered_target := {"handle": 402, "process_id": 42, "rect": Rect2i(300, 220, 400, 250), "z_order": 1, "visible": true}
+	var strict_surfaces := WindowPlatformService.build_platforms([covering_tool, fully_covered_target], 999, 160, 0, false, 0.0, screen, -1)
+	var private_support_surfaces := WindowPlatformService.build_platforms([covering_tool, fully_covered_target], 999, 160, 0, false, 0.0, screen, 0)
+	var strict_has_target := false
+	var private_has_target := false
+	for platform in strict_surfaces:
+		strict_has_target = strict_has_target or platform.handle == 402
+	for platform in private_support_surfaces:
+		private_has_target = private_has_target or platform.handle == 402
+	_expect(not strict_has_target and private_has_target, "new-hop acquisition uses strict native occlusion while an existing private support may remain mounted")
+
+	var min_rise_target := WindowPlatform.from_snapshot({"handle": 201, "process_id": 20, "rect": Rect2i(300, 284, 400, 250), "z_order": 1, "visible": true}, 300, 700)
+	var max_rise_target := WindowPlatform.from_snapshot({"handle": 202, "process_id": 20, "rect": Rect2i(300, 180, 400, 250), "z_order": 1, "visible": true}, 300, 700)
+	var too_high_target := WindowPlatform.from_snapshot({"handle": 203, "process_id": 20, "rect": Rect2i(300, 179, 400, 250), "z_order": 1, "visible": true}, 300, 700)
+	_expect(bool(WindowHopPlannerScript.plan_between(source, min_rise_target, 500.0).get("eligible", false)), "sixteen-pixel upward rise is accepted")
+	_expect(bool(WindowHopPlannerScript.plan_between(source, max_rise_target, 500.0).get("eligible", false)), "one-hundred-twenty-pixel upward rise is accepted")
+	_expect(not bool(WindowHopPlannerScript.plan_between(source, too_high_target, 500.0).get("eligible", false)), "a rise above one-hundred-twenty pixels is rejected")
+	var distance_900 := WindowPlatform.from_snapshot({"handle": 204, "process_id": 20, "rect": Rect2i(1098, 220, 300, 250), "z_order": 1, "visible": true}, 1098, 1398)
+	var distance_901 := WindowPlatform.from_snapshot({"handle": 205, "process_id": 20, "rect": Rect2i(1099, 220, 300, 250), "z_order": 1, "visible": true}, 1099, 1399)
+	var narrow_source := WindowPlatform.from_snapshot({"handle": 101, "process_id": 10, "rect": Rect2i(0, 300, 300, 400), "z_order": 5, "visible": true}, 0, 300)
+	_expect(bool(WindowHopPlannerScript.plan_between(narrow_source, distance_900, 150.0).get("eligible", false)), "nine-hundred-pixel horizontal jump is accepted")
+	_expect(not bool(WindowHopPlannerScript.plan_between(narrow_source, distance_901, 150.0).get("eligible", false)), "a horizontal jump beyond nine hundred pixels is rejected")
+	var long_approach_budget := WindowHopPlannerScript.session_budget_ms(8000.0, 900.0, 82.0)
+	_expect(long_approach_budget > 18000.0, "hop timeout budget includes the full walk to a distant takeoff point")
+	_expect(WindowHopPlannerScript.timeout_recovery_for_phase("takeoff") == "cancel", "a prelaunch timeout keeps the source platform")
+	_expect(WindowHopPlannerScript.timeout_recovery_for_phase("airborne") == "fall", "an airborne timeout becomes a natural fall")
+	_expect(WindowHopPlannerScript.timeout_recovery_for_phase("recover") == "finish", "a recovery timeout keeps the already-landed target platform")
+	_expect(WindowHopPlannerScript.should_preserve_fall_motion("drag_fall", {"type": "PLATFORM_LOST"}, false, true), "source loss preserves the fall motion prepared before the transition")
+	_expect(not WindowHopPlannerScript.should_preserve_fall_motion("drag_fall", {"type": "ACTION_END"}, false, true), "an unrelated transition cannot preserve a stale hop arc")
+
+	var first_missing := WindowHopPlannerScript.resolve_tracking({"lost": true, "reason": "missing"}, -1.0, 1000.0)
+	var grace_missing := WindowHopPlannerScript.resolve_tracking({"lost": true, "reason": "missing"}, float(first_missing.get("missing_since_ms", -1.0)), 1249.0)
+	var expired_missing := WindowHopPlannerScript.resolve_tracking({"lost": true, "reason": "missing"}, float(first_missing.get("missing_since_ms", -1.0)), 1250.0)
+	_expect(str(first_missing.get("status", "")) == "waiting" and str(grace_missing.get("status", "")) == "waiting", "ambiguous target loss receives a 250ms grace window")
+	_expect(str(expired_missing.get("status", "")) == "failed", "missing target fails when the 250ms grace expires")
+	_expect(str(WindowHopPlannerScript.resolve_tracking({"lost": true, "reason": "maximized"}, -1.0, 1000.0).get("status", "")) == "failed", "explicit target invalidation bypasses missing-query grace")
+	_expect(str(WindowHopPlannerScript.resolve_tracking({"lost": false, "status": "occluded"}, -1.0, 1000.0).get("status", "")) == "failed", "a fully occluded landing fragment fails immediately")
+
+	var diagonal_contact := WindowHopPlannerScript.swept_platform_contact(
+		Vector2(100, 0), Vector2(300, 100),
+		[{"left": 190.0, "right": 210.0, "y": 50.0, "handle": 200, "process_id": 20}],
+		200, 20,
+	)
+	_expect(not diagonal_contact.is_empty() and is_equal_approx(float(diagonal_contact.get("contact_x", 0.0)), 200.0), "swept landing catches a narrow platform crossed during a long diagonal frame")
+	var first_contact := WindowHopPlannerScript.swept_platform_contact(
+		Vector2(200, 0), Vector2(200, 100),
+		[
+			{"left": 100.0, "right": 300.0, "y": 70.0, "handle": 2, "process_id": 2},
+			{"left": 100.0, "right": 300.0, "y": 40.0, "handle": 1, "process_id": 1},
+		],
+	)
+	_expect(int(first_contact.get("handle", 0)) == 1, "swept fallback lands on the first valid lower platform")
+
+	var tracker := WindowPlatformService.new()
+	tracker.set_native_bridge(null)
+	var replaced := tracker.track_platform(target, [
+		{"handle": target.handle, "process_id": 9999, "rect": target.rect, "z_order": target.z_order, "visible": true},
+	], target.center().x, 16.0)
+	_expect(bool(replaced.get("lost", false)) and str(replaced.get("reason", "")) == "identity_replaced", "reused HWND with a different PID invalidates the locked hop target")
+
+	var newly_frontmost := {"handle": 400, "process_id": 40, "rect": Rect2i(720, 210, 300, 240), "z_order": 0, "visible": true}
+	var launch_snapshots := [newly_frontmost, target_snapshot, source_snapshot]
+	var launch_platforms := WindowPlatformService.build_platforms(launch_snapshots, 999, 160, 0, false, 0.7, screen, -1)
+	var launch_plan := WindowHopPlannerScript.select_frontmost_target(
+		source, launch_platforms, launch_snapshots, 999, 0, screen, screen, 500.0,
+	)
+	_expect(str(launch_plan.get("identity", "")) == "400:40" and str(launch_plan.get("identity", "")) != str(selected.get("identity", "")), "a fresh launch-time z-order sample detects a newly frontmost window")
+	var fresh_bridge := FakeFreshEnumerationBridge.new()
+	fresh_bridge.snapshots = launch_snapshots
+	var fresh_service := WindowPlatformService.new()
+	fresh_service.set_native_bridge(fresh_bridge)
+	fresh_service._last_snapshots = [target_snapshot, source_snapshot]
+	var launch_fresh := fresh_service.fresh_snapshots()
+	_expect(fresh_bridge.enumerate_calls == 1 and int((launch_fresh[0] as Dictionary).get("handle", 0)) == 400, "launch validation performs a new native enumeration")
+	_expect(int((fresh_service.last_snapshots()[0] as Dictionary).get("handle", 0)) == 200, "launch validation does not disturb the collision refresh cache")
+
+
 func _test_pet_z_occlusion_threshold() -> void:
 	var tracker := WindowPlatformService.new()
 	tracker.set_native_bridge(null)
@@ -2836,14 +2996,27 @@ func _test_pet_z_occlusion_threshold() -> void:
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
 	], 300.0)
 	_expect(not bool(in_front.get("lost", false)) and str(in_front.get("status", "")) == "occluded", "a window in front of the pet still occludes the standing point")
-	# 3. Maximized window behind the pet (z=60, maximized): the user maximizes to
-	# focus, so the pet yields — still occluded.
-	var maximized := tracker.track_platform(ridden, [
+	# 3. A maximized window behind the pet is still visually underneath its feet.
+	var maximized_behind := tracker.track_platform(ridden, [
 		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "maximized": true},
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
 	], 300.0)
-	_expect(not bool(maximized.get("lost", false)) and str(maximized.get("status", "")) == "occluded", "a maximized window behind the pet still occludes (maximized exception)")
-	# 4. Tool/owned window behind the pet (the `platforms=0 bodies=1` log signature):
+	_expect(not bool(maximized_behind.get("lost", false)) and str(maximized_behind.get("status", "")) != "occluded", "a maximized window behind the pet does not occlude the standing point")
+	_expect(not tracker.standing_point_occluded_by_maximized(11, 21, 300.0, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	]), "private riding support ignores a maximized window behind the pet")
+	# 4. A maximized window genuinely in front of the pet still removes support.
+	var maximized_in_front := tracker.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 40, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(not bool(maximized_in_front.get("lost", false)) and str(maximized_in_front.get("status", "")) == "occluded", "a maximized window in front of the pet occludes the standing point")
+	_expect(tracker.standing_point_occluded_by_maximized(11, 21, 300.0, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 40, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	]), "private riding support rejects a maximized window in front of the pet")
+	# 5. Tool/owned window behind the pet (the `platforms=0 bodies=1` log signature):
 	# tool windows are ineligible as sources but were occluders under the old standing
 	# window z threshold; behind the pet they no longer trigger a false drop.
 	var tool_behind := tracker.track_platform(ridden, [
@@ -2851,8 +3024,7 @@ func _test_pet_z_occlusion_threshold() -> void:
 		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
 	], 300.0)
 	_expect(not bool(tool_behind.get("lost", false)) and str(tool_behind.get("status", "")) != "occluded", "a tool window behind the pet does not occlude the standing point (false-drop signature)")
-	# 5. live_top_segment_planes: a behind-pet normal window keeps the plane; a
-	# behind-pet maximized window removes it.
+	# 6. live_top_segment_planes applies the same threshold to maximized windows.
 	var live_tracker := WindowPlatformService.new()
 	live_tracker.set_native_bridge(null)
 	live_tracker._self_z_order = 50
@@ -2862,12 +3034,26 @@ func _test_pet_z_occlusion_threshold() -> void:
 		standing,
 	])
 	_expect(live_planes.size() == 1 and is_equal_approx(float(live_planes[0].get("left", -1.0)), 0.0) and is_equal_approx(float(live_planes[0].get("right", -1.0)), 700.0), "a behind-pet window leaves the live top segment intact")
-	var live_maximized := live_tracker.live_top_segment_planes(11, 21, 356.0, [
+	var live_maximized_behind := live_tracker.live_top_segment_planes(11, 21, 356.0, [
 		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 60, "visible": true, "maximized": true},
 		standing,
-	])
-	_expect(live_maximized.is_empty(), "a behind-pet maximized window removes the live top segment")
-	# 6. Fallback: _self_z_order = -1 (no bridge z data) keeps the old full-occlusion
+	], true, 300.0)
+	_expect(live_maximized_behind.size() == 1, "a behind-pet maximized window leaves the live top segment intact")
+	var live_maximized_in_front := live_tracker.live_top_segment_planes(11, 21, 356.0, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 40, "visible": true, "maximized": true},
+		standing,
+	], true, 300.0)
+	_expect(live_maximized_in_front.is_empty(), "a foreground maximized window removes the live top segment")
+	# 7. z=0 is a valid pet z-order, not the unknown sentinel (-1).
+	var absolute_top := WindowPlatformService.new()
+	absolute_top.set_native_bridge(null)
+	absolute_top._self_z_order = 0
+	var absolute_top_track := absolute_top.track_platform(ridden, [
+		{"handle": 9, "process_id": 30, "rect": Rect2i(0, 50, 700, 300), "z_order": 1, "visible": true, "maximized": true},
+		{"handle": 11, "process_id": 21, "rect": Rect2i(0, 100, 700, 500), "z_order": 100, "visible": true},
+	], 300.0)
+	_expect(str(absolute_top_track.get("status", "")) != "occluded", "pet z-order zero ignores every background window")
+	# 8. Fallback: _self_z_order = -1 (no bridge z data) keeps the old full-occlusion
 	# behavior — the standing point covered by any front window is still occluded.
 	var fallback := WindowPlatformService.new()
 	fallback.set_native_bridge(null)
@@ -2917,6 +3103,28 @@ func _test_icon_visibility_and_reach() -> void:
 	_expect(str(picked.get("mode", "")) in ["walk", "fly"], "mode selection returns a viable mode")
 	_expect(pet._pick_approach_mode([]).is_empty(), "no viable modes selects none")
 	pet.free()
+	# 6. Explorer's desktop ListView is enumerated once for both autonomy gates,
+	# and continuous locomotion consumes the cached result instead of stalling a
+	# flight/wall frame with another synchronous cross-process scan.
+	var observation_pet := preload("res://scripts/main.gd").new()
+	var icon_desktop := FakeIconObservationDesktop.new()
+	icon_desktop.icons = [{"name": "reachable", "x": 120, "y": 700}]
+	observation_pet.add_child(icon_desktop)
+	observation_pet.desktop = icon_desktop
+	observation_pet.icon_collection = true
+	observation_pet.position = Vector2(100.0, 650.0)
+	observation_pet.machine.state = "idle"
+	var idle_availability: Dictionary = observation_pet._desktop_icon_availability()
+	_expect(icon_desktop.enumerate_calls == 1, "desktop icon autonomy gates share one Explorer enumeration")
+	_expect(bool(idle_availability.has_desktop_icons) and bool(idle_availability.has_reachable_icons), "the shared icon snapshot preserves visibility and reachability gates")
+	icon_desktop.icons = []
+	observation_pet.machine.state = "edge_patrol"
+	var patrol_availability: Dictionary = observation_pet._desktop_icon_availability()
+	_expect(icon_desktop.enumerate_calls == 1 and patrol_availability == idle_availability, "edge patrol reuses the last idle icon snapshot without touching Explorer")
+	observation_pet.machine.state = "idle"
+	var refreshed_availability: Dictionary = observation_pet._desktop_icon_availability()
+	_expect(icon_desktop.enumerate_calls == 2 and not bool(refreshed_availability.has_desktop_icons), "returning to idle refreshes icon availability before another action can start")
+	observation_pet.free()
 
 func _test_icon_storage_rules() -> void:
 	var pet := preload("res://scripts/main.gd").new()
@@ -3195,6 +3403,19 @@ class _FakeWindowSnapshotService extends WindowPlatformService:
 		return self_z
 	func self_process_id() -> int:
 		return self_pid
+
+
+class FakeFreshEnumerationBridge:
+	extends RefCounted
+	var snapshots: Array = []
+	var enumerate_calls := 0
+	func get_current_process_id() -> int:
+		return 999
+	func enumerate_windows(_max_count: int, _capture_titles: bool) -> Array:
+		enumerate_calls += 1
+		return snapshots.duplicate(true)
+	func get_self_window_z_order() -> int:
+		return 0
 
 func _test_window_bodies() -> void:
 	var snapshots := [
@@ -3545,6 +3766,17 @@ class FakeCursorDesktop:
 		capture_active = false
 	func is_cursor_capture_active() -> bool:
 		return capture_active
+
+
+class FakeIconObservationDesktop:
+	extends DesktopWindowBridge
+	var icons: Array = []
+	var enumerate_calls := 0
+	func desktop_listview_available() -> bool:
+		return true
+	func enumerate_desktop_icons() -> Array:
+		enumerate_calls += 1
+		return icons.duplicate(true)
 
 
 class FakeCursorSpritePlayer:
