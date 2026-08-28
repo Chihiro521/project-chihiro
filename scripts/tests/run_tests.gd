@@ -15,6 +15,16 @@ const WindowEventDebouncerScript := preload("res://scripts/core/window_event_deb
 const RideFeedbackControllerScript := preload("res://scripts/core/ride_feedback_controller.gd")
 const RelationshipRulesScript := preload("res://scripts/core/pet_relationship_rules.gd")
 const WindowHopPlannerScript := preload("res://scripts/core/window_hop_planner.gd")
+const DesktopWindowBridgeScript := preload("res://scripts/platform/desktop_window.gd")
+
+## Minimal stand-in for the native Windows bridge: lets tests drive the raw
+## button-state answers the lost-release watchdog depends on.
+class FakeRawInput:
+	var held := false
+	func can_poll_raw_input() -> bool:
+		return true
+	func is_key_pressed(_vk: int) -> bool:
+		return held
 
 const RELATIONSHIP_INTERACTION_EVENTS := [
 	"greeting", "return",
@@ -624,6 +634,69 @@ func _test_life_model() -> void:
 	pet.action_session.on_loop_boundary(3030)
 	_expect(pet._life_activity_mode() == "awake" and pet.action_session.current_clip() == "nap_wake", "wake animation stops recovery and preserves the full exit phase")
 	pet.free()
+
+	# Long-idle suspend/resume regression: a nap that stays armed through a
+	# fullscreen suspend cycle is orphaned when the resume lands back on idle
+	# (its loop clip is replaced by the idle entry clip, so the wake seam never
+	# arrives). The orphan must be force-completed instead of swallowing every
+	# deferred click/poke/head-pat/right-click forever.
+	var orphan := preload("res://scripts/main.gd").new()
+	orphan.needs_model = needs
+	orphan.action_session.session_completed.connect(orphan._on_action_session_completed)
+	orphan.current_intent = nap_intent.duplicate(true)
+	_expect(orphan.action_session.begin(orphan.current_intent, 4000), "suspend regression nap session begins")
+	orphan.action_session.on_clip_finished(4010)
+	_expect(orphan.action_session.current_phase() == "loop", "suspend regression nap reaches its loop phase")
+	orphan.machine.state = "idle"
+	_expect(orphan._defer_until_wake("click") == false, "wake gate refuses to swallow clicks for an orphaned nap session")
+	_expect(not orphan.action_session.is_active() and orphan.current_intent.is_empty(), "orphaned nap session is force-completed by the wake gate")
+	orphan.free()
+
+	var suspended_pet := preload("res://scripts/main.gd").new()
+	suspended_pet.needs_model = needs
+	suspended_pet.action_session.session_completed.connect(suspended_pet._on_action_session_completed)
+	suspended_pet.current_intent = nap_intent.duplicate(true)
+	_expect(suspended_pet.action_session.begin(suspended_pet.current_intent, 5000), "suspension regression nap session begins")
+	suspended_pet.action_session.on_clip_finished(5010)
+	suspended_pet.machine.state = "suspended"
+	suspended_pet.suspended = true
+	suspended_pet._clear_suspension()
+	_expect(suspended_pet.machine.state == "idle", "clearing suspension returns the machine to idle")
+	_expect(not suspended_pet.action_session.is_active() and suspended_pet.current_intent.is_empty(), "clearing suspension resolves the armed nap session")
+	_expect(not suspended_pet._defer_until_wake("click"), "direct interactions pass through after a resumed suspension")
+	suspended_pet.free()
+
+	var sticky_press := preload("res://scripts/main.gd").new()
+	sticky_press.needs_model = needs
+	sticky_press.machine.state = "idle"
+	var bridge := DesktopWindowBridgeScript.new()
+	var fake_input := FakeRawInput.new()
+	bridge._native_bridge = fake_input
+	sticky_press.desktop = bridge
+	fake_input.held = false
+	sticky_press.press = {
+		"started_at": 6000.0,
+		"start_global": Vector2.ZERO,
+		"offset": Vector2.ZERO,
+		"zone": "body",
+		"intent": "pending",
+		"samples": [],
+	}
+	sticky_press._update_press_watchdog()
+	_expect(sticky_press.press.is_empty(), "a press whose button is already up is cancelled by the watchdog")
+	fake_input.held = true
+	sticky_press.press = {
+		"started_at": 6000.0,
+		"start_global": Vector2.ZERO,
+		"offset": Vector2.ZERO,
+		"zone": "body",
+		"intent": "pending",
+		"samples": [],
+	}
+	sticky_press._update_press_watchdog()
+	_expect(not sticky_press.press.is_empty(), "the watchdog keeps a press while its button is still held")
+	bridge.free()
+	sticky_press.free()
 
 func _test_relationship_progression() -> void:
 	var profile := _load_json("res://data/behavior_profile.json")

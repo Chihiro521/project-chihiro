@@ -70,6 +70,12 @@ func is_key_pressed(vk: int) -> bool:
 		return bool(_native_bridge.call("is_key_pressed", vk))
 	return false
 
+## Whether raw key/button polling is backed by the native bridge. Callers that
+## need an authoritative answer (e.g. the lost-release watchdog) must skip their
+## logic when this is false instead of treating "false" as a real answer.
+func can_poll_raw_input() -> bool:
+	return _native_bridge != null and _native_bridge.has_method("is_key_pressed")
+
 func start_cursor_capture() -> bool:
 	if _native_bridge != null and _native_bridge.has_method("start_cursor_capture"):
 		return bool(_native_bridge.call("start_cursor_capture"))

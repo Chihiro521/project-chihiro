@@ -6,7 +6,7 @@ native Godot runtime — no Electron, no WebView, no Node.js, no Rust.
 一只住在 Windows 桌面上的小桌宠。AI 逐帧作画，Godot 原生运行时，不依赖
 Electron / WebView / Node.js / Rust。
 
-![version](https://img.shields.io/badge/version-v0.21.0--beta.3-blue)
+![version](https://img.shields.io/badge/version-v0.21.0--beta.6-blue)
 ![platform](https://img.shields.io/badge/platform-Windows-blue)
 ![engine](https://img.shields.io/badge/engine-Godot%204.7-478cbf)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -71,17 +71,17 @@ affection` 五项生命状态，自主决定下一步做什么，用 140 条离�
 
 ## Download / 下载
 
-**EN** — The latest desktop-integration test build is `v0.21.0-beta.3`.
+**EN** — The latest desktop-integration test build is `v0.21.0-beta.6`.
 Download the Windows x86_64 ZIP or `LittleChihiroPet.exe` from the
 [Releases](https://github.com/Chihiro521/project-chihiro/releases) page. The
 window is transparent, borderless and always-on-top.
 
-**中文** — 最新桌面生态测试版为 `v0.21.0-beta.3`。从
+**中文** — 最新桌面生态测试版为 `v0.21.0-beta.6`。从
 [Releases](https://github.com/Chihiro521/project-chihiro/releases) 页下载
 Windows x86_64 ZIP 或 `LittleChihiroPet.exe` 即可。窗口透明、无边框、置顶。
 
-> `v0.21.0-beta.3` is a prerelease for the active desktop-integration line.
-> `v0.21.0-beta.3` 是当前桌面生态开发线的测试版本。
+> `v0.21.0-beta.6` is a prerelease for the active desktop-integration line.
+> `v0.21.0-beta.6` 是当前桌面生态开发线的测试版本。
 
 ---
 

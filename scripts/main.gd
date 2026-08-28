@@ -82,6 +82,10 @@ const WINDOW_HOP_APPROACH_SPEED_PX_S := 82.0
 ## visible rendering.
 const WINDOW_STAND_MIN_AGE_MS := 2000.0
 
+## States in which an action session's clips actually play and can advance it
+## (loop seams, clip completions). Any other state orphans the session.
+const ACTION_SESSION_STATES := ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]
+
 # Cursor confiscation ("绝对没收"). During confiscation VK_ESCAPE is the global
 # safety valve; outside confiscation, focused manual control also uses Esc as its
 # original quick-exit shortcut. The capture branch always has priority.
@@ -566,6 +570,7 @@ func _process(delta: float) -> void:
 	elif machine.state == "drag_throw":
 		_update_drag_throw(now)
 	_update_long_press(now)
+	_update_press_watchdog()
 	if wander_deadline >= 0.0 and now >= wander_deadline:
 		wander_deadline = -1.0
 		_trigger_ambient_behavior()
@@ -831,6 +836,10 @@ func _on_menu_id_pressed(id: int) -> void:
 		MENU_MANUAL_CONTROL, TRAY_MANUAL_CONTROL:
 			_trigger_manual_control()
 		MENU_RECENTER, TRAY_RECENTER:
+			if suspended:
+				# Recentering is an explicit show request; clear suspension so
+				# the pet cannot come back visible but click-dead.
+				_clear_suspension()
 			desktop.set_visible(true)
 			_recenter()
 		MENU_HIDE:
@@ -912,6 +921,10 @@ func _on_menu_id_pressed(id: int) -> void:
 			get_tree().quit()
 		TRAY_SHOW:
 			hidden = false
+			if suspended:
+				# An explicit show request clears suspension; otherwise the pet
+				# would return visible but click-dead inside the suspended state.
+				_clear_suspension()
 			desktop.set_visible(true)
 	if machine.state == "menu_wait" and id not in [MENU_CLOCK] and not backpack_panel.visible:
 		machine.dispatch({"type": "INTERACTION_END", "resume": _resolve_resume(menu_resume)})
@@ -1783,7 +1796,7 @@ func _on_action_session_completed(outcome: String) -> void:
 		var dialogue_event := _dialogue_event_for_intent(str(finished_intent.get("id", "")))
 		if not dialogue_event.is_empty():
 			_emit_dialogue(dialogue_event)
-	if machine.state in ["ambient_action", "sleeping", "platform_transition", "platform_walk", "platform_sit"]:
+	if machine.state in ACTION_SESSION_STATES:
 		machine.dispatch({"type": "ACTION_END"})
 	if routine_session.is_active() and ecology_step_mode == "intent" and not routine_session.is_paused():
 		if outcome in ["completed", "timeout"]:
@@ -3611,6 +3624,13 @@ func _defer_until_wake(kind: String, payload: Dictionary = {}) -> bool:
 		return false
 	deferred_wake_action = {"kind": kind, "payload": payload.duplicate(true)}
 	_interrupt_action("menu" if kind == "menu" else "direct_interaction")
+	if action_session.is_active() and machine.state not in ACTION_SESSION_STATES:
+		# The wake seam can never arrive from this state (its clip is no longer
+		# playing), so end the session now and let the interaction proceed
+		# instead of swallowing it forever.
+		_reconcile_orphan_action_session()
+		deferred_wake_action.clear()
+		return false
 	return action_session.is_active()
 
 func _run_deferred_wake_action() -> void:
@@ -3626,6 +3646,34 @@ func _run_deferred_wake_action() -> void:
 		"bag": _trigger_bag_guard()
 		"head_pat": _trigger_head_pat(bool(payload.get("auto_release", true)))
 		"clock": _trigger_clock_scare()
+
+## Ends an action session that lost its clip pairing. A session only advances
+## while the sprite keeps playing its clips; once the state machine has left
+## the action states (e.g. a nap interrupted by a suspend/resume cycle that
+## jumped straight back to idle), the loop seam or clip completion would never
+## arrive and every deferred interaction stays swallowed forever.
+func _reconcile_orphan_action_session() -> void:
+	if not action_session.is_active() or machine.state in ACTION_SESSION_STATES:
+		return
+	action_session.force_complete()
+
+## Clears fullscreen suspension. The 400 ms system check re-suspends the pet if
+## a fullscreen surface still owns the screen, so forcing this on an explicit
+## user request (tray show / recenter) is safe and keeps the state machine from
+## sitting in "suspended" while the window is visible and click-dead.
+func _clear_suspension() -> void:
+	if not suspended:
+		return
+	suspended = false
+	machine.dispatch({"type": "FULLSCREEN_EXIT"})
+	# A nap that stayed armed through the suspend cycle is orphaned once the
+	# machine lands back on idle; resolve it here or every deferred interaction
+	# would stay swallowed forever.
+	_reconcile_orphan_action_session()
+	if suspended_window_hop_fall and active_platform == null and not motion.is_empty():
+		_rebase_motion()
+		machine.dispatch({"type": "PLATFORM_LOST"})
+	suspended_window_hop_fall = false
 
 func _try_resume_platform_action() -> void:
 	if resumable_platform_intent.is_empty() or not action_session.has_resumable_session():
@@ -4811,6 +4859,12 @@ func _on_transition(from: String, to: String, event: Dictionary) -> void:
 		_reset_drag_visual()
 	if from == "sleeping" and to != "sleeping" and action_session.is_active() and action_session.current_phase() == "exit":
 		action_session.on_clip_finished(int(_now_ms()))
+	if to == "idle" and action_session.is_active():
+		# A suspend/resume cycle can jump straight back to idle with the action
+		# session still armed in its loop phase; once the idle entry clip
+		# replaces the session clip the wake seam can never arrive, so end the
+		# session here or every deferred interaction stays swallowed forever.
+		_reconcile_orphan_action_session()
 	if to not in ["idle", "notice", "cursor_track"]:
 		gesture_recognizer.reset()
 	if to == "suspended":
@@ -5202,6 +5256,17 @@ func _finish_press(cancelled: bool) -> void:
 		else: _trigger_click()
 	press.clear()
 	if machine.state == "idle": _schedule_wander()
+
+## A press whose physical button is already up but whose release event never
+## arrived (swallowed by a minimize, a geometry change, or a focus steal) would
+## otherwise drag the pet behind the cursor forever. Cancel it as soon as the
+## mismatch between the live button state and the press record is seen.
+func _update_press_watchdog() -> void:
+	if press.is_empty() or desktop == null:
+		return
+	if not desktop.can_poll_raw_input() or desktop.is_key_pressed(0x01):
+		return
+	_finish_press(true)
 
 func _trigger_click() -> void:
 	if _defer_until_wake("click"):
@@ -6670,18 +6735,17 @@ func _check_system_context() -> void:
 		_interrupt_action("fullscreen")
 		if not suspended_window_hop_fall:
 			motion.clear()
+		# Minimizing the window swallows the pending mouse release; drop the
+		# press state so it cannot leak into the resume and glue the pet to the
+		# cursor forever.
+		press.clear()
 		_cancel_edge_patrol()
 		machine.dispatch({"type": "FULLSCREEN_ENTER"})
 		desktop.set_visible(false)
 	elif not fullscreen and suspended:
-		suspended = false
 		if not hidden:
 			desktop.set_visible(true)
-		machine.dispatch({"type": "FULLSCREEN_EXIT"})
-		if suspended_window_hop_fall and active_platform == null and not motion.is_empty():
-			_rebase_motion()
-			machine.dispatch({"type": "PLATFORM_LOST"})
-		suspended_window_hop_fall = false
+		_clear_suspension()
 
 func _refresh_habitat_screens() -> void:
 	if habitat_model == null or desktop == null:

@@ -92,6 +92,15 @@ func on_clip_finished(now_ms: int = -1) -> Dictionary:
 			_complete("interrupted" if not _interrupted_by.is_empty() else "completed")
 	return snapshot()
 
+## Hard-completes the session when its clips can no longer play (the state
+## machine left the action states, e.g. after a suspend/resume cycle jumped
+## straight back to idle), so a loop seam that would never arrive cannot hold
+## the session open forever and swallow every deferred interaction.
+func force_complete(outcome := "interrupted") -> void:
+	if not _active:
+		return
+	_complete(outcome)
+
 func request_finish(now_ms: int = -1) -> bool:
 	if not _active:
 		return false
